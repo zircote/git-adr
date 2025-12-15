@@ -59,6 +59,7 @@ def run_new(
     title: str,
     status: str = "proposed",
     tags: list[str] | None = None,
+    deciders: list[str] | None = None,
     link: str | None = None,
     template: str | None = None,
     file: str | None = None,
@@ -72,6 +73,7 @@ def run_new(
         title: ADR title.
         status: Initial status.
         tags: Tags for the ADR.
+        deciders: Decision makers for the ADR.
         link: Commit SHA to link.
         template: Template format override.
         file: Read content from file.
@@ -168,10 +170,40 @@ def run_new(
             body_content = final_content
 
         # CLI args take precedence over frontmatter
-        # Merge deciders from frontmatter (CLI doesn't have this option)
-        fm_deciders = ensure_list(fm.get("deciders"))
+        # Support both 'deciders' and 'decision-makers' (MADR 4.0) in frontmatter
+        fm_deciders = ensure_list(fm.get("deciders") or fm.get("decision-makers") or [])
         fm_consulted = ensure_list(fm.get("consulted"))
         fm_informed = ensure_list(fm.get("informed"))
+
+        # Deciders: CLI takes precedence, fallback to frontmatter
+        merged_deciders = deciders if deciders else fm_deciders
+
+        # Parse comma-separated values if provided as single string entries
+        if merged_deciders:
+            parsed_deciders = []
+            for d in merged_deciders:
+                # Split on comma if present, strip whitespace
+                parsed_deciders.extend([x.strip() for x in d.split(",") if x.strip()])
+            merged_deciders = parsed_deciders
+
+        # Interactive prompt for deciders if empty and TTY available
+        if not merged_deciders and sys.stdin.isatty() and not no_edit:
+            deciders_input = typer.prompt(
+                "Enter deciders (comma-separated, or press Enter to skip)",
+                default="",
+            )
+            if deciders_input:
+                merged_deciders = [
+                    d.strip() for d in deciders_input.split(",") if d.strip()
+                ]
+
+        # Validate: deciders are required for new ADRs
+        if not merged_deciders:
+            err_console.print(
+                "[red]Error:[/red] Deciders are required. "
+                "Use --deciders or specify in frontmatter."
+            )
+            raise typer.Exit(1)
 
         # Tags: CLI takes precedence, but merge if CLI is empty
         merged_tags = tags if tags else ensure_list(fm.get("tags"))
@@ -195,7 +227,7 @@ def run_new(
             date=adr_date,
             status=adr_status,
             tags=merged_tags or [],
-            deciders=fm_deciders,
+            deciders=merged_deciders,
             consulted=fm_consulted,
             informed=fm_informed,
             format=format_name,

@@ -279,6 +279,253 @@ class TestShowCommand:
         )
         assert result.exit_code == 0
 
+    def test_show_no_interactive_flag(self, adr_repo_with_data: Path) -> None:
+        """Test show with --no-interactive flag."""
+        result = runner.invoke(
+            app, ["show", "20250110-use-postgresql", "--no-interactive"]
+        )
+        assert result.exit_code == 0
+
+
+class TestShowInteractivePrompt:
+    """Tests for show command interactive deciders prompt."""
+
+    @patch("git_adr.commands.show.sys.stdin")
+    def test_show_no_prompt_when_deciders_exist(
+        self, mock_stdin: MagicMock, adr_repo_with_data: Path
+    ) -> None:
+        """Test show doesn't prompt when deciders exist."""
+        mock_stdin.isatty.return_value = True
+        result = runner.invoke(app, ["show", "20250110-use-postgresql"])
+        assert result.exit_code == 0
+        # Should not see prompt since ADR has deciders
+        assert "no deciders recorded" not in result.output.lower()
+
+    @patch("git_adr.commands.show.sys.stdin")
+    def test_show_no_prompt_for_yaml_format(
+        self, mock_stdin: MagicMock, adr_repo_with_data: Path
+    ) -> None:
+        """Test show doesn't prompt for YAML format."""
+        mock_stdin.isatty.return_value = True
+        result = runner.invoke(
+            app, ["show", "20250110-use-postgresql", "--format", "yaml"]
+        )
+        assert result.exit_code == 0
+        assert "no deciders recorded" not in result.output.lower()
+
+    @patch("git_adr.commands.show.sys.stdin")
+    def test_show_no_prompt_for_json_format(
+        self, mock_stdin: MagicMock, adr_repo_with_data: Path
+    ) -> None:
+        """Test show doesn't prompt for JSON format."""
+        mock_stdin.isatty.return_value = True
+        result = runner.invoke(
+            app, ["show", "20250110-use-postgresql", "--format", "json"]
+        )
+        assert result.exit_code == 0
+        assert "no deciders recorded" not in result.output.lower()
+
+    def test_show_no_prompt_when_no_interactive(
+        self, initialized_adr_repo: Path
+    ) -> None:
+        """Test show doesn't prompt with --no-interactive."""
+        from datetime import date
+
+        from git_adr.core import ADR, ADRMetadata, ADRStatus, Config, Git, NotesManager
+
+        # Create ADR without deciders
+        git = Git(cwd=initialized_adr_repo)
+        config = Config()
+        notes_manager = NotesManager(git, config)
+
+        metadata = ADRMetadata(
+            id="no-deciders-test-2",
+            title="Test Without Deciders 2",
+            date=date.today(),
+            status=ADRStatus.PROPOSED,
+            deciders=[],  # Empty deciders
+        )
+        adr = ADR(metadata=metadata, content="# Test\n\nNo deciders here.")
+        notes_manager.add(adr)
+
+        result = runner.invoke(app, ["show", "no-deciders-test-2", "--no-interactive"])
+        assert result.exit_code == 0
+        # Should not see prompt
+        assert "would you like to add" not in result.output.lower()
+
+
+class TestRunShowWithPrompt:
+    """Tests for run_show function that exercises prompt path."""
+
+    def test_run_show_calls_prompt_when_no_deciders(
+        self, initialized_adr_repo: Path
+    ) -> None:
+        """Test run_show calls _prompt_for_deciders when conditions are met."""
+        from datetime import date
+
+        from git_adr.commands.show import run_show
+        from git_adr.core import ADR, ADRMetadata, ADRStatus, Config, Git, NotesManager
+
+        git = Git(cwd=initialized_adr_repo)
+        config = Config()
+        notes_manager = NotesManager(git, config)
+
+        # Create ADR without deciders
+        metadata = ADRMetadata(
+            id="run-show-prompt-test",
+            title="Run Show Prompt Test",
+            date=date.today(),
+            status=ADRStatus.PROPOSED,
+            deciders=[],
+        )
+        adr = ADR(metadata=metadata, content="# Test")
+        notes_manager.add(adr)
+
+        # Mock stdin.isatty() to return True and user declining
+        with (
+            patch("git_adr.commands.show.sys.stdin.isatty", return_value=True),
+            patch("git_adr.commands.show.typer.confirm", return_value=False),
+        ):
+            # This should trigger line 79 - call to _prompt_for_deciders
+            run_show("run-show-prompt-test", format_="markdown", interactive=True)
+
+
+class TestPromptForDeciders:
+    """Direct tests for _prompt_for_deciders function."""
+
+    def test_prompt_user_declines(self, initialized_adr_repo: Path) -> None:
+        """Test prompt when user declines to add deciders."""
+        from datetime import date
+
+        from git_adr.commands.show import _prompt_for_deciders
+        from git_adr.core import ADR, ADRMetadata, ADRStatus, Config, Git, NotesManager
+
+        git = Git(cwd=initialized_adr_repo)
+        config = Config()
+        notes_manager = NotesManager(git, config)
+
+        metadata = ADRMetadata(
+            id="decline-test",
+            title="Decline Test",
+            date=date.today(),
+            status=ADRStatus.PROPOSED,
+            deciders=[],
+        )
+        adr = ADR(metadata=metadata, content="# Test")
+        notes_manager.add(adr)
+
+        # Mock user declining
+        with patch("git_adr.commands.show.typer.confirm", return_value=False):
+            result = _prompt_for_deciders(adr, notes_manager)
+
+        # Should return original ADR unchanged
+        assert result.metadata.deciders == []
+
+    def test_prompt_user_accepts_adds_deciders(
+        self, initialized_adr_repo: Path
+    ) -> None:
+        """Test prompt when user accepts and adds deciders."""
+        from datetime import date
+
+        from git_adr.commands.show import _prompt_for_deciders
+        from git_adr.core import ADR, ADRMetadata, ADRStatus, Config, Git, NotesManager
+
+        git = Git(cwd=initialized_adr_repo)
+        config = Config()
+        notes_manager = NotesManager(git, config)
+
+        metadata = ADRMetadata(
+            id="accept-test",
+            title="Accept Test",
+            date=date.today(),
+            status=ADRStatus.PROPOSED,
+            deciders=[],
+        )
+        adr = ADR(metadata=metadata, content="# Test")
+        notes_manager.add(adr)
+
+        # Mock user accepting and providing deciders
+        with (
+            patch("git_adr.commands.show.typer.confirm", return_value=True),
+            patch(
+                "git_adr.commands.show.typer.prompt",
+                return_value="Alice, Bob <b@x.com>",
+            ),
+        ):
+            result = _prompt_for_deciders(adr, notes_manager)
+
+        # Should return ADR with deciders added
+        assert result.metadata.deciders == ["Alice", "Bob <b@x.com>"]
+
+        # Verify saved to notes
+        saved = notes_manager.get("accept-test")
+        assert saved is not None
+        assert saved.metadata.deciders == ["Alice", "Bob <b@x.com>"]
+
+    def test_prompt_user_provides_empty_input(self, initialized_adr_repo: Path) -> None:
+        """Test prompt when user provides empty input."""
+        from datetime import date
+
+        from git_adr.commands.show import _prompt_for_deciders
+        from git_adr.core import ADR, ADRMetadata, ADRStatus, Config, Git, NotesManager
+
+        git = Git(cwd=initialized_adr_repo)
+        config = Config()
+        notes_manager = NotesManager(git, config)
+
+        metadata = ADRMetadata(
+            id="empty-input-test",
+            title="Empty Input Test",
+            date=date.today(),
+            status=ADRStatus.PROPOSED,
+            deciders=[],
+        )
+        adr = ADR(metadata=metadata, content="# Test")
+        notes_manager.add(adr)
+
+        # Mock user accepting but providing empty input
+        with (
+            patch("git_adr.commands.show.typer.confirm", return_value=True),
+            patch("git_adr.commands.show.typer.prompt", return_value=""),
+        ):
+            result = _prompt_for_deciders(adr, notes_manager)
+
+        # Should return original ADR unchanged
+        assert result.metadata.deciders == []
+
+    def test_prompt_user_provides_whitespace_only(
+        self, initialized_adr_repo: Path
+    ) -> None:
+        """Test prompt when user provides whitespace-only input."""
+        from datetime import date
+
+        from git_adr.commands.show import _prompt_for_deciders
+        from git_adr.core import ADR, ADRMetadata, ADRStatus, Config, Git, NotesManager
+
+        git = Git(cwd=initialized_adr_repo)
+        config = Config()
+        notes_manager = NotesManager(git, config)
+
+        metadata = ADRMetadata(
+            id="whitespace-test",
+            title="Whitespace Test",
+            date=date.today(),
+            status=ADRStatus.PROPOSED,
+            deciders=[],
+        )
+        adr = ADR(metadata=metadata, content="# Test")
+        notes_manager.add(adr)
+
+        # Mock user accepting but providing only whitespace
+        with (
+            patch("git_adr.commands.show.typer.confirm", return_value=True),
+            patch("git_adr.commands.show.typer.prompt", return_value="   ,  ,   "),
+        ):
+            result = _prompt_for_deciders(adr, notes_manager)
+
+        # Should return original ADR unchanged (empty after parsing)
+        assert result.metadata.deciders == []
+
 
 # =============================================================================
 # Log Command Tests
