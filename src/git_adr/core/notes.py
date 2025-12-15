@@ -7,6 +7,7 @@ stability across rebase and amend operations.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 from dataclasses import dataclass
 from pathlib import Path
@@ -506,11 +507,8 @@ class NotesManager:
         self._git.fetch_notes(remote, self.adr_ref)
 
         # Try to fetch artifacts ref (may not exist on remote)
-        try:
+        with contextlib.suppress(GitError):
             self._git.fetch_notes(remote, self.artifacts_ref)
-        except GitError:
-            # Artifacts ref doesn't exist on remote - nothing to fetch
-            pass
 
         # Notes are automatically merged by git during fetch
         # The strategy is configured via notes.mergeStrategy
