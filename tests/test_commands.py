@@ -78,8 +78,8 @@ class TestCLIInNonRepo:
         """Test init fails gracefully outside git repo."""
         # Note: CliRunner doesn't respect chdir, but we test the error path
         result = runner.invoke(app, ["init"])
-        # Should fail - either "not a git repository" or similar
-        assert result.exit_code != 0 or "not" in result.output.lower()
+        # Should fail with non-zero exit code when not in a git repository
+        assert result.exit_code != 0, "Expected non-zero exit code outside git repo"
 
 
 class TestCommandSubgroups:

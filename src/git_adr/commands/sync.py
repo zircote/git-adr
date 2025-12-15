@@ -70,6 +70,9 @@ def run_sync(
                 notes_manager.sync_pull(remote=remote, merge_strategy=merge_strategy)
                 console.print(f"[green]✓[/green] Pulled ADR notes from {remote}")
             except GitError as e:
+                # Check for "remote ref not found" error - this is expected when
+                # notes haven't been pushed to the remote yet. String matching is
+                # used because git doesn't provide distinct exit codes for this case.
                 if "couldn't find remote ref" in str(e).lower():
                     console.print(
                         f"[yellow]Note:[/yellow] No remote notes found on {remote}"

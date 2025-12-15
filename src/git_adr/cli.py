@@ -1156,7 +1156,7 @@ def completion(
 
     if shell == "bash":
         # Custom bash completion that supports both 'git-adr' and 'git adr'
-        script = '''# git-adr bash completion
+        script = """# git-adr bash completion
 _git_adr_completion() {
     local IFS=$'\\n'
     COMPREPLY=( $( env COMP_WORDS="${COMP_WORDS[*]}" \\
@@ -1189,7 +1189,7 @@ _git_adr() {
 if type __git_complete &>/dev/null; then
     __git_complete adr _git_adr
 fi
-'''
+"""
         config_file = "~/.bashrc"
     elif shell == "zsh":
         # Use Typer's built-in for zsh
@@ -1226,7 +1226,9 @@ fi
             completion_file.write_text(script)
             console.print(f"[green]✓[/green] Completion installed to {completion_file}")
         elif shell == "powershell":
-            console.print("[yellow]PowerShell completion requires manual setup.[/yellow]")
+            console.print(
+                "[yellow]PowerShell completion requires manual setup.[/yellow]"
+            )
             console.print(f"Add the following to your {config_file}:")
             console.print(script)
         else:

@@ -165,7 +165,9 @@ class WikiService:
         wiki_dir = Path(tempfile.mkdtemp(prefix="git-adr-wiki-"))
 
         try:
-            # git CLI with controlled args; "git" expected in PATH
+            # wiki_url comes from git remote config (user-controlled).
+            # Git validates URL format during clone - invalid URLs fail safely.
+            # The nosec comment acknowledges subprocess usage with user input.
             result = subprocess.run(  # nosec B603 B607
                 ["git", "clone", "--depth", "1", wiki_url, str(wiki_dir)],
                 check=False,
@@ -475,7 +477,8 @@ class WikiService:
                 timeout=30,
             )
 
-            # Commit - commit_msg is generated internally, not user input
+            # Commit changes. Security note: commit_msg is constructed from internal
+            # integer counts (len() results), not user input, so this is safe.
             commit_msg = (
                 f"Sync {result.total_synced} ADRs from git-adr\n\n"
                 f"Created: {len(result.created)}\n"

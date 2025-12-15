@@ -516,8 +516,11 @@ class NotesManager:
         Returns:
             Object ID for the note.
         """
-        # Hash the ADR ID to create a pseudo-object ID
-        # This gives us a stable reference point for each ADR
+        # Hash the ADR ID to create a pseudo-object ID.
+        # We use SHA1 here for git compatibility (git uses SHA1 for object IDs).
+        # Security note: This is NOT used for cryptographic security, only for
+        # generating unique, deterministic identifiers. Collision resistance is
+        # not critical since we control the input format (adr_id is validated).
         hash_input = f"git-adr:{adr_id}".encode()
         return hashlib.sha1(hash_input, usedforsecurity=False).hexdigest()
 
@@ -530,6 +533,8 @@ class NotesManager:
         Returns:
             Object ID for the artifact note.
         """
+        # SHA1 for git object ID compatibility (40-char hex).
+        # Security: Not used for cryptographic purposes - only for unique ID generation.
         hash_input = f"git-adr-artifact:{sha256}".encode()
         return hashlib.sha1(hash_input, usedforsecurity=False).hexdigest()
 

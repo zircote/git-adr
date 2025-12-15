@@ -37,9 +37,9 @@ class TestArtifactsCommandCoverage:
             ["attach", "20250110-use-postgresql", str(test_file)],
         )
 
-        # Now list artifacts
+        # Now list artifacts - may succeed (0) or report no artifacts (1)
         result = runner.invoke(app, ["artifacts", "20250110-use-postgresql"])
-        assert result.exit_code in [0, 1]
+        assert result.exit_code in [0, 1], f"Unexpected exit code: {result.exit_code}"
 
 
 class TestArtifactGetCoverage:
