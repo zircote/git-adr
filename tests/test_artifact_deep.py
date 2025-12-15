@@ -154,7 +154,11 @@ class TestArtifactGetCommand:
                     str(output_file),
                 ],
             )
-            assert result.exit_code in [0, 1]
+            # Expect success when artifact exists, or specific failure
+            # (0 = success, 1 = not found which is acceptable for this test)
+            assert result.exit_code in [0, 1], (
+                f"Unexpected exit code: {result.exit_code}"
+            )
 
     def test_artifact_get_not_found(self, adr_repo_with_data: Path) -> None:
         """Test getting non-existent artifact."""

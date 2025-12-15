@@ -163,7 +163,9 @@ class Git:
         # Prevent git from prompting for credentials in non-interactive mode
         env["GIT_TERMINAL_PROMPT"] = "0"
 
-        # Ensure consistent output format
+        # Force C locale for consistent git output parsing.
+        # This ensures git messages/formats are predictable across systems.
+        # Note: Non-ASCII filenames still work; this only affects UI messages.
         env["LC_ALL"] = "C"
 
         # Merge any custom environment variables
