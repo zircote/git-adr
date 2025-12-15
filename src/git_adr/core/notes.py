@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from git_adr.core.adr import ADR, ADRMetadata
+from git_adr.core.git import GitError
 
 if TYPE_CHECKING:
     from git_adr.core.config import Config
@@ -478,8 +479,16 @@ class NotesManager:
             remote: Remote name.
             force: If True, force push.
         """
+        # Push ADR notes (must exist)
         self._git.push_notes(remote, self.adr_ref, force=force)
-        self._git.push_notes(remote, self.artifacts_ref, force=force)
+
+        # Only push artifacts ref if it exists locally
+        try:
+            self._git.run(["rev-parse", "--verify", self.artifacts_ref], check=True)
+            self._git.push_notes(remote, self.artifacts_ref, force=force)
+        except GitError:
+            # Artifacts ref doesn't exist yet - nothing to push
+            pass
 
     def sync_pull(
         self,
@@ -493,9 +502,15 @@ class NotesManager:
             remote: Remote name.
             merge_strategy: Strategy for merging conflicts.
         """
-        # Fetch notes
+        # Fetch ADR notes
         self._git.fetch_notes(remote, self.adr_ref)
-        self._git.fetch_notes(remote, self.artifacts_ref)
+
+        # Try to fetch artifacts ref (may not exist on remote)
+        try:
+            self._git.fetch_notes(remote, self.artifacts_ref)
+        except GitError:
+            # Artifacts ref doesn't exist on remote - nothing to fetch
+            pass
 
         # Notes are automatically merged by git during fetch
         # The strategy is configured via notes.mergeStrategy
