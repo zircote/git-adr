@@ -6,6 +6,7 @@ Exports ADRs to various formats and locations.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from pathlib import Path
 
 import typer
@@ -159,10 +160,11 @@ def _export_html(
 ) -> None:
     """Export ADRs as HTML files."""
     # Try to use mistune for markdown conversion
+    md: Callable[[str], str]
     try:
         import mistune
 
-        md = mistune.html
+        md = mistune.html  # type: ignore[assignment]
     except ImportError:
         # Fallback: just wrap in pre tags
         def md(x: str) -> str:
