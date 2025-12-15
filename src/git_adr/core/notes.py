@@ -119,31 +119,32 @@ class NotesManager:
         self._git.config_set("adr.initialized", "true")
 
     def _configure_remote_notes(self, remote: str) -> None:
-        """Configure a remote for notes fetch/push.
+        """Configure a remote for notes fetch.
+
+        This method is idempotent - it checks for existing configuration
+        before adding to prevent duplicate entries.
+
+        Note: We only configure fetch refspecs, not push. Push refspecs cause
+        bare `git push` to fail if the notes refs don't exist locally yet.
+        The `git adr sync push` command handles pushes explicitly.
 
         Args:
             remote: Remote name to configure.
         """
-        # Add fetch refspec for ADR notes
         fetch_key = f"remote.{remote}.fetch"
+
+        # Get all existing values for idempotent configuration
+        existing_fetch = self._git.config_get_all(fetch_key)
+
+        # Add fetch refspec for ADR notes (if not already present)
         fetch_spec = f"+{self.adr_ref}:{self.adr_ref}"
+        if fetch_spec not in existing_fetch:
+            self._git.config_add(fetch_key, fetch_spec)
 
-        # Check if already configured
-        existing_fetch = self._git.config_get(fetch_key)
-        if existing_fetch and self.adr_ref in existing_fetch:
-            return
-
-        # Add the fetch refspec
-        self._git.config_add(fetch_key, fetch_spec)
-
-        # Add fetch refspec for artifacts
-        artifacts_spec = f"+{self.artifacts_ref}:{self.artifacts_ref}"
-        self._git.config_add(fetch_key, artifacts_spec)
-
-        # Configure push refspecs
-        push_key = f"remote.{remote}.push"
-        self._git.config_add(push_key, self.adr_ref)
-        self._git.config_add(push_key, self.artifacts_ref)
+        # Add fetch refspec for artifacts (if not already present)
+        artifacts_fetch_spec = f"+{self.artifacts_ref}:{self.artifacts_ref}"
+        if artifacts_fetch_spec not in existing_fetch:
+            self._git.config_add(fetch_key, artifacts_fetch_spec)
 
     # =========================================================================
     # ADR Operations
