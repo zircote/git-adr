@@ -1114,6 +1114,149 @@ app.command("s", hidden=True)(search)
 app.command("e", hidden=True)(edit)
 
 
+# =============================================================================
+# Shell Completion
+# =============================================================================
+
+
+@app.command("completion")
+def completion(
+    shell: Annotated[
+        str,
+        typer.Argument(help="Shell type: bash, zsh, fish, or powershell"),
+    ],
+    install: Annotated[
+        bool,
+        typer.Option("--install", "-i", help="Install completion to shell config"),
+    ] = False,
+) -> None:
+    """Generate or install shell completion scripts.
+
+    Examples:
+
+        # Show bash completion script
+        git adr completion bash
+
+        # Install zsh completion
+        git adr completion zsh --install
+
+        # Save fish completion to file
+        git adr completion fish > ~/.config/fish/completions/git-adr.fish
+    """
+    shell = shell.lower()
+    valid_shells = ["bash", "zsh", "fish", "powershell"]
+
+    if shell not in valid_shells:
+        err_console.print(f"[red]Invalid shell: {shell}[/red]")
+        err_console.print(f"Valid shells: {', '.join(valid_shells)}")
+        raise typer.Exit(1)
+
+    # Generate completion script using Typer's internal mechanism
+    prog_name = "git-adr"
+    env_var = f"_{prog_name.upper().replace('-', '_')}_COMPLETE"
+
+    if shell == "bash":
+        script = f'''_git_adr_completion() {{
+    local IFS=$'\\n'
+    COMPREPLY=( $( env COMP_WORDS="${{COMP_WORDS[*]}}" \\
+                   COMP_CWORD=$COMP_CWORD \\
+                   {env_var}=bash_complete $1 ) )
+    return 0
+}}
+
+complete -o default -F _git_adr_completion git-adr
+'''
+        config_file = "~/.bashrc"
+    elif shell == "zsh":
+        script = f'''#compdef git-adr
+
+_git_adr_completion() {{
+    local -a completions
+    local -a completions_with_descriptions
+    local -a response
+    (( ! $+commands[git-adr] )) && return 1
+
+    response=("${{(@f)$(env COMP_WORDS="${{words[*]}}" COMP_CWORD=$((CURRENT-1)) {env_var}=zsh_complete git-adr)}}")
+
+    for key descr in ${{(kv)response}}; do
+      if [[ "$descr" == "_" ]]; then
+          completions+=("$key")
+      else
+          completions_with_descriptions+=("$key":"$descr")
+      fi
+    done
+
+    if [ -n "$completions_with_descriptions" ]; then
+        _describe -V unsorted completions_with_descriptions -U
+    fi
+
+    if [ -n "$completions" ]; then
+        compadd -U -V unsorted -a completions
+    fi
+}}
+
+compdef _git_adr_completion git-adr
+'''
+        config_file = "~/.zshrc"
+    elif shell == "fish":
+        script = f'''complete -c git-adr -f -a "(env {env_var}=fish_complete COMP_WORDS=(commandline -cp) COMP_CWORD=(commandline -t) git-adr)"
+'''
+        config_file = "~/.config/fish/completions/git-adr.fish"
+    else:  # powershell
+        script = f'''$scriptblock = {{
+    param($wordToComplete, $commandAst, $cursorPosition)
+    $env:{env_var} = "powershell_complete"
+    $env:COMP_WORDS = $commandAst.ToString()
+    $env:COMP_CWORD = $cursorPosition
+    git-adr | ForEach-Object {{
+        [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
+    }}
+    Remove-Item env:{env_var}
+    Remove-Item env:COMP_WORDS
+    Remove-Item env:COMP_CWORD
+}}
+Register-ArgumentCompleter -Native -CommandName git-adr -ScriptBlock $scriptblock
+'''
+        config_file = "$PROFILE"
+
+    if install:
+        # Install the completion
+        from pathlib import Path
+
+        if shell == "fish":
+            # Fish uses a dedicated completions directory
+            fish_dir = Path.home() / ".config" / "fish" / "completions"
+            fish_dir.mkdir(parents=True, exist_ok=True)
+            completion_file = fish_dir / "git-adr.fish"
+            completion_file.write_text(script)
+            console.print(f"[green]✓[/green] Completion installed to {completion_file}")
+        elif shell == "powershell":
+            console.print("[yellow]PowerShell completion requires manual setup.[/yellow]")
+            console.print(f"Add the following to your {config_file}:")
+            console.print(script)
+        else:
+            # Bash/Zsh - append to config file
+            config_path = Path(config_file).expanduser()
+            marker = "# git-adr completion"
+
+            if config_path.exists():
+                content = config_path.read_text()
+                if marker in content:
+                    console.print(
+                        f"[yellow]Completion already installed in {config_file}[/yellow]"
+                    )
+                    raise typer.Exit(0)
+
+            with config_path.open("a") as f:
+                f.write(f"\n{marker}\n{script}\n")
+
+            console.print(f"[green]✓[/green] Completion installed to {config_file}")
+            console.print(f"Run: [cyan]source {config_file}[/cyan] to activate")
+    else:
+        # Just print the script
+        console.print(script, highlight=False)
+
+
 def main() -> None:
     """Entry point for the git-adr CLI."""
     try:
