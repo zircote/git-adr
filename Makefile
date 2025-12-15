@@ -143,10 +143,18 @@ install: install-bin install-man install-completions
 
 install-bin:
 	@echo "Installing git-adr binary..."
-	install -d $(DESTDIR)$(bindir)
-	install -m 755 $(VENV_BIN)/git-adr $(DESTDIR)$(bindir)/git-adr 2>/dev/null || \
-		pip install --target=$(DESTDIR)$(bindir) --no-deps . && \
-		echo "Note: Installed via pip, binary wrapper may need PATH adjustment"
+	@if [ -x "$(VENV_BIN)/git-adr" ]; then \
+		install -d $(DESTDIR)$(bindir); \
+		install -m 755 $(VENV_BIN)/git-adr $(DESTDIR)$(bindir)/git-adr; \
+		echo "Installed to $(DESTDIR)$(bindir)/git-adr"; \
+	else \
+		echo "Error: git-adr not found in venv. Run 'make dev-install' first."; \
+		echo ""; \
+		echo "Alternative: Install directly with:"; \
+		echo "  uv tool install git-adr"; \
+		echo "  # or: pipx install git-adr"; \
+		exit 1; \
+	fi
 
 install-man: man-pages
 	@echo "Installing man pages..."

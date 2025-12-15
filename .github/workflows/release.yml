@@ -121,7 +121,8 @@ jobs:
 
             ### From release tarball (includes man pages + completions)
             ```bash
-            # Download and extract
+            # Download and extract (replace VERSION with actual version, e.g., 0.1.0)
+            VERSION=${{ github.ref_name }}
             curl -sL https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/git-adr-${VERSION#v}.tar.gz | tar xz
             cd git-adr-*/
 
