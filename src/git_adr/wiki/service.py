@@ -6,7 +6,7 @@ Provides sync to GitHub and GitLab wikis.
 from __future__ import annotations
 
 import shutil
-import subprocess
+import subprocess  # nosec B404 - subprocess required for git wiki operations
 import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -165,7 +165,8 @@ class WikiService:
         wiki_dir = Path(tempfile.mkdtemp(prefix="git-adr-wiki-"))
 
         try:
-            result = subprocess.run(
+            # git CLI with controlled args; "git" expected in PATH
+            result = subprocess.run(  # nosec B603 B607
                 ["git", "clone", "--depth", "1", wiki_url, str(wiki_dir)],
                 check=False,
                 capture_output=True,
@@ -179,15 +180,15 @@ class WikiService:
                     "not found" in result.stderr.lower()
                     or "not exist" in result.stderr.lower()
                 ):
-                    # Initialize new wiki
-                    subprocess.run(
+                    # Initialize new wiki - git CLI with controlled args
+                    subprocess.run(  # nosec B603 B607
                         ["git", "init"],
                         check=False,
                         cwd=wiki_dir,
                         capture_output=True,
                         timeout=30,
                     )
-                    subprocess.run(
+                    subprocess.run(  # nosec B603 B607
                         ["git", "remote", "add", "origin", wiki_url],
                         check=False,
                         cwd=wiki_dir,
@@ -463,8 +464,8 @@ class WikiService:
             WikiServiceError: If commit/push fails.
         """
         try:
-            # Stage all changes
-            subprocess.run(
+            # Stage all changes - git CLI with controlled args
+            subprocess.run(  # nosec B603 B607
                 ["git", "add", "-A"],
                 check=False,
                 cwd=wiki_dir,
@@ -472,14 +473,14 @@ class WikiService:
                 timeout=30,
             )
 
-            # Commit
+            # Commit - commit_msg is generated internally, not user input
             commit_msg = (
                 f"Sync {result.total_synced} ADRs from git-adr\n\n"
                 f"Created: {len(result.created)}\n"
                 f"Updated: {len(result.updated)}\n"
                 f"Deleted: {len(result.deleted)}"
             )
-            subprocess.run(
+            subprocess.run(  # nosec B603 B607
                 ["git", "commit", "-m", commit_msg],
                 check=False,
                 cwd=wiki_dir,
@@ -487,8 +488,8 @@ class WikiService:
                 timeout=30,
             )
 
-            # Push
-            push_result = subprocess.run(
+            # Push - git CLI with controlled args
+            push_result = subprocess.run(  # nosec B603 B607
                 ["git", "push", "origin", "HEAD"],
                 check=False,
                 cwd=wiki_dir,

@@ -129,8 +129,8 @@ def run_ai_draft(
                 result = git.run(["log", "--oneline", from_commits])
                 if result.exit_code == 0:
                     commit_context = f"\n\nRecent commits:\n{result.stdout}"
-            except Exception:
-                pass  # Ignore commit parsing errors
+            except Exception:  # nosec B110 - commit context is optional; graceful degradation
+                pass
 
         # Generate ADR using AI
         console.print()
