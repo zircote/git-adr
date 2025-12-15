@@ -62,7 +62,9 @@ Thumbs.db
 .env.local
 *.local
 
-# Distribution
+# Distribution and build artifacts
 *.tar.gz
 *.whl
 man/
+share/
+coverage/
