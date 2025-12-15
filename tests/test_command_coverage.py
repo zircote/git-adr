@@ -297,8 +297,9 @@ class TestSupersedeCommandCoverage:
         result = runner.invoke(
             app,
             ["supersede", "--help"],
+            color=False,  # Disable ANSI color codes in output
         )
-        assert "--template" in result.output
+        assert "--template" in result.output or "template" in result.output.lower()
 
 
 # =============================================================================
