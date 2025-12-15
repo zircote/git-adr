@@ -156,7 +156,9 @@ class ADRMetadata:
             tags=ensure_list(data.get("tags")),
             # Support both 'deciders' (legacy) and 'decision-makers' (MADR 4.0)
             deciders=ensure_list(
-                data.get("deciders") if "deciders" in data else data.get("decision-makers", [])
+                data.get("deciders")
+                if "deciders" in data
+                else data.get("decision-makers", [])
             ),
             consulted=ensure_list(data.get("consulted")),
             informed=ensure_list(data.get("informed")),
