@@ -105,18 +105,25 @@ class TestAIServiceProviders:
 
     def test_provider_import_error(self) -> None:
         """Test import error handling (lines 127-132)."""
-        # Clear any cached modules
-        modules_to_remove = [mod for mod in sys.modules if "langchain" in mod]
-        for mod in modules_to_remove:
-            del sys.modules[mod]
+        import builtins
+
+        original_import = builtins.__import__
+
+        def mock_import(name, *args, **kwargs):
+            if "langchain_openai" in name:
+                raise ImportError(f"No module named '{name}'")
+            return original_import(name, *args, **kwargs)
 
         with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
             config = make_config("openai", "gpt-4")
+            service = AIService(config)
+            # Reset the cached LLM to force re-import
+            service._llm = None
 
-            # Without langchain_openai installed, should raise AIServiceError
-            with pytest.raises(AIServiceError) as exc_info:
-                service = AIService(config)
-                _ = service._get_llm()
+            # Mock import to fail for langchain_openai
+            with patch.object(builtins, "__import__", side_effect=mock_import):
+                with pytest.raises(AIServiceError) as exc_info:
+                    _ = service._get_llm()
 
             error_msg = str(exc_info.value).lower()
             assert (
