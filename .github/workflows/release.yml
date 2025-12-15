@@ -112,7 +112,13 @@ jobs:
           body: |
             ## Installation
 
-            ### Via pip/uv (recommended)
+            ### Homebrew (macOS)
+            ```bash
+            brew tap zircote/git-adr
+            brew install git-adr
+            ```
+
+            ### Via pip/uv
             ```bash
             pip install git-adr
             # or
@@ -163,3 +169,66 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  update-homebrew:
+    name: Update Homebrew Formula
+    runs-on: ubuntu-latest
+    needs: publish
+    steps:
+      - name: Wait for PyPI availability
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${REF_NAME#v}"
+          echo "Waiting for git-adr==${VERSION} on PyPI..."
+          for i in {1..30}; do
+            if curl -sf "https://pypi.org/pypi/git-adr/${VERSION}/json" > /dev/null 2>&1; then
+              echo "Package available on PyPI"
+              break
+            fi
+            echo "Attempt $i: Not yet available, waiting 10s..."
+            sleep 10
+          done
+
+      - name: Get PyPI SHA256
+        id: pypi
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${REF_NAME#v}"
+          PYPI_JSON=$(curl -sf "https://pypi.org/pypi/git-adr/${VERSION}/json")
+          SDIST_URL=$(echo "$PYPI_JSON" | jq -r '.urls[] | select(.packagetype=="sdist") | .url')
+          SDIST_SHA256=$(echo "$PYPI_JSON" | jq -r '.urls[] | select(.packagetype=="sdist") | .digests.sha256')
+          echo "url=${SDIST_URL}" >> "$GITHUB_OUTPUT"
+          echo "sha256=${SDIST_SHA256}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout Homebrew tap
+        uses: actions/checkout@v4
+        with:
+          repository: zircote/homebrew-git-adr
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Update formula
+        env:
+          VERSION: ${{ steps.pypi.outputs.version }}
+          SHA256: ${{ steps.pypi.outputs.sha256 }}
+          URL: ${{ steps.pypi.outputs.url }}
+        run: |
+          cd homebrew-tap
+          sed -i 's|url ".*"|url "'"${URL}"'"|' Formula/git-adr.rb
+          sed -i 's|sha256 ".*"|sha256 "'"${SHA256}"'"|' Formula/git-adr.rb
+          sed -i '/# NOTE: Update to PyPI URL/d' Formula/git-adr.rb
+          sed -i '/# url "https:\/\/files.pythonhosted.org/d' Formula/git-adr.rb
+
+      - name: Commit and push
+        env:
+          VERSION: ${{ steps.pypi.outputs.version }}
+        run: |
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/git-adr.rb
+          git commit -m "git-adr ${VERSION}"
+          git push
