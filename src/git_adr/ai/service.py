@@ -179,8 +179,8 @@ Do NOT include YAML frontmatter - just the markdown content."""
 
         return AIResponse(
             content=content,
-            model=self.model,
-            provider=self.provider,
+            model=self.model or "unknown",
+            provider=self.provider or "unknown",
         )
 
     def suggest_improvements(self, adr: ADR) -> AIResponse:
@@ -222,8 +222,8 @@ Be specific and actionable."""
 
         return AIResponse(
             content=content,
-            model=self.model,
-            provider=self.provider,
+            model=self.model or "unknown",
+            provider=self.provider or "unknown",
         )
 
     def summarize_adrs(
@@ -280,8 +280,8 @@ Highlight:
 
         return AIResponse(
             content=content,
-            model=self.model,
-            provider=self.provider,
+            model=self.model or "unknown",
+            provider=self.provider or "unknown",
         )
 
     def ask_question(
@@ -333,6 +333,6 @@ Be specific and technical."""
 
         return AIResponse(
             content=content,
-            model=self.model,
-            provider=self.provider,
+            model=self.model or "unknown",
+            provider=self.provider or "unknown",
         )
