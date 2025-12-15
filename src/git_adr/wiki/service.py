@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
+from urllib.parse import urlparse
 
 if TYPE_CHECKING:
     from git_adr.core import ADR, Config, Git
@@ -76,9 +77,10 @@ class WikiService:
                 return None
 
             remote_url = result.stdout.strip()
-            if "github.com" in remote_url:
+            hostname = urlparse(remote_url).hostname
+            if hostname and hostname.lower() == "github.com":
                 return "github"
-            elif "gitlab" in remote_url.lower():
+            elif hostname and "gitlab" in hostname.lower():
                 return "gitlab"
             return None
         except Exception:
