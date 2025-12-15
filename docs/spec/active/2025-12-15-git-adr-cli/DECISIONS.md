@@ -325,3 +325,132 @@ Git notes are NOT pushed or fetched by default. Users will lose ADRs if they don
 **Negative:**
 - Modifies user's git config (expected behavior for init)
 - May conflict with existing notes configuration (handle gracefully)
+
+---
+
+## ADR-011: Add `git adr rm` command (Late Addition)
+
+**Date**: 2025-12-15
+**Status**: Accepted
+**Deciders**: User
+**Type**: Scope Creep
+
+### Context
+
+During implementation, the user needed to remove an ADR from git notes. The original specification (REQUIREMENTS.md) did not include a `rm` command - only artifact removal (`artifact-rm`) was planned.
+
+### Decision
+
+Add `git adr rm <id> [--force]` command to remove ADRs from git notes.
+
+### Implementation
+
+- Interactive confirmation by default showing ADR title, status, and warnings
+- `--force` flag to skip confirmation (for scripting)
+- Warnings displayed for:
+  - ADRs with linked commits (traceability will be lost)
+  - ADRs that supersede others (chain will be broken)
+  - ADRs superseded by others (reference becomes stale)
+
+### Consequences
+
+**Positive:**
+- Users can remove ADRs without direct git notes manipulation
+- Consistent UX with other ADR management commands
+- Safe defaults (confirmation required)
+
+**Negative:**
+- Scope increase (~5 hours of work including tests and docs)
+- Not recoverable without git reflog knowledge
+
+### Classification
+
+This is **acceptable scope creep** because:
+1. Aligns with tool's philosophy (manage ADRs without raw git notes)
+2. User-requested based on real need
+3. Similar pattern to existing `artifact-rm` command
+
+---
+
+## ADR-012: git-lfs Style Distribution (Late Addition)
+
+**Date**: 2025-12-15
+**Status**: Accepted
+**Deciders**: User
+**Type**: Scope Creep
+
+### Context
+
+Original spec assumed PyPI-only distribution. User requested distribution patterns following git-lfs conventions for git extensions.
+
+### Decision
+
+Implement git-lfs style distribution with:
+- Makefile for build/install/release targets
+- install.sh script for tarball installation
+- release.yml GitHub Actions workflow for automated releases
+
+### Implementation
+
+- `Makefile` with targets: build, install, install-bin, install-man, install-completions, release
+- `script/install.sh` following git-lfs pattern with uv/pip fallback
+- `.github/workflows/release.yml` creating tarballs with man pages + completions
+
+### Consequences
+
+**Positive:**
+- Familiar pattern for git extension users
+- Single tarball contains all artifacts
+- Works without PyPI access
+
+**Negative:**
+- Significant scope increase (~10 hours of work)
+- More complex release process
+
+### Classification
+
+This is **acceptable scope creep** because:
+1. Follows established git extension conventions
+2. Improves distribution flexibility
+3. User explicitly requested
+
+---
+
+## ADR-013: Coverage Target 95% (Late Addition)
+
+**Date**: 2025-12-15
+**Status**: Accepted
+**Deciders**: PR Requirements
+**Type**: Scope Creep
+
+### Context
+
+Original REQUIREMENTS.md specified 90% test coverage. The PR CI configuration required 95%.
+
+### Decision
+
+Raise coverage target from 90% to 95% and add tests to meet it.
+
+### Implementation
+
+- Added `tests/test_completion.py` (12 tests) for shell completion code
+- Added `tests/test_rm_command.py` (14 tests) for new rm command
+- Final coverage: 95.19%
+
+### Consequences
+
+**Positive:**
+- Higher code quality assurance
+- Better coverage of edge cases
+- Shell completion code now tested
+
+**Negative:**
+- Additional test development time
+- Coverage requirement more strict than planned
+
+### Classification
+
+This is **acceptable scope creep** because:
+1. Higher quality is always beneficial
+2. CI already enforced this requirement
+3. Tests caught real issues during development
