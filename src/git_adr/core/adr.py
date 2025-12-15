@@ -154,7 +154,10 @@ class ADRMetadata:
             date=parsed_date,
             status=status,
             tags=ensure_list(data.get("tags")),
-            deciders=ensure_list(data.get("deciders")),
+            # Support both 'deciders' (legacy) and 'decision-makers' (MADR 4.0)
+            deciders=ensure_list(
+                data.get("deciders") or data.get("decision-makers") or []
+            ),
             consulted=ensure_list(data.get("consulted")),
             informed=ensure_list(data.get("informed")),
             linked_commits=ensure_list(data.get("linked_commits")),

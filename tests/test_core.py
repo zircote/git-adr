@@ -56,6 +56,32 @@ class TestADRMetadata:
         assert ADRStatus("proposed") == ADRStatus.PROPOSED
         assert ADRStatus("accepted") == ADRStatus.ACCEPTED
 
+    def test_from_dict_madr4_decision_makers(self) -> None:
+        """Test MADR 4.0 'decision-makers' field is parsed as deciders."""
+        data = {
+            "id": "test-adr",
+            "title": "Test MADR 4.0",
+            "date": "2025-12-15",
+            "status": "proposed",
+            "decision-makers": ["Alice <alice@example.com>", "Bob"],
+        }
+        metadata = ADRMetadata.from_dict(data)
+        assert metadata.deciders == ["Alice <alice@example.com>", "Bob"]
+
+    def test_from_dict_deciders_takes_precedence(self) -> None:
+        """Test that 'deciders' field takes precedence over 'decision-makers'."""
+        data = {
+            "id": "test-adr",
+            "title": "Test Precedence",
+            "date": "2025-12-15",
+            "status": "proposed",
+            "deciders": ["Alice"],
+            "decision-makers": ["Bob"],
+        }
+        metadata = ADRMetadata.from_dict(data)
+        # 'deciders' should take precedence
+        assert metadata.deciders == ["Alice"]
+
 
 class TestADR:
     """Tests for ADR dataclass."""

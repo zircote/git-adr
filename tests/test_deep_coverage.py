@@ -57,7 +57,11 @@ class TestNewDeepCoverage:
 
     def test_new_stdin_input(self, initialized_adr_repo: Path) -> None:
         """Test new with stdin input."""
-        content = """## Context and Problem Statement
+        content = """---
+deciders:
+  - Test User
+---
+## Context and Problem Statement
 
 We need to decide on a testing framework.
 
@@ -89,6 +93,8 @@ Chose pytest.
                 str(content_file),
                 "--link",
                 head,
+                "--deciders",
+                "Test User",
             ],
         )
         assert result.exit_code == 0
