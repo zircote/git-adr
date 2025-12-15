@@ -225,8 +225,11 @@ jobs:
       - name: Commit and push
         env:
           VERSION: ${{ steps.pypi.outputs.version }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
           cd homebrew-tap
+          # Explicitly set remote URL with token for cross-repo push
+          git remote set-url origin "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/zircote/homebrew-git-adr.git"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/git-adr.rb
