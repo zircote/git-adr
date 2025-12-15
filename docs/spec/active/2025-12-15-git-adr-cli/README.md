@@ -2,10 +2,10 @@
 project_id: SPEC-2025-12-15-001
 project_name: "git-adr CLI"
 slug: git-adr-cli
-status: in-review
+status: in-progress
 created: 2025-12-15T00:20:00Z
-approved: null
-started: null
+approved: 2025-12-15T02:00:00Z
+started: 2025-12-15T02:00:00Z
 completed: null
 expires: 2026-03-15T00:20:00Z
 superseded_by: null
@@ -26,7 +26,7 @@ A command-line tool implemented as a git extension that manages Architecture Dec
 
 ## Status
 
-**Current Phase**: In Review (awaiting approval)
+**Current Phase**: Implementation (Phase 1: Core MVP)
 
 ## Specification Summary
 
@@ -69,6 +69,6 @@ A command-line tool implemented as a git extension that manages Architecture Dec
 
 ## Next Steps
 
-1. Review specification documents
-2. Approve for implementation
-3. Run `/cs:i git-adr-cli` to begin implementation tracking
+1. Complete Phase 1 tasks (see [PROGRESS.md](PROGRESS.md))
+2. Start with Task 1.1.1: Migrate CLI from click to typer
+3. Track progress using `/cs:i git-adr-cli`

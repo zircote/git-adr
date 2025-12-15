@@ -1,0 +1,426 @@
+"""Implementation of `git adr new` command.
+
+Creates a new Architecture Decision Record with multiple input modes:
+- Editor mode (default): Opens configured editor with template
+- File input: --file path/to/content.md
+- Stdin input: cat file.md | git adr new "Title"
+- Preview mode: --preview shows template without creating
+"""
+
+from __future__ import annotations
+
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+import typer
+from rich.console import Console
+from rich.markdown import Markdown
+
+from git_adr.core import (
+    ADR,
+    ADRMetadata,
+    ADRStatus,
+    Config,
+    ConfigManager,
+    GitError,
+    NotesManager,
+    ensure_list,
+    generate_adr_id,
+    get_git,
+    validate_adr,
+)
+from git_adr.core.templates import TemplateEngine
+
+console = Console()
+err_console = Console(stderr=True)
+
+# Editor fallback chain
+EDITOR_FALLBACKS = ["vim", "nano", "vi"]
+
+# GUI editors that need --wait flag
+GUI_EDITORS = {
+    "code": "--wait",
+    "subl": "--wait",
+    "sublime_text": "--wait",
+    "atom": "--wait",
+    "zed": "--wait",
+    "cursor": "--wait",
+    "idea": "--wait",
+    "pycharm": "--wait",
+    "webstorm": "--wait",
+}
+
+
+def run_new(
+    title: str,
+    status: str = "proposed",
+    tags: list[str] | None = None,
+    link: str | None = None,
+    template: str | None = None,
+    file: str | None = None,
+    no_edit: bool = False,
+    preview: bool = False,
+    draft: bool = False,
+) -> None:
+    """Create a new ADR.
+
+    Args:
+        title: ADR title.
+        status: Initial status.
+        tags: Tags for the ADR.
+        link: Commit SHA to link.
+        template: Template format override.
+        file: Read content from file.
+        no_edit: Skip editor (requires --file or stdin).
+        preview: Show template without creating.
+        draft: Mark as draft.
+
+    Raises:
+        typer.Exit: On error.
+    """
+    try:
+        # Get git and config
+        git = get_git(cwd=Path.cwd())
+
+        if not git.is_repository():
+            err_console.print("[red]Error:[/red] Not a git repository")
+            raise typer.Exit(1)
+
+        config_manager = ConfigManager(git)
+        config = config_manager.load()
+
+        # Check if initialized
+        if not config_manager.get("initialized"):
+            err_console.print(
+                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
+            )
+            raise typer.Exit(1)
+
+        # Get template format
+        format_name = template or config.template
+
+        # Generate ADR ID
+        notes_manager = NotesManager(git, config)
+        existing_ids = {adr.id for adr in notes_manager.list_all()}
+        adr_id = generate_adr_id(title, existing_ids)
+
+        # Parse status
+        if draft:
+            adr_status = ADRStatus.DRAFT
+        else:
+            try:
+                adr_status = ADRStatus.from_string(status)
+            except ValueError:
+                err_console.print(f"[red]Error:[/red] Invalid status: {status}")
+                valid = ", ".join(s.value for s in ADRStatus)
+                err_console.print(f"Valid statuses: {valid}")
+                raise typer.Exit(1)
+
+        # Create template engine
+        template_engine = TemplateEngine(config.custom_templates_dir)
+
+        # Render template
+        try:
+            content = template_engine.render_for_new(
+                format_name=format_name,
+                title=title,
+                adr_id=adr_id,
+                status=str(adr_status),
+                tags=tags,
+            )
+        except ValueError as e:
+            err_console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(1)
+
+        # Handle preview mode
+        if preview:
+            _show_preview(content, format_name)
+            return
+
+        # Get content from various sources
+        final_content = _get_content(
+            template_content=content,
+            file_path=file,
+            no_edit=no_edit,
+            config=config,
+        )
+
+        if final_content is None:
+            console.print("[yellow]Aborted[/yellow]")
+            raise typer.Exit(0)
+
+        # Parse frontmatter from content and merge with CLI args
+        from datetime import date as date_type
+
+        import frontmatter
+
+        try:
+            post = frontmatter.loads(final_content)
+            fm = dict(post.metadata) if post.metadata else {}
+            body_content = post.content
+        except Exception:
+            # If frontmatter parsing fails, use content as-is
+            fm = {}
+            body_content = final_content
+
+        # CLI args take precedence over frontmatter
+        # Merge deciders from frontmatter (CLI doesn't have this option)
+        fm_deciders = ensure_list(fm.get("deciders"))
+        fm_consulted = ensure_list(fm.get("consulted"))
+        fm_informed = ensure_list(fm.get("informed"))
+
+        # Tags: CLI takes precedence, but merge if CLI is empty
+        merged_tags = tags if tags else ensure_list(fm.get("tags"))
+
+        # Date: use CLI-provided date (today) unless frontmatter has one
+        adr_date = date_type.today()
+        if "date" in fm:
+            try:
+                fm_date = fm["date"]
+                if isinstance(fm_date, date_type):
+                    adr_date = fm_date
+                elif isinstance(fm_date, str):
+                    adr_date = date_type.fromisoformat(fm_date[:10])
+            except (ValueError, TypeError):
+                pass  # Keep today's date
+
+        # Create metadata
+        metadata = ADRMetadata(
+            id=adr_id,
+            title=title,
+            date=adr_date,
+            status=adr_status,
+            tags=merged_tags or [],
+            deciders=fm_deciders,
+            consulted=fm_consulted,
+            informed=fm_informed,
+            format=format_name,
+            linked_commits=[link] if link else [],
+        )
+
+        # Validate linked commit
+        if link:
+            if not git.commit_exists(link):
+                err_console.print(
+                    f"[yellow]Warning:[/yellow] Commit {link[:8]} not found"
+                )
+
+        # Create ADR (use body_content without frontmatter)
+        adr = ADR(metadata=metadata, content=body_content)
+
+        # Validate
+        issues = validate_adr(adr)
+        if issues:
+            err_console.print("[yellow]Validation warnings:[/yellow]")
+            for issue in issues:
+                err_console.print(f"  • {issue}")
+
+        # Store ADR
+        notes_manager.add(adr)
+
+        # Success
+        console.print()
+        console.print(f"[green]✓[/green] Created ADR: [cyan]{adr_id}[/cyan]")
+        console.print(f"  Title: {title}")
+        console.print(f"  Status: {adr_status}")
+        if tags:
+            console.print(f"  Tags: {', '.join(tags)}")
+        if link:
+            console.print(f"  Linked: {link[:8]}")
+
+    except GitError as e:
+        err_console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+
+
+def _show_preview(content: str, format_name: str) -> None:
+    """Show template preview.
+
+    Args:
+        content: Template content.
+        format_name: Format name.
+    """
+    console.print()
+    console.print(f"[bold]Template Preview[/bold] ({format_name} format)")
+    console.print()
+    console.print(Markdown(content))
+
+
+def _get_content(
+    template_content: str,
+    file_path: str | None,
+    no_edit: bool,
+    config: Config,
+) -> str | None:
+    """Get ADR content from file, stdin, or editor.
+
+    Args:
+        template_content: Rendered template.
+        file_path: Optional file to read from.
+        no_edit: If True, don't open editor.
+        config: Configuration.
+
+    Returns:
+        Final content, or None if aborted.
+    """
+
+    # Check for file input first (explicit file takes precedence)
+    if file_path:
+        path = Path(file_path)
+        if not path.exists():
+            err_console.print(f"[red]Error:[/red] File not found: {file_path}")
+            raise typer.Exit(1)
+
+        content = path.read_text()
+        console.print(f"[dim]Read content from {file_path}[/dim]")
+        return content
+
+    # Check for stdin input (only if no file specified)
+    if not sys.stdin.isatty():
+        console.print("[dim]Reading content from stdin...[/dim]")
+        stdin_content = sys.stdin.read()
+        if stdin_content.strip():
+            return stdin_content
+        if no_edit:
+            err_console.print(
+                "[red]Error:[/red] No content from stdin and --no-edit specified"
+            )
+            raise typer.Exit(1)
+
+    # If no_edit and no file/stdin, error
+    if no_edit:
+        err_console.print("[red]Error:[/red] --no-edit requires --file or stdin input")
+        raise typer.Exit(1)
+
+    # Open editor
+    return _open_editor(template_content, config)
+
+
+def _open_editor(content: str, config: Config) -> str | None:
+    """Open the user's editor with content.
+
+    Args:
+        content: Initial content.
+        config: Configuration.
+
+    Returns:
+        Edited content, or None if aborted.
+    """
+
+    # Find editor
+    editor_cmd = _find_editor(config)
+    if editor_cmd is None:
+        err_console.print(
+            "[red]Error:[/red] No editor found. Set $EDITOR or use --file"
+        )
+        raise typer.Exit(1)
+
+    # Create temp file
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".md",
+        prefix="git-adr-",
+        delete=False,
+    ) as f:
+        f.write(content)
+        temp_path = f.name
+
+    try:
+        # Build editor command
+        cmd = _build_editor_command(editor_cmd, temp_path)
+
+        console.print(f"[dim]Opening editor: {editor_cmd}[/dim]")
+
+        # Run editor
+        result = subprocess.run(cmd, check=False)
+
+        if result.returncode != 0:
+            err_console.print(
+                f"[yellow]Warning:[/yellow] Editor exited with code {result.returncode}"
+            )
+
+        # Read edited content
+        edited_content = Path(temp_path).read_text()
+
+        # Check if content was changed
+        if edited_content.strip() == content.strip():
+            console.print("[dim]No changes made[/dim]")
+            return None
+
+        # Check for empty content
+        if not edited_content.strip():
+            console.print("[dim]Empty content[/dim]")
+            return None
+
+        return edited_content
+
+    finally:
+        # Clean up temp file
+        Path(temp_path).unlink(missing_ok=True)
+
+
+def _find_editor(config: Config) -> str | None:
+    """Find the editor to use.
+
+    Fallback chain:
+    1. adr.editor config
+    2. $EDITOR
+    3. $VISUAL
+    4. vim
+    5. nano
+    6. vi
+
+    Args:
+        config: Configuration.
+
+    Returns:
+        Editor command, or None if not found.
+    """
+
+    # Check config
+    if config.editor:
+        if shutil.which(config.editor.split()[0]):
+            return config.editor
+
+    # Check environment
+    for env_var in ["EDITOR", "VISUAL"]:
+        editor = os.environ.get(env_var)
+        if editor and shutil.which(editor.split()[0]):
+            return editor
+
+    # Check fallbacks
+    for editor in EDITOR_FALLBACKS:
+        if shutil.which(editor):
+            return editor
+
+    return None
+
+
+def _build_editor_command(editor: str, file_path: str) -> list[str]:
+    """Build the editor command with appropriate flags.
+
+    Adds --wait flag for GUI editors that need it.
+
+    Args:
+        editor: Editor command.
+        file_path: Path to file to edit.
+
+    Returns:
+        Command list for subprocess.
+    """
+    parts = editor.split()
+    cmd = parts[0]
+    args = parts[1:]
+
+    # Check if this is a GUI editor that needs --wait
+    cmd_name = Path(cmd).stem.lower()
+    if cmd_name in GUI_EDITORS:
+        wait_flag = GUI_EDITORS[cmd_name]
+        if wait_flag not in args:
+            args.append(wait_flag)
+
+    return [cmd, *args, file_path]
