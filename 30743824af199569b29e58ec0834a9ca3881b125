@@ -1,0 +1,36 @@
+---
+date: '2025-12-15'
+id: adr006-use-yaml-frontmatter-markdown-for-adr-st
+status: accepted
+tags:
+- git-adr-cli
+title: Use YAML frontmatter + Markdown for ADR storage format
+---
+
+# Use YAML frontmatter + Markdown for ADR storage format
+
+**Date**: 2025-12-15
+**Status**: Accepted
+**Deciders**: Planning (based on product brief)
+
+### Context
+
+ADRs stored in git notes need a format that is:
+- Human-readable in `git log`
+- Machine-parseable for indexing
+- Merge-friendly for concurrent changes
+
+### Decision
+
+Use YAML frontmatter followed by Markdown body.
+
+### Consequences
+
+**Positive:**
+- Human-readable in terminal
+- Structured metadata for programmatic access
+- Compatible with `union` merge strategy
+- Standard format (matches file-based ADR tools)
+
+**Negative:**
+- YAML parsing adds dependency
