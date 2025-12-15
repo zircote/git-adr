@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
+import subprocess  # nosec B404 - subprocess is required for git CLI wrapper functionality
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -205,7 +205,9 @@ class Git:
         allowed = {0, *(allow_exit_codes or [])}
 
         try:
-            result = subprocess.run(
+            # subprocess with list args (not shell=True) is safe; cmd is built
+            # from validated git executable path + controlled args, not user input
+            result = subprocess.run(  # nosec B603
                 cmd,
                 check=False,
                 cwd=self.cwd,

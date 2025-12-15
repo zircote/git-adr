@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
+import subprocess  # nosec B404 - subprocess needed to launch user's editor
 import sys
 import tempfile
 from pathlib import Path
@@ -335,8 +335,8 @@ def _open_editor(content: str, config: Config) -> str | None:
 
         console.print(f"[dim]Opening editor: {editor_cmd}[/dim]")
 
-        # Run editor
-        result = subprocess.run(cmd, check=False)
+        # Run editor - cmd is built from user's $EDITOR (trusted) + temp file path we control
+        result = subprocess.run(cmd, check=False)  # nosec B603
 
         if result.returncode != 0:
             err_console.print(

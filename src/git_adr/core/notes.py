@@ -518,7 +518,7 @@ class NotesManager:
         # Hash the ADR ID to create a pseudo-object ID
         # This gives us a stable reference point for each ADR
         hash_input = f"git-adr:{adr_id}".encode()
-        return hashlib.sha1(hash_input).hexdigest()  # noqa: S324
+        return hashlib.sha1(hash_input, usedforsecurity=False).hexdigest()
 
     def _artifact_hash_to_object(self, sha256: str) -> str:
         """Convert an artifact hash to a git object ID.
@@ -530,7 +530,7 @@ class NotesManager:
             Object ID for the artifact note.
         """
         hash_input = f"git-adr-artifact:{sha256}".encode()
-        return hashlib.sha1(hash_input).hexdigest()  # noqa: S324
+        return hashlib.sha1(hash_input, usedforsecurity=False).hexdigest()
 
     def _update_index(
         self,

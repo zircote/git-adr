@@ -150,7 +150,12 @@ ignore_errors = true
 # Bandit Configuration
 [tool.bandit]
 exclude_dirs = ["tests", "venv", ".venv"]
-skips = ["B101"]
+# B101: assert used (tests)
+# B110: try-except-pass (intentional for graceful error handling)
+# B404: subprocess import (intentional - this is a git wrapper tool)
+# B603: subprocess call (intentional - git operations require subprocess)
+# B607: partial path (intentional - git should be in PATH)
+skips = ["B101", "B110", "B404", "B603", "B607"]
 
 [tool.bandit.assert_used]
 skips = ["*_test.py", "test_*.py"]
