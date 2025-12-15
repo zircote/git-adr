@@ -1,0 +1,33 @@
+---
+date: '2025-12-15'
+id: adr007-separate-namespace-for-binary-artifacts
+status: accepted
+tags:
+- git-adr-cli
+title: Separate namespace for binary artifacts
+---
+
+# Separate namespace for binary artifacts
+
+**Date**: 2025-12-15
+**Status**: Accepted
+**Deciders**: Planning (based on product brief)
+
+### Context
+
+ADRs may include diagrams and images. These shouldn't bloat the main notes namespace.
+
+### Decision
+
+Store artifacts in `refs/notes/adr-artifacts` with content-addressed references in ADR metadata.
+
+### Consequences
+
+**Positive:**
+- Main ADR notes stay small and text-based
+- Content deduplication via SHA256 addressing
+- Size limits enforceable separately
+
+**Negative:**
+- Additional namespace to sync
+- More complex artifact retrieval
