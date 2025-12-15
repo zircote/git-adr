@@ -1,26 +1,33 @@
 # Shell Completion for git-adr
 
-git-adr provides shell completion for bash, zsh, fish, and PowerShell through
-Typer's built-in completion system.
+git-adr provides shell completion for bash, zsh, fish, and PowerShell.
 
 ## Quick Setup
 
-### Automatic Installation
+### Using the completion command (Recommended)
 
-The easiest way to enable completion:
+The `completion` command explicitly specifies your shell type:
 
 ```bash
-git-adr --install-completion
-```
+# Install bash completion
+git-adr completion bash --install
 
-This detects your shell and installs the completion script automatically.
+# Install zsh completion
+git-adr completion zsh --install
+
+# Install fish completion (auto-creates directory)
+git-adr completion fish --install
+```
 
 ### Show Completion Script
 
 To see the completion script without installing:
 
 ```bash
-git-adr --show-completion
+git-adr completion bash
+git-adr completion zsh
+git-adr completion fish
+git-adr completion powershell
 ```
 
 ## Manual Setup
@@ -31,13 +38,14 @@ Add to your `~/.bashrc`:
 
 ```bash
 # git-adr completion
-eval "$(git-adr --show-completion bash)"
+eval "$(git-adr completion bash)"
 ```
 
-Or save to a file:
+Or install directly:
 
 ```bash
-git-adr --show-completion bash > ~/.local/share/bash-completion/completions/git-adr
+git-adr completion bash --install
+source ~/.bashrc
 ```
 
 ### Zsh
@@ -46,15 +54,14 @@ Add to your `~/.zshrc`:
 
 ```zsh
 # git-adr completion
-eval "$(git-adr --show-completion zsh)"
+eval "$(git-adr completion zsh)"
 ```
 
-Or save to a file in your fpath:
+Or install directly:
 
-```zsh
-git-adr --show-completion zsh > ~/.zfunc/_git-adr
-# Then add to .zshrc before compinit:
-# fpath+=~/.zfunc
+```bash
+git-adr completion zsh --install
+source ~/.zshrc
 ```
 
 ### Fish
@@ -62,15 +69,21 @@ git-adr --show-completion zsh > ~/.zfunc/_git-adr
 Save to completions directory:
 
 ```fish
-git-adr --show-completion fish > ~/.config/fish/completions/git-adr.fish
+git-adr completion fish > ~/.config/fish/completions/git-adr.fish
+```
+
+Or install directly:
+
+```bash
+git-adr completion fish --install
 ```
 
 ### PowerShell
 
-Add to your PowerShell profile:
+Add to your PowerShell profile (`$PROFILE`):
 
 ```powershell
-git-adr --show-completion powershell | Out-String | Invoke-Expression
+git-adr completion powershell | Out-String | Invoke-Expression
 ```
 
 ## What Gets Completed
@@ -90,9 +103,12 @@ want to set up completion for the git alias. Add to your `.bashrc`/`.zshrc`:
 # Enable completion for 'git adr' subcommand
 _git_adr() {
     if command -v git-adr >/dev/null 2>&1; then
-        COMPREPLY=($(compgen -W "$(git-adr --show-completion bash 2>/dev/null | grep -oP '(?<=_GIT_ADR_COMPLETE=bash_source )[a-z-]+')" -- "${COMP_WORDS[COMP_CWORD]}"))
+        # Delegate to git-adr completion
+        local cur="${COMP_WORDS[COMP_CWORD]}"
+        COMPREPLY=($(compgen -W "init new list show edit search link supersede log sync config convert attach artifacts artifact-get artifact-rm stats report metrics export import onboard ai wiki completion" -- "$cur"))
     fi
 }
+complete -F _git_adr git-adr
 ```
 
 ## Git Alias Setup
@@ -116,7 +132,7 @@ git adr show 20250115-my-decision
 ### Completion Not Working
 
 1. **Reload shell**: `source ~/.bashrc` or `source ~/.zshrc`
-2. **Check installation**: `git-adr --show-completion` should output a script
+2. **Check installation**: `git-adr completion bash` should output a script
 3. **Verify fpath** (zsh): Ensure completion directory is in fpath
 
 ### Slow Completion
