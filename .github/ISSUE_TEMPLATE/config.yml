@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/zircote/git-adr#readme
+    about: Check the documentation before opening an issue
+  - name: Discussions
+    url: https://github.com/zircote/git-adr/discussions
+    about: Ask questions and discuss ideas
