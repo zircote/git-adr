@@ -1,0 +1,32 @@
+---
+date: '2025-12-15'
+id: adr004-support-python-3-11-
+status: accepted
+tags:
+- git-adr-cli
+title: Support Python 3.11+
+---
+
+# Support Python 3.11+
+
+**Date**: 2025-12-15
+**Status**: Accepted
+**Deciders**: User
+
+### Context
+
+The existing pyproject.toml required Python 3.12+. Broader compatibility was requested.
+
+### Decision
+
+Lower minimum Python version to 3.11+.
+
+### Consequences
+
+**Positive:**
+- Broader user base (3.11 still widely used)
+- Longer support window
+
+**Negative:**
+- Cannot use 3.12+ only features (few relevant ones)
+- Must include tomllib fallback for 3.10 (not needed for 3.11+)
