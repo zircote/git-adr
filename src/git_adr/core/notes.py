@@ -525,16 +525,23 @@ class NotesManager:
         return hashlib.sha1(hash_input, usedforsecurity=False).hexdigest()
 
     def _artifact_hash_to_object(self, sha256: str) -> str:
-        """Convert an artifact hash to a git object ID.
+        """Convert an artifact hash to a git object ID for notes.
+
+        We use a deterministic hash of the artifact's SHA-256 to create a stable
+        object reference that can hold the artifact note in git.
 
         Args:
-            sha256: Content hash.
+            sha256: Content hash (SHA-256) of the artifact.
 
         Returns:
-            Object ID for the artifact note.
+            Object ID for the artifact note (SHA-1 hash, 40-char hex).
         """
-        # SHA1 for git object ID compatibility (40-char hex).
-        # Security: Not used for cryptographic purposes - only for unique ID generation.
+        # Hash the artifact SHA-256 to create a pseudo-object ID.
+        # We use SHA1 here for git compatibility (git uses SHA1 for object IDs).
+        # Security note: This is NOT used for cryptographic security, only for
+        # generating unique, deterministic identifiers. Collision resistance is
+        # not critical since the input is already a SHA-256 hash (64 hex chars).
+        # The artifact content itself is verified using SHA-256 (line 309).
         hash_input = f"git-adr-artifact:{sha256}".encode()
         return hashlib.sha1(hash_input, usedforsecurity=False).hexdigest()
 
