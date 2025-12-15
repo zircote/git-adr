@@ -1,0 +1,50 @@
+---
+date: '2025-12-15'
+id: adr012-git-lfs-style-distribution-late-addition
+status: accepted
+tags:
+- git-adr-cli
+title: git-lfs Style Distribution (Late Addition)
+---
+
+# git-lfs Style Distribution (Late Addition)
+
+**Date**: 2025-12-15
+**Status**: Accepted
+**Deciders**: User
+**Type**: Scope Creep
+
+### Context
+
+Original spec assumed PyPI-only distribution. User requested distribution patterns following git-lfs conventions for git extensions.
+
+### Decision
+
+Implement git-lfs style distribution with:
+- Makefile for build/install/release targets
+- install.sh script for tarball installation
+- release.yml GitHub Actions workflow for automated releases
+
+### Implementation
+
+- `Makefile` with targets: build, install, install-bin, install-man, install-completions, release
+- `script/install.sh` following git-lfs pattern with uv/pip fallback
+- `.github/workflows/release.yml` creating tarballs with man pages + completions
+
+### Consequences
+
+**Positive:**
+- Familiar pattern for git extension users
+- Single tarball contains all artifacts
+- Works without PyPI access
+
+**Negative:**
+- Significant scope increase (~10 hours of work)
+- More complex release process
+
+### Classification
+
+This is **acceptable scope creep** because:
+1. Follows established git extension conventions
+2. Improves distribution flexibility
+3. User explicitly requested
