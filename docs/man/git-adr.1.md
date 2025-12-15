@@ -52,6 +52,9 @@ git notes attached to the repository, providing:
 : Edit an existing ADR. Supports quick metadata changes (--status, --add-tag)
   or full editor mode.
 
+`git adr rm` ADR_ID [--force]
+: Remove an ADR from git notes. Use --force to skip confirmation.
+
 `git adr search` QUERY
 : Search ADRs by content using full-text search.
 

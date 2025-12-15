@@ -65,6 +65,6 @@ Thumbs.db
 # Distribution and build artifacts
 *.tar.gz
 *.whl
-man/
-share/
+/man/
+/share/
 coverage/
