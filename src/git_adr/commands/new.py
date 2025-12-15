@@ -171,7 +171,7 @@ def run_new(
 
         # CLI args take precedence over frontmatter
         # Support both 'deciders' and 'decision-makers' (MADR 4.0) in frontmatter
-        fm_deciders = ensure_list(fm.get("deciders") or fm.get("decision-makers") or [])
+        fm_deciders = ensure_list(fm.get("deciders") if "deciders" in fm else fm.get("decision-makers", []))
         fm_consulted = ensure_list(fm.get("consulted"))
         fm_informed = ensure_list(fm.get("informed"))
 
