@@ -1151,72 +1151,32 @@ def completion(
         err_console.print(f"Valid shells: {', '.join(valid_shells)}")
         raise typer.Exit(1)
 
-    # Generate completion script using Typer's internal mechanism
+    # Use Typer's built-in completion script generation
+    from typer.completion import get_completion_script
+
     prog_name = "git-adr"
     env_var = f"_{prog_name.upper().replace('-', '_')}_COMPLETE"
 
+    # S604: False positive - 'shell' is shell type (bash/zsh), not subprocess shell param
     if shell == "bash":
-        script = f'''_git_adr_completion() {{
-    local IFS=$'\\n'
-    COMPREPLY=( $( env COMP_WORDS="${{COMP_WORDS[*]}}" \\
-                   COMP_CWORD=$COMP_CWORD \\
-                   {env_var}=bash_complete $1 ) )
-    return 0
-}}
-
-complete -o default -F _git_adr_completion git-adr
-'''
+        script = get_completion_script(  # noqa: S604
+            prog_name=prog_name, complete_var=env_var, shell="bash"
+        )
         config_file = "~/.bashrc"
     elif shell == "zsh":
-        script = f'''#compdef git-adr
-
-_git_adr_completion() {{
-    local -a completions
-    local -a completions_with_descriptions
-    local -a response
-    (( ! $+commands[git-adr] )) && return 1
-
-    response=("${{(@f)$(env COMP_WORDS="${{words[*]}}" COMP_CWORD=$((CURRENT-1)) {env_var}=zsh_complete git-adr)}}")
-
-    for key descr in ${{(kv)response}}; do
-      if [[ "$descr" == "_" ]]; then
-          completions+=("$key")
-      else
-          completions_with_descriptions+=("$key":"$descr")
-      fi
-    done
-
-    if [ -n "$completions_with_descriptions" ]; then
-        _describe -V unsorted completions_with_descriptions -U
-    fi
-
-    if [ -n "$completions" ]; then
-        compadd -U -V unsorted -a completions
-    fi
-}}
-
-compdef _git_adr_completion git-adr
-'''
+        script = get_completion_script(  # noqa: S604
+            prog_name=prog_name, complete_var=env_var, shell="zsh"
+        )
         config_file = "~/.zshrc"
     elif shell == "fish":
-        script = f'''complete -c git-adr -f -a "(env {env_var}=fish_complete COMP_WORDS=(commandline -cp) COMP_CWORD=(commandline -t) git-adr)"
-'''
+        script = get_completion_script(  # noqa: S604
+            prog_name=prog_name, complete_var=env_var, shell="fish"
+        )
         config_file = "~/.config/fish/completions/git-adr.fish"
     else:  # powershell
-        script = f'''$scriptblock = {{
-    param($wordToComplete, $commandAst, $cursorPosition)
-    $env:{env_var} = "powershell_complete"
-    $env:COMP_WORDS = $commandAst.ToString()
-    $env:COMP_CWORD = $cursorPosition
-    git-adr | ForEach-Object {{
-        [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
-    }}
-    Remove-Item env:{env_var}
-    Remove-Item env:COMP_WORDS
-    Remove-Item env:COMP_CWORD
-}}
-Register-ArgumentCompleter -Native -CommandName git-adr -ScriptBlock $scriptblock
-'''
+        script = get_completion_script(  # noqa: S604
+            prog_name=prog_name, complete_var=env_var, shell="powershell"
+        )
         config_file = "$PROFILE"
 
     if install:
