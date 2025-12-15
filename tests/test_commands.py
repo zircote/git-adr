@@ -23,6 +23,7 @@ class TestCLIBasics:
     def test_version(self) -> None:
         """Test --version flag."""
         import re
+
         result = runner.invoke(app, ["--version"])
         assert result.exit_code == 0
         assert re.search(r"\d+\.\d+\.\d+", result.output), "Version not found in output"
