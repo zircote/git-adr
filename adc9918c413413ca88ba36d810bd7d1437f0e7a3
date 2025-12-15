@@ -1,0 +1,47 @@
+---
+date: '2025-12-15'
+id: adr013-coverage-target-95-late-addition-
+status: accepted
+tags:
+- git-adr-cli
+title: Coverage Target 95% (Late Addition)
+---
+
+# Coverage Target 95% (Late Addition)
+
+**Date**: 2025-12-15
+**Status**: Accepted
+**Deciders**: PR Requirements
+**Type**: Scope Creep
+
+### Context
+
+Original REQUIREMENTS.md specified 90% test coverage. The PR CI configuration required 95%.
+
+### Decision
+
+Raise coverage target from 90% to 95% and add tests to meet it.
+
+### Implementation
+
+- Added `tests/test_completion.py` (12 tests) for shell completion code
+- Added `tests/test_rm_command.py` (14 tests) for new rm command
+- Final coverage: 95.19%
+
+### Consequences
+
+**Positive:**
+- Higher code quality assurance
+- Better coverage of edge cases
+- Shell completion code now tested
+
+**Negative:**
+- Additional test development time
+- Coverage requirement more strict than planned
+
+### Classification
+
+This is **acceptable scope creep** because:
+1. Higher quality is always beneficial
+2. CI already enforced this requirement
+3. Tests caught real issues during development
