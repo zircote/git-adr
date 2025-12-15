@@ -1,6 +1,7 @@
 # Shell Completion for git-adr
 
 git-adr provides shell completion for bash, zsh, fish, and PowerShell.
+Completion works for both `git-adr` (direct) and `git adr` (git alias).
 
 ## Quick Setup
 
@@ -9,7 +10,7 @@ git-adr provides shell completion for bash, zsh, fish, and PowerShell.
 The `completion` command explicitly specifies your shell type:
 
 ```bash
-# Install bash completion
+# Install bash completion (supports both 'git-adr' and 'git adr')
 git-adr completion bash --install
 
 # Install zsh completion
@@ -93,23 +94,6 @@ Shell completion provides:
 - **Commands**: All subcommands (`new`, `list`, `show`, etc.)
 - **Options**: Command-specific flags (`--status`, `--tags`, etc.)
 - **Arguments**: ADR IDs (for commands like `show`, `edit`)
-
-## Integration with Git
-
-Since git-adr is typically invoked as `git adr` (git alias), you may also
-want to set up completion for the git alias. Add to your `.bashrc`/`.zshrc`:
-
-```bash
-# Enable completion for 'git adr' subcommand
-_git_adr() {
-    if command -v git-adr >/dev/null 2>&1; then
-        # Delegate to git-adr completion
-        local cur="${COMP_WORDS[COMP_CWORD]}"
-        COMPREPLY=($(compgen -W "init new list show edit search link supersede log sync config convert attach artifacts artifact-get artifact-rm stats report metrics export import onboard ai wiki completion" -- "$cur"))
-    fi
-}
-complete -F _git_adr git-adr
-```
 
 ## Git Alias Setup
 
