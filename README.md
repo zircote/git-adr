@@ -18,7 +18,18 @@ Architecture Decision Records (ADR) management for git repositories using git no
 
 ## Installation
 
-### Basic Installation
+### Homebrew (macOS)
+
+The recommended installation method for macOS:
+
+```bash
+brew tap zircote/git-adr
+brew install git-adr
+```
+
+This automatically installs shell completions and keeps git-adr updated with `brew upgrade`.
+
+### pip / uv
 
 ```bash
 pip install git-adr
