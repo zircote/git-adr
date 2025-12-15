@@ -37,6 +37,7 @@ from git_adr.commands.new import run_new
 # Onboarding/Export/Import commands
 from git_adr.commands.onboard import run_onboard
 from git_adr.commands.report import run_report
+from git_adr.commands.rm import run_rm
 from git_adr.commands.search import run_search
 from git_adr.commands.show import run_show
 
@@ -62,6 +63,7 @@ __all__ = [
     "run_log",
     "run_sync",
     "run_config",
+    "run_rm",
     # Format
     "run_convert",
     # Artifact

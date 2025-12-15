@@ -16,6 +16,7 @@ the man pages: `git adr <command> --help` or read `docs/man/git-adr-*.1.md`.
 |---------|-------------|
 | `git adr new <title>` | Create a new ADR |
 | `git adr edit <id>` | Edit an existing ADR |
+| `git adr rm <id>` | Remove an ADR |
 | `git adr supersede <old-id> <title>` | Create ADR that supersedes another |
 
 ## Viewing ADRs
