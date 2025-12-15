@@ -185,21 +185,30 @@ jobs:
     name: Update Homebrew Formula
     runs-on: ubuntu-latest
     needs: publish
+    # Don't fail the release if Homebrew update fails
+    continue-on-error: true
     steps:
       - name: Wait for PyPI availability
+        id: wait
         env:
           REF_NAME: ${{ github.ref_name }}
         run: |
           VERSION="${REF_NAME#v}"
           echo "Waiting for git-adr==${VERSION} on PyPI..."
+          AVAILABLE=false
           for i in {1..30}; do
             if curl -sf "https://pypi.org/pypi/git-adr/${VERSION}/json" > /dev/null 2>&1; then
               echo "Package available on PyPI"
+              AVAILABLE=true
               break
             fi
             echo "Attempt $i: Not yet available, waiting 10s..."
             sleep 10
           done
+          if [ "$AVAILABLE" = "false" ]; then
+            echo "::warning::Package not available on PyPI after 5 minutes"
+            exit 1
+          fi
 
       - name: Get PyPI SHA256
         id: pypi
@@ -208,11 +217,20 @@ jobs:
         run: |
           VERSION="${REF_NAME#v}"
           PYPI_JSON=$(curl -sf "https://pypi.org/pypi/git-adr/${VERSION}/json")
+          if [ -z "$PYPI_JSON" ]; then
+            echo "::error::Failed to fetch PyPI metadata"
+            exit 1
+          fi
           SDIST_URL=$(echo "$PYPI_JSON" | jq -r '.urls[] | select(.packagetype=="sdist") | .url')
           SDIST_SHA256=$(echo "$PYPI_JSON" | jq -r '.urls[] | select(.packagetype=="sdist") | .digests.sha256')
+          if [ -z "$SDIST_URL" ] || [ "$SDIST_URL" = "null" ]; then
+            echo "::error::Could not find sdist URL in PyPI response"
+            exit 1
+          fi
           echo "url=${SDIST_URL}" >> "$GITHUB_OUTPUT"
           echo "sha256=${SDIST_SHA256}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Found: $SDIST_URL with SHA256: $SDIST_SHA256"
 
       - name: Checkout Homebrew tap
         uses: actions/checkout@v4
@@ -228,10 +246,14 @@ jobs:
           URL: ${{ steps.pypi.outputs.url }}
         run: |
           cd homebrew-tap
+          echo "Updating formula with URL: ${URL}"
+          echo "SHA256: ${SHA256}"
           sed -i 's|url ".*"|url "'"${URL}"'"|' Formula/git-adr.rb
           sed -i 's|sha256 ".*"|sha256 "'"${SHA256}"'"|' Formula/git-adr.rb
           sed -i '/# NOTE: Update to PyPI URL/d' Formula/git-adr.rb
           sed -i '/# url "https:\/\/files.pythonhosted.org/d' Formula/git-adr.rb
+          echo "Updated formula:"
+          grep -E "url|sha256" Formula/git-adr.rb | head -4
 
       - name: Commit and push
         env:
@@ -239,6 +261,11 @@ jobs:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
           cd homebrew-tap
+          # Check if there are changes to commit
+          if git diff --quiet Formula/git-adr.rb; then
+            echo "No changes to formula - already up to date"
+            exit 0
+          fi
           # Explicitly set remote URL with token for cross-repo push
           git remote set-url origin "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/zircote/homebrew-git-adr.git"
           git config user.name "github-actions[bot]"
