@@ -9,7 +9,7 @@ import shutil
 import subprocess  # nosec B404 - subprocess required for git wiki operations
 import tempfile
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
@@ -242,7 +242,7 @@ class WikiService:
         lines.append("")
         lines.append("---")
         lines.append(
-            f"*Synced from git-adr on {datetime.now().strftime('%Y-%m-%d %H:%M')}*"
+            f"*Synced from git-adr on {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}*"
         )
 
         return "\n".join(lines)
@@ -291,7 +291,9 @@ class WikiService:
             lines.append("")
 
         lines.append("---")
-        lines.append(f"*Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M')}*")
+        lines.append(
+            f"*Last updated: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}*"
+        )
 
         return "\n".join(lines)
 
