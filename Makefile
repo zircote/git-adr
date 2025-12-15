@@ -1,7 +1,7 @@
 # git-adr Makefile
 # Orchestrates testing with proper temp git repo management
 
-.PHONY: all clean test test-unit test-integration test-coverage lint format check install dev-install help docs man-pages
+.PHONY: all clean test test-unit test-integration test-coverage lint format check install dev-install help docs man-pages install-man
 
 # Python and venv
 PYTHON := python3
@@ -45,7 +45,8 @@ help:
 	@echo ""
 	@echo "Documentation:"
 	@echo "  make docs           Build all documentation"
-	@echo "  make man-pages      Generate man pages from CLI"
+	@echo "  make man-pages      Generate man pages (requires pandoc)"
+	@echo "  make install-man    Install man pages to system"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  make clean          Clean temp files and caches"
@@ -154,17 +155,31 @@ MAN_OUT_DIR := man
 # Requires: pandoc (brew install pandoc / apt-get install pandoc)
 man-pages:
 	@echo "Generating man pages from markdown sources..."
-	@mkdir -p $(MAN_OUT_DIR)
+	@mkdir -p $(MAN_OUT_DIR)/man1
 	@if command -v pandoc >/dev/null 2>&1; then \
 		for md in $(MAN_DIR)/*.md; do \
 			name=$$(basename $$md .md); \
 			echo "  Converting $$name..."; \
-			pandoc -s -t man $$md -o $(MAN_OUT_DIR)/$$name 2>/dev/null || true; \
+			pandoc -s -t man $$md -o $(MAN_OUT_DIR)/man1/$$name 2>/dev/null || true; \
 		done; \
-		echo "Man pages generated in $(MAN_OUT_DIR)/"; \
+		echo "Man pages generated in $(MAN_OUT_DIR)/man1/"; \
 	else \
 		echo "Note: pandoc not installed. Man page sources in $(MAN_DIR)/"; \
 		echo "Install pandoc to generate man format: brew install pandoc"; \
+	fi
+
+# Install man pages to system directory
+# Default: /usr/local/share/man (configurable via MAN_INSTALL_DIR)
+MAN_INSTALL_DIR ?= /usr/local/share/man
+install-man: man-pages
+	@if [ -d "$(MAN_OUT_DIR)/man1" ] && [ -n "$$(ls -A $(MAN_OUT_DIR)/man1 2>/dev/null)" ]; then \
+		echo "Installing man pages to $(MAN_INSTALL_DIR)/man1/..."; \
+		mkdir -p $(MAN_INSTALL_DIR)/man1; \
+		cp $(MAN_OUT_DIR)/man1/* $(MAN_INSTALL_DIR)/man1/; \
+		echo "Man pages installed. Try: man git-adr"; \
+	else \
+		echo "Error: No man pages generated. Install pandoc first: brew install pandoc"; \
+		exit 1; \
 	fi
 
 # Build all documentation
