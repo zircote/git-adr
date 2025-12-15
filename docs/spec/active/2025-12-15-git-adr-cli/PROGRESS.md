@@ -171,7 +171,17 @@ current_phase: 1
 
 | Date | Task | Planned | Actual | Reason |
 |------|------|---------|--------|--------|
-| - | - | - | - | No divergences yet |
+| 2025-12-15 | Coverage target | 90% | 95% | PR requirement stricter than spec |
+| 2025-12-15 | `git adr rm` command | Not planned | Implemented | User request during implementation |
+| 2025-12-15 | Shell completion tests | Not planned | Implemented | Coverage gap for completion code |
+| 2025-12-15 | Man page for rm | Not planned | Created | Documentation for new command |
+| 2025-12-15 | git-lfs style install | Not planned | Implemented | User request for distribution pattern |
+| 2025-12-15 | Makefile build system | Not planned | Implemented | Supports git-lfs style release |
+| 2025-12-15 | install.sh script | Not planned | Implemented | Distribution convenience |
+| 2025-12-15 | release.yml workflow | Not planned | Implemented | Automated release artifacts |
+| 2025-12-15 | Bash completion for `git adr` | Basic completion | Extended | Support both `git-adr` and `git adr` |
+| 2025-12-15 | .gitignore fixes | Not planned | Fixed | Prevent ignoring docs/man/ source files |
+| 2025-12-15 | GitHub Actions v6/v7 | Not planned | Upgraded | Align with ci.yml versions |
 
 ---
 
