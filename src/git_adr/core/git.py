@@ -484,6 +484,31 @@ class Git:
         args.extend(["--add", key, value])
         self.run(args)
 
+    def config_get_all(
+        self,
+        key: str,
+        *,
+        global_: bool = False,
+    ) -> list[str]:
+        """Get all values for a multi-valued config key.
+
+        Args:
+            key: Config key (e.g., "remote.origin.push").
+            global_: If True, read from global config.
+
+        Returns:
+            List of all values for the key (empty list if not found).
+        """
+        args = ["config"]
+        if global_:
+            args.append("--global")
+        args.extend(["--get-all", key])
+
+        result = self.run(args, check=False, allow_exit_codes=[1])
+        if result.exit_code == 0:
+            return [line for line in result.lines if line]
+        return []
+
     # =========================================================================
     # Remote Operations
     # =========================================================================
