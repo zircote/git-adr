@@ -28,19 +28,6 @@ if TYPE_CHECKING:
 
 
 # =============================================================================
-# Test Markers
-# =============================================================================
-
-
-def pytest_configure(config: pytest.Config) -> None:
-    """Register custom markers."""
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests (require git repos)"
-    )
-    config.addinivalue_line("markers", "slow: marks tests as slow running")
-
-
-# =============================================================================
 # Git Repository Fixtures
 # =============================================================================
 
@@ -292,6 +279,8 @@ def mock_ai_service(ai_config: Config, mock_llm: MagicMock) -> MagicMock:
         from git_adr.ai import AIService
 
         service = AIService(ai_config)
+        # NOTE: Accessing _llm is intentional for test injection.
+        # This allows isolated testing without real API calls.
         service._llm = mock_llm
         return service
 

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import typer
@@ -101,7 +101,7 @@ def _generate_markdown_report(all_adrs: list, notes_manager: NotesManager) -> st
     lines = [
         "# Architecture Decision Records Report",
         "",
-        f"Generated: {datetime.now().isoformat()}",
+        f"Generated: {datetime.now(UTC).isoformat()}",
         "",
         "## Summary",
         "",
@@ -233,7 +233,7 @@ def _generate_json_report(all_adrs: list, notes_manager: NotesManager) -> str:
         status_counts[adr.metadata.status.value] += 1
 
     report_data = {
-        "generated": datetime.now().isoformat(),
+        "generated": datetime.now(UTC).isoformat(),
         "total": len(all_adrs),
         "by_status": dict(status_counts),
         "adrs": [
