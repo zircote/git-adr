@@ -1,7 +1,7 @@
 # git-adr Makefile
 # Orchestrates testing with proper temp git repo management
 
-.PHONY: all clean test test-unit test-integration test-coverage lint format check install dev-install help
+.PHONY: all clean test test-unit test-integration test-coverage lint format check install dev-install help docs man-pages
 
 # Python and venv
 PYTHON := python3
@@ -26,15 +26,28 @@ all: check test
 help:
 	@echo "git-adr Makefile targets:"
 	@echo ""
+	@echo "Development:"
 	@echo "  make install        Install production dependencies"
 	@echo "  make dev-install    Install development dependencies"
+	@echo ""
+	@echo "Testing:"
 	@echo "  make test           Run all tests with coverage"
 	@echo "  make test-unit      Run unit tests only"
 	@echo "  make test-integration  Run integration tests only"
 	@echo "  make test-coverage  Run tests with detailed coverage report"
+	@echo "  make test-quick     Quick test run (no coverage)"
+	@echo ""
+	@echo "Code Quality:"
 	@echo "  make lint           Run linter (ruff check)"
 	@echo "  make format         Format code (ruff format)"
 	@echo "  make check          Run all quality checks"
+	@echo "  make ci             Full CI checks (clean, check, test)"
+	@echo ""
+	@echo "Documentation:"
+	@echo "  make docs           Build all documentation"
+	@echo "  make man-pages      Generate man pages from CLI"
+	@echo ""
+	@echo "Maintenance:"
 	@echo "  make clean          Clean temp files and caches"
 	@echo ""
 
@@ -127,3 +140,39 @@ test-quick:
 # CI target (strict)
 ci: clean check test
 	@echo "CI checks passed!"
+
+# ============================================================
+# Documentation
+# ============================================================
+
+# Directories
+DOCS_DIR := docs
+MAN_DIR := $(DOCS_DIR)/man
+MAN_OUT_DIR := man
+
+# Generate man pages from markdown sources using pandoc
+# Requires: pandoc (brew install pandoc / apt-get install pandoc)
+man-pages:
+	@echo "Generating man pages from markdown sources..."
+	@mkdir -p $(MAN_OUT_DIR)
+	@if command -v pandoc >/dev/null 2>&1; then \
+		for md in $(MAN_DIR)/*.md; do \
+			name=$$(basename $$md .md); \
+			echo "  Converting $$name..."; \
+			pandoc -s -t man $$md -o $(MAN_OUT_DIR)/$$name 2>/dev/null || true; \
+		done; \
+		echo "Man pages generated in $(MAN_OUT_DIR)/"; \
+	else \
+		echo "Note: pandoc not installed. Man page sources in $(MAN_DIR)/"; \
+		echo "Install pandoc to generate man format: brew install pandoc"; \
+	fi
+
+# Build all documentation
+docs: man-pages
+	@echo ""
+	@echo "Documentation available:"
+	@echo "  $(MAN_DIR)/*.md         - Man page sources (markdown)"
+	@echo "  $(DOCS_DIR)/COMMANDS.md - Command quick reference"
+	@echo ""
+	@echo "View man pages: man $(MAN_OUT_DIR)/git-adr.1"
+	@echo "Or read markdown: cat $(MAN_DIR)/git-adr.1.md"
