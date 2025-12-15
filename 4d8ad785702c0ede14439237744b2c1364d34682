@@ -1,0 +1,48 @@
+---
+date: '2025-12-15'
+id: adr001-use-subprocess-to-git-binary-for-git-ope
+status: accepted
+tags:
+- git-adr-cli
+title: Use subprocess to git binary for git operations
+---
+
+# Use subprocess to git binary for git operations
+
+**Date**: 2025-12-15
+**Status**: Accepted
+**Deciders**: User, Claude (Planning)
+
+### Context
+
+git-adr needs to perform git operations including notes management. Options include:
+1. `subprocess` to git binary (shell out)
+2. `pygit2` (libgit2 bindings)
+3. `GitPython` (Python git wrapper)
+
+### Decision
+
+Use subprocess to the git binary for all git operations.
+
+### Consequences
+
+**Positive:**
+- Industry standard approach (5 of 6 major git extensions use this)
+- Zero additional dependencies
+- Full feature parity with git CLI including all notes operations
+- Inherits user's git configuration and credentials automatically
+- No GPL license concerns (pygit2/libgit2 is GPLv2)
+- Simple, well-understood model
+
+**Negative:**
+- Process spawning overhead (negligible for our use case)
+- Must parse text output
+- Requires git to be installed
+
+**Neutral:**
+- Same approach used by git-lfs, git-flow, git-crypt, GitHub CLI
+
+### Alternatives Considered
+
+1. **pygit2**: High performance but adds libgit2 dependency, installation complexity, GPLv2 license, overkill for ADR operations
+2. **GitPython**: Still shells out internally (no performance benefit), Windows reliability issues, recent security vulnerabilities
