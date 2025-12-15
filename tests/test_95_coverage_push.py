@@ -260,8 +260,11 @@ class TestTemplatesLoadFromDir:
 
         # Mock read_text to raise OSError
         with patch.object(Path, "read_text", side_effect=OSError("Permission denied")):
-            # Should not raise, just skip the file
+            # Should not raise, just skip the file gracefully
             engine._load_custom_templates(tmp_path)
+        # Verify engine still works after error (built-in templates still available)
+        assert engine._templates is not None
+        assert len(engine._templates) > 0
 
 
 # =============================================================================

@@ -95,9 +95,6 @@ def _format_log_output(output: str) -> None:
         # First line is commit info
         commit_line = lines[0]
 
-        # Second line is author
-        lines[1] if len(lines) > 1 else ""
-
         # Remaining lines are notes (if any)
         notes = "\n".join(lines[2:]).strip() if len(lines) > 2 else ""
 
