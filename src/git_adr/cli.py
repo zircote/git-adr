@@ -1219,21 +1219,21 @@ fi
         # Use Typer's built-in for zsh
         from typer.completion import get_completion_script
 
-        script = get_completion_script(  # noqa: S604
+        script = get_completion_script(  # noqa: S604 # nosec B604 - shell specifies script type, not subprocess
             prog_name=prog_name, complete_var=env_var, shell="zsh"
         )
         config_file = "~/.zshrc"
     elif shell == "fish":
         from typer.completion import get_completion_script
 
-        script = get_completion_script(  # noqa: S604
+        script = get_completion_script(  # noqa: S604 # nosec B604 - shell specifies script type, not subprocess
             prog_name=prog_name, complete_var=env_var, shell="fish"
         )
         config_file = "~/.config/fish/completions/git-adr.fish"
     else:  # powershell
         from typer.completion import get_completion_script
 
-        script = get_completion_script(  # noqa: S604
+        script = get_completion_script(  # noqa: S604 # nosec B604 - shell specifies script type, not subprocess
             prog_name=prog_name, complete_var=env_var, shell="powershell"
         )
         config_file = "$PROFILE"
