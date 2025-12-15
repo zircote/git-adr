@@ -1,0 +1,110 @@
+---
+date: '2025-12-15'
+id: 20251215-madr-format-review-codebase-regarding-madr-format
+status: proposed
+title: 'MADR format
+
+  Review codebase regarding MADR format and create teh ADR record'
+---
+
+# MADR format
+
+## Context and Problem Statement
+The codebase needs a consistent, discoverable way to record architecture and design decisions using the MADR 4.0 structure. The project currently lacks a single, standardized ADR location and template; team members create ad-hoc notes in PR descriptions, issues, or scattered markdown files. This leads to:
+
+- decisions being hard to find and review,
+- inconsistent structure and variable readability,
+- difficulty automating validation or linking decisions from code and docs.
+
+We want to adopt a MADR 4.0-compliant workflow that:
+- is easy for contributors to use,
+- produces pleasant-to-read ADRs,
+- integrates cleanly with the repository and CI, and
+- minimizes friction (no heavy new infrastructure).
+
+## Decision Drivers
+- Ease of use for contributors (low learning curve, few new tools).
+- Pleasant-to-read output (clear, consistent layout following MADR 4.0).
+- Discoverability (single directory, consistent filenames, index).
+- Version-control friendliness (plain text, small changes per decision).
+- Low operational overhead (minimal extra dependencies).
+- Ability to validate/automate formatting over time (linting/CI-safe).
+- Compatibility with existing workflows (PRs, code, docs).
+
+## Considered Options
+- ngard
+  - Use an external tool/CLI (named here as "ngard") that scaffolds, validates, and formats MADR 4.0 ADRs.
+  - Pros: can enforce templates, generate metadata, provide validation and consistent formatting automatically.
+  - Cons: adds a new dependency/tooling requirement, possible installation/config maintenance, potential lock-in to tool-specific templates or metadata.
+- Raw files (plain Markdown MADR 4.0 files)
+  - Authors create ADRs as plain Markdown files following the MADR 4.0 sections. Files live in a dedicated directory in the repo.
+  - Pros: zero runtime dependencies, immediate readability, easy to edit in any editor, simple Git history, minimal onboarding.
+  - Cons: formatting and template compliance are manual unless we add linting/CI checks later; potential for inconsistent naming or missing sections unless conventions are enforced.
+
+## Decision Outcome
+Chosen option: Raw files (plain Markdown MADR 4.0 files), stored under docs/adr (or ADR/).
+
+Justification:
+- Prioritizes the top decision drivers: ease of use and pleasant reading. Plain Markdown files require no extra installation and are immediately editable and readable by all contributors.
+- Minimizes friction for adoption — contributors can add ADRs via a PR with no tool learning or CI/tooling prerequisites.
+- Retains full compatibility with version control and standard review workflows.
+- Allows incremental improvement: we can later introduce a lightweight validator or optional CLI if the team wants more automation; adopting raw files now avoids premature tool lock-in.
+- Raw files are the simplest path to consistent documentation while allowing tooling to be introduced as a non-blocking enhancement.
+
+Implementation details (concrete, technical):
+- File location and naming
+  - Directory: docs/adr/ (or ADR/ at repo root if preferred).
+  - Filenames: zero-padded ordinal + short-slug, e.g., 0001-madr-format.md, 0002-some-other-decision.md
+  - Rationale: numeric ordering makes listing deterministic and simplifies cross-referencing.
+- Required MADR 4.0 sections (apply on each ADR):
+  - Title (H1)
+  - Status (Accepted / Proposed / Deprecated / etc.) — include in the top of the ADR body if desired (no YAML frontmatter).
+  - Context and Problem Statement
+  - Decision Drivers
+  - Considered Options
+  - Decision Outcome
+  - Consequences
+  - Optionally: Date, Deciders, Related Decisions (as plain text fields inside the ADR)
+- Example path for this ADR:
+  - docs/adr/0001-madr-format.md (this file)
+- Recommended small automation and hygiene to add (optional, incremental)
+  - Add a README at docs/adr/README.md explaining convention and a 1-line example command to create new ADRs.
+  - Add a simple checklist in the README: required headings, naming rule, and how to propose/accept ADRs (PR workflow).
+  - Add lightweight linting in CI:
+    - Use markdownlint with a small config enforcing required headings and filename pattern.
+    - Create a CI job that fails if new ADR files are missing required headings (a small script that validates the presence of the MADR headings).
+  - Add a pre-commit entry to run markdownlint locally (optional).
+- Backfill plan
+  - Add this ADR to docs/adr as 0001.
+  - Convert any existing scattered decision notes into ADRs in docs/adr with PRs, cross-referencing original issues/PRs.
+
+Status: Accepted — Raw files approach adopted.
+
+## Consequences
+
+Good
+- Immediate adoption with zero dependency installs — contributors can author ADRs without tooling.
+- High readability: plain Markdown renders in GitHub/GitLab and in any editor with predictable layout.
+- Low friction for reviews: ADRs can be proposed and reviewed via standard PRs with familiar diffing.
+- Simple versioning/history: each ADR is a regular file tracked by Git with clean diffs.
+- Easy to integrate incrementally: lints, small CI checks, or a scaffolding tool can be added later without changing the file format.
+
+Bad
+- Manual enforcement: without added tooling, ADR authors might omit required sections, deviate from naming conventions, or produce inconsistent prose.
+- Validator/automation delayed: to get strict MADR conformance we need to invest time to add CI scripts or adopt a third-party tool later.
+- Potential for human error: typos in required headings or status fields can be introduced; automatic linking/search is limited until we add metadata or a small index generator.
+
+Neutral
+- No immediate locking into a particular ADR tool/format — good for flexibility, but means we must decide later whether to adopt a scaffolding/validation tool.
+- Migration cost is low now, but if a tool is adopted later some small transformation (e.g., adding metadata) may be needed. Transformations can be automated via scripts.
+- Files will increase repository size slightly as ADRs accumulate (plain text), but growth is small and acceptable for standard repos.
+
+If we decide later to adopt a tool (e.g., a CLI that scaffolds/validates MADR 4.0), we will:
+- Preserve existing raw files (tools should accept or import them).
+- Add a migration script to add any required metadata while keeping the human-readable markdown primary.
+
+Next steps
+- Commit this ADR as docs/adr/0001-madr-format.md.
+- Add docs/adr/README.md with the naming and section conventions and a short "How to add an ADR" guide.
+- Create a small CI check (or GitHub Actions job) that validates new ADR files include the required MADR headings.
+- Encourage authors to follow the template and open ADRs via PRs for team review.
