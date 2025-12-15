@@ -73,7 +73,13 @@ def run_sync(
                 # Check for "remote ref not found" error - this is expected when
                 # notes haven't been pushed to the remote yet. String matching is
                 # used because git doesn't provide distinct exit codes for this case.
-                if "couldn't find remote ref" in str(e).lower():
+                # Prefer exit_code check if available, fallback to string match if not
+                if getattr(e, "exit_code", None) == 128:
+                    console.print(
+                        f"[yellow]Note:[/yellow] No remote notes found on {remote}"
+                    )
+                elif "couldn't find remote ref" in str(e).lower():
+                    # Fallback for legacy GitError without exit_code
                     console.print(
                         f"[yellow]Note:[/yellow] No remote notes found on {remote}"
                     )
