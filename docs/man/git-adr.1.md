@@ -148,21 +148,49 @@ git notes attached to the repository, providing:
 git-adr stores its configuration in git config. Key settings include:
 
 `adr.namespace`
-: Git notes namespace for ADRs (default: `refs/notes/adr`)
+: Git notes namespace for ADRs (default: `adr`)
+
+`adr.artifacts_namespace`
+: Git notes namespace for artifacts (default: `adr-artifacts`)
 
 `adr.template`
-: Default template format (madr, nygard, custom)
+: Default template format: madr, nygard, y-statement, alexandrian, business, planguage
 
 `adr.editor`
 : Editor command for creating/editing ADRs
 
+`adr.artifact_warn_size`
+: Size threshold (bytes) for attachment warnings (default: 1048576)
+
+`adr.artifact_max_size`
+: Maximum attachment size in bytes (default: 10485760)
+
+`adr.sync.auto_push`
+: Auto-push after modifications (default: false)
+
+`adr.sync.auto_pull`
+: Auto-pull before reads (default: true)
+
+`adr.sync.merge_strategy`
+: Merge strategy: union, ours, theirs, cat_sort_uniq (default: union)
+
 `adr.ai.provider`
-: AI provider (openai, anthropic, google, ollama)
+: AI provider: openai, anthropic, google, bedrock, azure, ollama, openrouter
 
 `adr.ai.model`
-: AI model name
+: AI model name (provider-specific)
 
-Use `git adr config list` to see all settings.
+`adr.ai.temperature`
+: AI temperature 0.0-1.0 (default: 0.7)
+
+`adr.wiki.platform`
+: Wiki platform: github, gitlab, auto
+
+`adr.wiki.auto_sync`
+: Auto-sync to wiki after changes (default: false)
+
+Use `git adr config list` to see all settings. For complete documentation
+with examples and recipes, see docs/CONFIGURATION.md in the repository.
 
 ## EXAMPLES
 
@@ -242,6 +270,13 @@ git-adr supports multiple ADR template formats:
 ## SEE ALSO
 
 git-notes(1), git-config(1)
+
+**Online Documentation:**
+
+- docs/CONFIGURATION.md - Complete configuration reference with examples
+- docs/ADR_FORMATS.md - All template formats with full examples
+- docs/ADR_PRIMER.md - Introduction to ADRs for beginners
+- docs/COMMANDS.md - Complete command reference
 
 ## AUTHOR
 
