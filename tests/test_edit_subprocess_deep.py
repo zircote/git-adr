@@ -6,19 +6,13 @@ using careful mocking of both subprocess and tempfile.
 
 from __future__ import annotations
 
-import tempfile
-from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
 from git_adr.core.git import Git
-from git_adr.core.notes import NotesManager
 
 runner = CliRunner()
 
@@ -31,7 +25,10 @@ class TestEditFullEditorFlowDirect:
         with patch("git_adr.commands.new._find_editor", return_value=None):
             result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
             assert result.exit_code == 1
-            assert "no editor" in result.output.lower() or "editor" in result.output.lower()
+            assert (
+                "no editor" in result.output.lower()
+                or "editor" in result.output.lower()
+            )
 
     def test_full_edit_complete_flow(self, adr_repo_with_data: Path) -> None:
         """Test complete editor flow with mocked subprocess."""
@@ -144,9 +141,7 @@ class TestEditQuickEditPaths:
         git = Git(cwd=adr_repo_with_data)
         head = git.get_head_commit()
 
-        result = runner.invoke(
-            app, ["edit", "20250110-use-postgresql", "--link", head]
-        )
+        result = runner.invoke(app, ["edit", "20250110-use-postgresql", "--link", head])
         assert result.exit_code == 0
 
     def test_edit_unlink_commit(self, adr_repo_with_data: Path) -> None:
@@ -155,9 +150,7 @@ class TestEditQuickEditPaths:
         head = git.get_head_commit()
 
         # First link
-        runner.invoke(
-            app, ["edit", "20250110-use-postgresql", "--link", head]
-        )
+        runner.invoke(app, ["edit", "20250110-use-postgresql", "--link", head])
         # Then unlink
         result = runner.invoke(
             app, ["edit", "20250110-use-postgresql", "--unlink", head]
@@ -200,7 +193,7 @@ class TestEditNotFoundCases:
         import subprocess as sp
 
         os.chdir(tmp_path)
-        sp.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        sp.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["edit", "some-adr"])
         assert result.exit_code == 1
@@ -229,25 +222,29 @@ class TestInitEdgeCasesDeep:
         import subprocess as sp
 
         os.chdir(tmp_path)
-        sp.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        sp.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
         sp.run(
             ["git", "config", "user.email", "test@test.com"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "config", "user.name", "Test User"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "commit", "--allow-empty", "-m", "Initial"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         # Add a fake remote
         sp.run(
             ["git", "remote", "add", "origin", "https://example.com/repo.git"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
@@ -265,9 +262,7 @@ class TestConfigCommandDeep:
 
     def test_config_set_invalid_key(self, adr_repo_with_data: Path) -> None:
         """Test config --set with unknown key."""
-        result = runner.invoke(
-            app, ["config", "--set", "unknown.key.path", "value"]
-        )
+        result = runner.invoke(app, ["config", "--set", "unknown.key.path", "value"])
         # May succeed or fail depending on validation
         assert result.exit_code in [0, 1]
 

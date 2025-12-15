@@ -5,7 +5,6 @@ Targets uncovered code paths with comprehensive mocking.
 
 from __future__ import annotations
 
-from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -13,10 +12,8 @@ import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
 from git_adr.core.config import ConfigManager
 from git_adr.core.git import Git
-from git_adr.core.notes import NotesManager
 
 runner = CliRunner()
 

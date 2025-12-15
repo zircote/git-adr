@@ -6,17 +6,15 @@ Targets remaining uncovered lines in init.py, ai commands, and other gaps.
 from __future__ import annotations
 
 import subprocess
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
 from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
-from git_adr.core.git import Git, GitError
+from git_adr.core.config import ConfigManager
+from git_adr.core.git import Git
 
 runner = CliRunner()
 
@@ -84,7 +82,13 @@ class TestAIDraftEdgeCases:
         """Test ai draft with related ADR."""
         result = runner.invoke(
             app,
-            ["ai", "draft", "Database migration strategy", "--related", "20250110-use-postgresql"],
+            [
+                "ai",
+                "draft",
+                "Database migration strategy",
+                "--related",
+                "20250110-use-postgresql",
+            ],
         )
         # Will fail due to no provider configured (exit 1) or missing arg (exit 2)
         assert result.exit_code in [1, 2]
@@ -107,19 +111,22 @@ class TestAISummarizeEdgeCases:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
         subprocess.run(
             ["git", "config", "user.email", "test@test.com"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         subprocess.run(
             ["git", "config", "user.name", "Test User"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         subprocess.run(
             ["git", "commit", "--allow-empty", "-m", "Initial"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
@@ -330,7 +337,7 @@ class TestSyncEdgeCases:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["sync"])
         assert result.exit_code == 1

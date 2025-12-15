@@ -8,7 +8,6 @@ from __future__ import annotations
 import subprocess
 from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -16,7 +15,7 @@ from typer.testing import CliRunner
 from git_adr.cli import app
 from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
 from git_adr.core.config import Config, ConfigManager
-from git_adr.core.git import Git, GitError
+from git_adr.core.git import Git
 from git_adr.core.templates import TemplateEngine
 
 runner = CliRunner()
@@ -92,9 +91,7 @@ class TestConfigDefaults:
     def test_config_with_custom_values(self) -> None:
         """Test Config with custom values."""
         config = Config(
-            template="nygard",
-            editor="code",
-            custom_templates_dir="/custom/templates"
+            template="nygard", editor="code", custom_templates_dir="/custom/templates"
         )
         assert config.template == "nygard"
         assert config.editor == "code"
@@ -130,6 +127,7 @@ class TestConfigCommand:
     def test_config_not_git_repo(self, tmp_path: Path) -> None:
         """Test config in non-git directory."""
         import os
+
         os.chdir(tmp_path)
 
         result = runner.invoke(app, ["config", "--list"])
@@ -139,8 +137,9 @@ class TestConfigCommand:
     def test_config_not_initialized(self, tmp_path: Path) -> None:
         """Test config in uninitialized repo."""
         import os
+
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["config", "--list"])
         # Config may work without init for reading defaults
@@ -421,7 +420,7 @@ class TestGitEdgeCases:
         git = Git(cwd=adr_repo_with_data)
 
         # May not have remote in test repo
-        url = git.get_remote_url("origin")
+        git.get_remote_url("origin")
         # Could be None or a URL
 
     def test_git_commit_exists(self, adr_repo_with_data: Path) -> None:

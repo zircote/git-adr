@@ -10,7 +10,6 @@ Focuses on modules that need more test coverage:
 
 from __future__ import annotations
 
-import subprocess
 from datetime import date
 from pathlib import Path
 
@@ -28,10 +27,10 @@ from git_adr.core.git import Git, GitError, GitResult
 from git_adr.core.notes import NotesManager
 from git_adr.core.templates import TemplateEngine
 
-
 # =============================================================================
 # Git Wrapper Extended Tests
 # =============================================================================
+
 
 class TestGitWrapperExtended:
     """Extended tests for Git wrapper."""
@@ -128,6 +127,7 @@ class TestGitNotesExtended:
 # Notes Manager Extended Tests
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestNotesManagerExtended:
     """Extended tests for NotesManager."""
@@ -185,7 +185,9 @@ class TestNotesManagerExtended:
 
         # Get all and filter in memory
         all_adrs = notes_manager.list_all()
-        accepted = [adr for adr in all_adrs if adr.metadata.status == ADRStatus.ACCEPTED]
+        accepted = [
+            adr for adr in all_adrs if adr.metadata.status == ADRStatus.ACCEPTED
+        ]
         assert len(accepted) >= 1
         assert all(adr.metadata.status == ADRStatus.ACCEPTED for adr in accepted)
 
@@ -211,13 +213,18 @@ class TestNotesManagerExtended:
 
         # Get all and search in memory
         all_adrs = notes_manager.list_all()
-        results = [adr for adr in all_adrs if "PostgreSQL" in adr.content or "postgresql" in adr.content.lower()]
+        results = [
+            adr
+            for adr in all_adrs
+            if "PostgreSQL" in adr.content or "postgresql" in adr.content.lower()
+        ]
         assert len(results) >= 1
 
 
 # =============================================================================
 # Template Engine Extended Tests
 # =============================================================================
+
 
 class TestTemplateEngineExtended:
     """Extended tests for TemplateEngine."""
@@ -297,6 +304,7 @@ Better documentation.
 # =============================================================================
 # ADR Model Extended Tests
 # =============================================================================
+
 
 class TestADRModelExtended:
     """Extended tests for ADR model."""
@@ -404,6 +412,7 @@ Simple decision.
 # Config Extended Tests
 # =============================================================================
 
+
 class TestConfigExtended:
     """Extended tests for Config."""
 
@@ -442,6 +451,7 @@ class TestConfigExtended:
 # Git Result Tests
 # =============================================================================
 
+
 class TestGitResult:
     """Tests for GitResult dataclass."""
 
@@ -470,6 +480,7 @@ class TestGitResult:
 # Error Handling Tests
 # =============================================================================
 
+
 class TestErrorHandling:
     """Tests for error handling in core modules."""
 
@@ -479,7 +490,7 @@ class TestErrorHandling:
             message="Command failed",
             command=["git", "status"],
             exit_code=1,
-            stderr="detailed error"
+            stderr="detailed error",
         )
         assert "Command failed" in str(error)
 

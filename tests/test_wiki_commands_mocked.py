@@ -121,7 +121,11 @@ class TestWikiInitCommand:
         """Test wiki init with no remote configured - shows help."""
         result = runner.invoke(app, ["wiki", "init"])
         # May show help/warning about needing a platform
-        assert result.exit_code == 0 or "platform" in result.output.lower() or "remote" in result.output.lower()
+        assert (
+            result.exit_code == 0
+            or "platform" in result.output.lower()
+            or "remote" in result.output.lower()
+        )
 
     def test_wiki_init_not_initialized(self, temp_git_repo_with_commit: Path) -> None:
         """Test wiki init in non-initialized repo - shows help."""
@@ -238,7 +242,9 @@ class TestWikiSyncCommand:
         """Test wiki sync without wiki configured."""
         result = runner.invoke(app, ["wiki", "sync"])
         assert result.exit_code != 0
-        assert "not" in result.output.lower() and ("config" in result.output.lower() or "init" in result.output.lower())
+        assert "not" in result.output.lower() and (
+            "config" in result.output.lower() or "init" in result.output.lower()
+        )
 
     def test_wiki_sync_invalid_direction(self, wiki_configured_repo: Path) -> None:
         """Test wiki sync with invalid direction."""

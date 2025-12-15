@@ -5,18 +5,15 @@ Targets specific uncovered lines in config.py, index.py, and remaining commands.
 
 from __future__ import annotations
 
-import re
-import subprocess
 from datetime import date, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
 from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
+from git_adr.core.config import ConfigManager
 from git_adr.core.git import Git
 
 runner = CliRunner()
@@ -432,9 +429,7 @@ Updated consequences.
             mock_run.side_effect = side_effect
 
             with patch("git_adr.commands.new._find_editor", return_value="vim"):
-                result = runner.invoke(
-                    app, ["edit", "20250110-use-postgresql"]
-                )
+                result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
                 # May succeed or fail depending on parsing
                 # The important thing is the code path is exercised
                 assert result.exit_code in [0, 1]
@@ -454,15 +449,14 @@ Updated consequences.
             mock_run.return_value = MagicMock(returncode=1)
 
             with patch("git_adr.commands.new._find_editor", return_value="vim"):
-                result = runner.invoke(
-                    app, ["edit", "20250110-use-postgresql"]
-                )
+                result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
                 # Should warn but continue
                 assert result.exit_code in [0, 1]
 
     def test_edit_invalid_adr_format_after_edit(self, adr_repo_with_data: Path) -> None:
         """Test edit with invalid ADR format after editing (lines 223-225)."""
         with patch("subprocess.run") as mock_run:
+
             def side_effect(cmd, **kwargs):
                 if cmd and len(cmd) > 0:
                     temp_file = cmd[-1]
@@ -474,9 +468,7 @@ Updated consequences.
             mock_run.side_effect = side_effect
 
             with patch("git_adr.commands.new._find_editor", return_value="vim"):
-                result = runner.invoke(
-                    app, ["edit", "20250110-use-postgresql"]
-                )
+                result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
                 # May fail with parse error or succeed with default parsing
                 assert result.exit_code in [0, 1]
 

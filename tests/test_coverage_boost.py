@@ -13,6 +13,7 @@ Note: Uses fixtures from conftest.py
 
 from __future__ import annotations
 
+import contextlib
 from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -108,7 +109,9 @@ class TestNewCommandCoverage:
     def test_new_with_no_edit(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
         """Test new with file and no-edit."""
         content_file = tmp_path / "content.md"
-        content_file.write_text("## Context\n\nTest context.\n\n## Decision\n\nTest decision.")
+        content_file.write_text(
+            "## Context\n\nTest context.\n\n## Decision\n\nTest decision."
+        )
         result = runner.invoke(
             app,
             ["new", "File Decision", "--file", str(content_file), "--no-edit"],
@@ -164,7 +167,14 @@ class TestEditCommandCoverage:
         """Test edit adding multiple tags."""
         result = runner.invoke(
             app,
-            ["edit", "20250110-use-postgresql", "--add-tag", "newtag1", "--add-tag", "newtag2"],
+            [
+                "edit",
+                "20250110-use-postgresql",
+                "--add-tag",
+                "newtag1",
+                "--add-tag",
+                "newtag2",
+            ],
         )
         assert result.exit_code == 0
 
@@ -180,7 +190,14 @@ class TestEditCommandCoverage:
         """Test edit with multiple changes at once."""
         result = runner.invoke(
             app,
-            ["edit", "20250110-use-postgresql", "--status", "deprecated", "--add-tag", "legacy"],
+            [
+                "edit",
+                "20250110-use-postgresql",
+                "--status",
+                "deprecated",
+                "--add-tag",
+                "legacy",
+            ],
         )
         assert result.exit_code == 0
 
@@ -362,9 +379,7 @@ class TestConvertCommandCoverage:
 class TestImportCommandCoverage:
     """Tests for import command."""
 
-    def test_import_with_tags(
-        self, initialized_adr_repo: Path, tmp_path: Path
-    ) -> None:
+    def test_import_with_tags(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
         """Test import with tags."""
         adr_file = tmp_path / "test.md"
         adr_file.write_text("""---
@@ -391,9 +406,7 @@ Imported decision.
         )
         assert result.exit_code in [0, 1]
 
-    def test_import_bulk(
-        self, initialized_adr_repo: Path, tmp_path: Path
-    ) -> None:
+    def test_import_bulk(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
         """Test bulk import."""
         adr_dir = tmp_path / "adrs"
         adr_dir.mkdir()
@@ -402,7 +415,7 @@ Imported decision.
             adr_file = adr_dir / f"adr-{i}.md"
             adr_file.write_text(f"""---
 title: ADR {i}
-date: 2025-01-{10+i}
+date: 2025-01-{10 + i}
 status: proposed
 ---
 
@@ -595,7 +608,7 @@ class TestCoreCoverage:
 
     def test_adr_validation_errors(self) -> None:
         """Test ADR validation with invalid data."""
-        from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
+        from git_adr.core.adr import ADRStatus
 
         # Create ADR with minimal data
         adr = ADR(
@@ -712,9 +725,8 @@ class TestSyncErrorHandling:
     ) -> None:
         """Test sync when push fails."""
         from git_adr.core.git import GitError
-        mock_sync_push.side_effect = GitError(
-            "failed to push", ["git", "push"], 1
-        )
+
+        mock_sync_push.side_effect = GitError("failed to push", ["git", "push"], 1)
 
         result = runner.invoke(app, ["sync", "--no-pull"])
         assert result.exit_code != 0
@@ -731,9 +743,8 @@ class TestWikiServiceSubprocess:
     @patch("subprocess.run")
     def test_clone_wiki_success(self, mock_subprocess: MagicMock) -> None:
         """Test successful wiki clone."""
-        import subprocess
-        from git_adr.wiki.service import WikiService
         from git_adr.core.config import Config
+        from git_adr.wiki.service import WikiService
 
         mock_subprocess.return_value = MagicMock(returncode=0, stderr="", stdout="")
 
@@ -744,7 +755,9 @@ class TestWikiServiceSubprocess:
         with patch("tempfile.mkdtemp", return_value="/tmp/test-wiki"):
             with patch("pathlib.Path.exists", return_value=True):
                 try:
-                    result_path = service._clone_wiki("https://github.com/user/repo.wiki.git")
+                    result_path = service._clone_wiki(
+                        "https://github.com/user/repo.wiki.git"
+                    )
                     assert result_path is not None
                 except Exception:
                     pass  # May fail on follow-up operations
@@ -752,9 +765,8 @@ class TestWikiServiceSubprocess:
     @patch("subprocess.run")
     def test_clone_wiki_not_found_init_new(self, mock_subprocess: MagicMock) -> None:
         """Test wiki clone when wiki doesn't exist - initializes new."""
-        import subprocess
-        from git_adr.wiki.service import WikiService
         from git_adr.core.config import Config
+        from git_adr.wiki.service import WikiService
 
         # First call fails with "not found", subsequent calls succeed
         mock_subprocess.side_effect = [
@@ -768,17 +780,16 @@ class TestWikiServiceSubprocess:
         service = WikiService(mock_git, config)
 
         with patch("tempfile.mkdtemp", return_value="/tmp/test-wiki"):
-            try:
+            with contextlib.suppress(Exception):
                 service._clone_wiki("https://github.com/user/repo.wiki.git")
-            except Exception:
-                pass
 
     @patch("subprocess.run")
     def test_clone_wiki_timeout(self, mock_subprocess: MagicMock) -> None:
         """Test wiki clone timeout handling."""
         import subprocess
-        from git_adr.wiki.service import WikiService, WikiServiceError
+
         from git_adr.core.config import Config
+        from git_adr.wiki.service import WikiService, WikiServiceError
 
         mock_subprocess.side_effect = subprocess.TimeoutExpired(cmd=["git"], timeout=60)
 
@@ -795,9 +806,10 @@ class TestWikiServiceSubprocess:
     @patch("subprocess.run")
     def test_commit_and_push_success(self, mock_subprocess: MagicMock) -> None:
         """Test successful commit and push."""
-        from git_adr.wiki.service import WikiService, SyncResult
-        from git_adr.core.config import Config
         from pathlib import Path as PathLib
+
+        from git_adr.core.config import Config
+        from git_adr.wiki.service import SyncResult, WikiService
 
         mock_subprocess.return_value = MagicMock(returncode=0, stderr="", stdout="")
 
@@ -811,9 +823,10 @@ class TestWikiServiceSubprocess:
     @patch("subprocess.run")
     def test_commit_and_push_push_failed(self, mock_subprocess: MagicMock) -> None:
         """Test commit and push when push fails."""
-        from git_adr.wiki.service import WikiService, WikiServiceError, SyncResult
-        from git_adr.core.config import Config
         from pathlib import Path as PathLib
+
+        from git_adr.core.config import Config
+        from git_adr.wiki.service import SyncResult, WikiService, WikiServiceError
 
         # git add and commit succeed, push fails
         mock_subprocess.side_effect = [

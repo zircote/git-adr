@@ -49,6 +49,7 @@ class TestLLMExceptionHandling:
     ) -> None:
         """Test that suggest_improvements wraps LLM errors in AIServiceError."""
         from datetime import date
+
         from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
 
         mock_adr = ADR(
@@ -61,7 +62,9 @@ class TestLLMExceptionHandling:
             content="Test content",
         )
 
-        service_with_mock_llm._llm.invoke.side_effect = ConnectionError("API unavailable")
+        service_with_mock_llm._llm.invoke.side_effect = ConnectionError(
+            "API unavailable"
+        )
 
         with pytest.raises(AIServiceError) as exc_info:
             service_with_mock_llm.suggest_improvements(mock_adr)
@@ -74,6 +77,7 @@ class TestLLMExceptionHandling:
     ) -> None:
         """Test that summarize_adrs wraps LLM errors in AIServiceError."""
         from datetime import date
+
         from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
 
         mock_adr = ADR(
@@ -86,7 +90,9 @@ class TestLLMExceptionHandling:
             content="Test content",
         )
 
-        service_with_mock_llm._llm.invoke.side_effect = ValueError("Rate limit exceeded")
+        service_with_mock_llm._llm.invoke.side_effect = ValueError(
+            "Rate limit exceeded"
+        )
 
         with pytest.raises(AIServiceError) as exc_info:
             service_with_mock_llm.summarize_adrs([mock_adr])
@@ -99,6 +105,7 @@ class TestLLMExceptionHandling:
     ) -> None:
         """Test that ask_question wraps LLM errors in AIServiceError."""
         from datetime import date
+
         from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
 
         mock_adr = ADR(
@@ -111,7 +118,9 @@ class TestLLMExceptionHandling:
             content="Test content",
         )
 
-        service_with_mock_llm._llm.invoke.side_effect = TimeoutError("Request timed out")
+        service_with_mock_llm._llm.invoke.side_effect = TimeoutError(
+            "Request timed out"
+        )
 
         with pytest.raises(AIServiceError) as exc_info:
             service_with_mock_llm.ask_question("What?", [mock_adr])

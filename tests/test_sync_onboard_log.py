@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -15,7 +14,7 @@ from typer.testing import CliRunner
 from git_adr.cli import app
 from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
 from git_adr.core.config import ConfigManager
-from git_adr.core.git import Git, GitError
+from git_adr.core.git import Git
 from git_adr.core.notes import NotesManager
 
 runner = CliRunner()
@@ -179,7 +178,9 @@ class TestOnboardCommand:
         """Test onboard with no ADRs."""
         result = runner.invoke(app, ["onboard", "--quick"])
         assert result.exit_code == 0
-        assert "no adr" in result.output.lower() or "get started" in result.output.lower()
+        assert (
+            "no adr" in result.output.lower() or "get started" in result.output.lower()
+        )
 
     def test_onboard_not_initialized(self, temp_git_repo: Path) -> None:
         """Test onboard in non-initialized repo."""
@@ -266,9 +267,7 @@ class TestEditCommand:
         """Test quick edit to link commit."""
         git = Git(cwd=adr_repo_with_data)
         head = git.get_head_commit()
-        result = runner.invoke(
-            app, ["edit", "20250110-use-postgresql", "--link", head]
-        )
+        result = runner.invoke(app, ["edit", "20250110-use-postgresql", "--link", head])
         assert result.exit_code == 0
 
     def test_edit_unlink_commit(self, adr_repo_with_data: Path) -> None:
@@ -289,7 +288,9 @@ class TestEditCommand:
 
     def test_edit_nonexistent_adr(self, adr_repo_with_data: Path) -> None:
         """Test edit on non-existent ADR."""
-        result = runner.invoke(app, ["edit", "nonexistent-adr-id", "--status", "accepted"])
+        result = runner.invoke(
+            app, ["edit", "nonexistent-adr-id", "--status", "accepted"]
+        )
         assert result.exit_code != 0
         assert "not found" in result.output.lower()
 
@@ -336,9 +337,7 @@ class TestSupersedeCommand:
 
     def test_supersede_nonexistent(self, adr_repo_with_data: Path) -> None:
         """Test superseding non-existent ADR."""
-        result = runner.invoke(
-            app, ["supersede", "nonexistent-adr", "New Decision"]
-        )
+        result = runner.invoke(app, ["supersede", "nonexistent-adr", "New Decision"])
         assert result.exit_code != 0
         assert "not found" in result.output.lower()
 
@@ -373,20 +372,20 @@ class TestConvertCommand:
     def test_convert_to_y_statement(self, adr_repo_with_data: Path) -> None:
         """Test converting to Y-statement format."""
         result = runner.invoke(
-            app, ["convert", "20250110-use-postgresql", "--to", "y-statement", "--dry-run"]
+            app,
+            ["convert", "20250110-use-postgresql", "--to", "y-statement", "--dry-run"],
         )
         assert result.exit_code in [0, 1]
 
     def test_convert_to_alexandrian(self, adr_repo_with_data: Path) -> None:
         """Test converting to Alexandrian format."""
         result = runner.invoke(
-            app, ["convert", "20250110-use-postgresql", "--to", "alexandrian", "--dry-run"]
+            app,
+            ["convert", "20250110-use-postgresql", "--to", "alexandrian", "--dry-run"],
         )
         assert result.exit_code in [0, 1]
 
     def test_convert_nonexistent_adr(self, adr_repo_with_data: Path) -> None:
         """Test converting non-existent ADR."""
-        result = runner.invoke(
-            app, ["convert", "nonexistent-adr", "--to", "nygard"]
-        )
+        result = runner.invoke(app, ["convert", "nonexistent-adr", "--to", "nygard"])
         assert result.exit_code != 0

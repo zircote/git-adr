@@ -114,8 +114,7 @@ def run_attach(
             )
 
             console.print(
-                f"[green]Attached[/green] [cyan]{artifact.name}[/cyan] "
-                f"to ADR {adr_id}"
+                f"[green]Attached[/green] [cyan]{artifact.name}[/cyan] to ADR {adr_id}"
             )
             console.print(f"  SHA256: {artifact.sha256[:16]}...")
             console.print(f"  Size: {_format_size(artifact.size)}")

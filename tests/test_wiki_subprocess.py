@@ -6,7 +6,6 @@ Targets the uncovered subprocess code paths in wiki/service.py.
 from __future__ import annotations
 
 import subprocess
-import tempfile
 from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -239,9 +238,7 @@ class TestWikiSync:
 
     def test_sync_no_platform(self, mock_git: MagicMock) -> None:
         """Test sync without platform configured."""
-        mock_git.run.return_value = MagicMock(
-            stdout="", exit_code=1, success=False
-        )
+        mock_git.run.return_value = MagicMock(stdout="", exit_code=1, success=False)
 
         config = Config()
         service = WikiService(mock_git, config)
@@ -260,9 +257,7 @@ class TestWikiSync:
         with pytest.raises(WikiServiceError, match="Could not determine wiki URL"):
             service.sync([], direction="push")
 
-    def test_sync_dry_run(
-        self, mock_git: MagicMock, sample_adrs: list[ADR]
-    ) -> None:
+    def test_sync_dry_run(self, mock_git: MagicMock, sample_adrs: list[ADR]) -> None:
         """Test sync in dry run mode."""
         config = Config(wiki_platform="github")
         service = WikiService(mock_git, config)
@@ -563,9 +558,7 @@ class TestWikiPageGeneration:
         assert "| **Deciders**" not in page
         assert "| **Tags**" not in page
 
-    def test_generate_index_with_remaining_statuses(
-        self, mock_git: MagicMock
-    ) -> None:
+    def test_generate_index_with_remaining_statuses(self, mock_git: MagicMock) -> None:
         """Test index generation with non-priority statuses."""
         adrs = [
             ADR(
@@ -669,9 +662,7 @@ class TestWikiURL:
 class TestPlatformDetection:
     """Tests for platform detection."""
 
-    def test_detect_platform_gitlab_case_insensitive(
-        self, mock_git: MagicMock
-    ) -> None:
+    def test_detect_platform_gitlab_case_insensitive(self, mock_git: MagicMock) -> None:
         """Test GitLab detection is case insensitive."""
         mock_git.run.return_value = MagicMock(
             stdout="origin\thttps://GITLAB.example.com/user/repo.git",

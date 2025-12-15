@@ -31,7 +31,9 @@ class TestSEC001ArtifactGetPathTraversal:
     This is a WRITE operation, so paths must be restricted to cwd.
     """
 
-    def test_valid_output_in_cwd(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_valid_output_in_cwd(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Valid output path within current directory should be allowed."""
         monkeypatch.chdir(tmp_path)
 
@@ -43,14 +45,18 @@ class TestSEC001ArtifactGetPathTraversal:
         result = _validate_output_path("subdir/output.txt", "default.txt")
         assert result == tmp_path / "subdir" / "output.txt"
 
-    def test_default_name_when_output_none(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_default_name_when_output_none(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """When output is None, should use default_name in cwd."""
         monkeypatch.chdir(tmp_path)
 
         result = _validate_output_path(None, "artifact.png")
         assert result == tmp_path / "artifact.png"
 
-    def test_path_traversal_blocked_parent_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_path_traversal_blocked_parent_dir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Path traversal using .. should be blocked."""
         monkeypatch.chdir(tmp_path)
 
@@ -58,7 +64,9 @@ class TestSEC001ArtifactGetPathTraversal:
             _validate_output_path("../outside.txt", "default.txt")
         assert exc_info.value.exit_code == 1
 
-    def test_path_traversal_blocked_absolute_path(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_path_traversal_blocked_absolute_path(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Absolute path outside cwd should be blocked."""
         monkeypatch.chdir(tmp_path)
 
@@ -66,7 +74,9 @@ class TestSEC001ArtifactGetPathTraversal:
             _validate_output_path("/tmp/malicious.txt", "default.txt")
         assert exc_info.value.exit_code == 1
 
-    def test_path_traversal_blocked_deep_escape(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_path_traversal_blocked_deep_escape(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Deep path traversal attempts should be blocked."""
         monkeypatch.chdir(tmp_path)
 
@@ -75,7 +85,9 @@ class TestSEC001ArtifactGetPathTraversal:
             _validate_output_path("../../../../../../etc/passwd", "default.txt")
         assert exc_info.value.exit_code == 1
 
-    def test_path_traversal_blocked_mixed(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_path_traversal_blocked_mixed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Mixed path with subdir then escape should be blocked."""
         monkeypatch.chdir(tmp_path)
 
@@ -83,21 +95,27 @@ class TestSEC001ArtifactGetPathTraversal:
             _validate_output_path("subdir/../../outside.txt", "default.txt")
         assert exc_info.value.exit_code == 1
 
-    def test_valid_nested_subdirectory(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_valid_nested_subdirectory(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Nested subdirectories within cwd should be allowed."""
         monkeypatch.chdir(tmp_path)
 
         result = _validate_output_path("a/b/c/output.txt", "default.txt")
         assert result == tmp_path / "a" / "b" / "c" / "output.txt"
 
-    def test_dot_path_allowed(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_dot_path_allowed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Single dot path should be resolved correctly."""
         monkeypatch.chdir(tmp_path)
 
         result = _validate_output_path("./output.txt", "default.txt")
         assert result == tmp_path / "output.txt"
 
-    def test_write_to_home_directory_blocked(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_write_to_home_directory_blocked(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Attempting to write to home directory should be blocked."""
         monkeypatch.chdir(tmp_path)
 
@@ -115,7 +133,9 @@ class TestAttachInputValidation:
     from anywhere the user has read access.
     """
 
-    def test_valid_file_in_cwd(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_valid_file_in_cwd(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Valid file path within current directory should be allowed."""
         monkeypatch.chdir(tmp_path)
 
@@ -126,7 +146,9 @@ class TestAttachInputValidation:
         result = _validate_input_path("diagram.png")
         assert result == test_file
 
-    def test_valid_file_in_subdirectory(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_valid_file_in_subdirectory(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """File in subdirectory within cwd should be allowed."""
         monkeypatch.chdir(tmp_path)
 
@@ -139,7 +161,9 @@ class TestAttachInputValidation:
         result = _validate_input_path("images/diagram.png")
         assert result == test_file
 
-    def test_file_not_found_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_file_not_found_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Non-existent file should raise error."""
         monkeypatch.chdir(tmp_path)
 
@@ -147,7 +171,9 @@ class TestAttachInputValidation:
             _validate_input_path("nonexistent.txt")
         assert exc_info.value.exit_code == 1
 
-    def test_directory_not_file_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_directory_not_file_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Directory path should raise 'not a file' error."""
         monkeypatch.chdir(tmp_path)
 
@@ -158,7 +184,9 @@ class TestAttachInputValidation:
             _validate_input_path("subdir")
         assert exc_info.value.exit_code == 1
 
-    def test_file_outside_cwd_allowed(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_file_outside_cwd_allowed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Files outside cwd should be readable (user-initiated read operation)."""
         # Create a file in tmp_path
         outside_file = tmp_path / "external_file.png"
@@ -173,7 +201,9 @@ class TestAttachInputValidation:
         result = _validate_input_path(str(outside_file))
         assert result == outside_file
 
-    def test_expanduser_works(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_expanduser_works(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Tilde expansion should work for home directory paths."""
         monkeypatch.chdir(tmp_path)
 
@@ -196,7 +226,9 @@ class TestImportSourceValidation:
     anywhere the user has read access.
     """
 
-    def test_valid_file_in_cwd(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_valid_file_in_cwd(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Valid source file within current directory should be allowed."""
         monkeypatch.chdir(tmp_path)
 
@@ -207,7 +239,9 @@ class TestImportSourceValidation:
         result = _validate_source_path("adrs.json")
         assert result == test_file
 
-    def test_valid_directory_in_cwd(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_valid_directory_in_cwd(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Valid source directory within cwd should be allowed."""
         monkeypatch.chdir(tmp_path)
 
@@ -218,7 +252,9 @@ class TestImportSourceValidation:
         result = _validate_source_path("docs/adr")
         assert result == adr_dir
 
-    def test_source_not_found_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_source_not_found_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Non-existent source should raise error."""
         monkeypatch.chdir(tmp_path)
 
@@ -226,7 +262,9 @@ class TestImportSourceValidation:
             _validate_source_path("nonexistent")
         assert exc_info.value.exit_code == 1
 
-    def test_source_outside_cwd_allowed(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_source_outside_cwd_allowed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Sources outside cwd should be readable (user-initiated read operation)."""
         # Create a directory in tmp_path
         source_dir = tmp_path / "external_adrs"
@@ -241,7 +279,9 @@ class TestImportSourceValidation:
         result = _validate_source_path(str(source_dir))
         assert result == source_dir
 
-    def test_dot_path_allowed(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_dot_path_allowed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Current directory (.) should be allowed."""
         monkeypatch.chdir(tmp_path)
 
@@ -256,7 +296,9 @@ class TestSymlinkHandling:
     """
 
     @pytest.mark.skipif(os.name == "nt", reason="Symlinks require admin on Windows")
-    def test_symlink_escape_blocked_artifact_get(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_symlink_escape_blocked_artifact_get(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Symlink pointing outside cwd should be blocked for artifact-get (write)."""
         monkeypatch.chdir(tmp_path)
 
@@ -275,7 +317,9 @@ class TestSymlinkHandling:
             outside_dir.rmdir()
 
     @pytest.mark.skipif(os.name == "nt", reason="Symlinks require admin on Windows")
-    def test_symlink_within_cwd_allowed(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_symlink_within_cwd_allowed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Symlink pointing to location within cwd should be allowed for output."""
         monkeypatch.chdir(tmp_path)
 
@@ -293,7 +337,9 @@ class TestSymlinkHandling:
 class TestEdgeCases:
     """Test edge cases and boundary conditions."""
 
-    def test_empty_string_path_uses_default(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_empty_string_path_uses_default(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Empty string is falsy, so default_name should be used."""
         monkeypatch.chdir(tmp_path)
 
@@ -302,7 +348,9 @@ class TestEdgeCases:
         # Empty string uses the default path: cwd / default_name
         assert result == tmp_path / "default.txt"
 
-    def test_whitespace_path(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_whitespace_path(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Whitespace-only paths should be handled."""
         monkeypatch.chdir(tmp_path)
 
@@ -311,14 +359,18 @@ class TestEdgeCases:
         # Path normalizes whitespace in filename
         assert "file.txt" in str(result)
 
-    def test_unicode_filename(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_unicode_filename(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Unicode filenames should work."""
         monkeypatch.chdir(tmp_path)
 
         result = _validate_output_path("archivo.txt", "default.txt")
         assert result == tmp_path / "archivo.txt"
 
-    def test_special_characters_in_path(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_special_characters_in_path(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Special characters (except path separators) should work for input validation."""
         monkeypatch.chdir(tmp_path)
 
@@ -333,7 +385,9 @@ class TestEdgeCases:
 class TestSecurityIntegration:
     """Integration tests for realistic security scenarios."""
 
-    def test_null_byte_injection(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_null_byte_injection(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Null byte injection attempts should be safely handled."""
         monkeypatch.chdir(tmp_path)
 
@@ -345,7 +399,9 @@ class TestSecurityIntegration:
             # Any of these exceptions indicates the attack was blocked
             pass
 
-    def test_encoded_path_traversal(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_encoded_path_traversal(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """URL-encoded path traversal attempts should be handled.
 
         Python's Path doesn't decode URL encoding, so %2e%2e is treated

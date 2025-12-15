@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from git_adr.core.utils import ensure_list
 
 

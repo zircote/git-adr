@@ -6,19 +6,14 @@ Targets specific uncovered lines in new.py.
 from __future__ import annotations
 
 import subprocess
-import sys
-from datetime import date
-from io import StringIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
 from git_adr.core.config import Config
-from git_adr.core.git import Git, GitError
+from git_adr.core.git import GitError
 
 runner = CliRunner()
 
@@ -31,7 +26,7 @@ class TestNewNotInitialized:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["new", "Test ADR", "--no-edit"])
         assert result.exit_code == 1
@@ -147,7 +142,8 @@ Content.
 """)
 
         result = runner.invoke(
-            app, ["new", "Invalid Date Override", "--file", str(content_file), "--no-edit"]
+            app,
+            ["new", "Invalid Date Override", "--file", str(content_file), "--no-edit"],
         )
         # Should succeed using today's date
         assert result.exit_code == 0
@@ -219,9 +215,7 @@ class TestNewStdinInput:
     def test_new_stdin_empty_no_edit(self, adr_repo_with_data: Path) -> None:
         """Test new with empty stdin and --no-edit (lines 295-296)."""
         # This test simulates stdin with empty content
-        result = runner.invoke(
-            app, ["new", "Stdin Empty Test", "--no-edit"], input=""
-        )
+        result = runner.invoke(app, ["new", "Stdin Empty Test", "--no-edit"], input="")
         # Should error because no content and no-edit specified
         assert result.exit_code in [0, 1]
 
@@ -242,9 +236,7 @@ Use stdin.
 None.
 """
         # Use CliRunner's input parameter to simulate stdin
-        result = runner.invoke(
-            app, ["new", "Stdin Test", "--no-edit"], input=content
-        )
+        result = runner.invoke(app, ["new", "Stdin Test", "--no-edit"], input=content)
         # May succeed or not depending on stdin handling
         assert result.exit_code in [0, 1]
 
@@ -294,8 +286,9 @@ class TestFindEditorAdvanced:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test _find_editor with config.editor containing spaces (line 385)."""
-        from git_adr.commands.new import _find_editor
         import os
+
+        from git_adr.commands.new import _find_editor
 
         old_editor = os.environ.pop("EDITOR", None)
         old_visual = os.environ.pop("VISUAL", None)
@@ -318,8 +311,9 @@ class TestFindEditorAdvanced:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test _find_editor uses VISUAL environment variable."""
-        from git_adr.commands.new import _find_editor
         import os
+
+        from git_adr.commands.new import _find_editor
 
         old_editor = os.environ.pop("EDITOR", None)
         old_visual = os.environ.pop("VISUAL", None)
@@ -342,8 +336,9 @@ class TestFindEditorAdvanced:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test _find_editor when EDITOR is set but not found (lines 391-392)."""
-        from git_adr.commands.new import _find_editor
         import os
+
+        from git_adr.commands.new import _find_editor
 
         old_editor = os.environ.pop("EDITOR", None)
         old_visual = os.environ.pop("VISUAL", None)
@@ -422,9 +417,7 @@ class TestNewPreview:
 
     def test_new_preview_mode(self, adr_repo_with_data: Path) -> None:
         """Test new with --preview flag."""
-        result = runner.invoke(
-            app, ["new", "Preview Test", "--preview"]
-        )
+        result = runner.invoke(app, ["new", "Preview Test", "--preview"])
         assert result.exit_code == 0
         # Should show preview
         assert "preview" in result.output.lower() or "#" in result.output
@@ -452,7 +445,16 @@ Test decision.
 Test consequences.
 """)
         result = runner.invoke(
-            app, ["new", "Nygard Test", "--template", "nygard", "--file", str(content_file), "--no-edit"]
+            app,
+            [
+                "new",
+                "Nygard Test",
+                "--template",
+                "nygard",
+                "--file",
+                str(content_file),
+                "--no-edit",
+            ],
         )
         assert result.exit_code == 0
 
@@ -474,7 +476,16 @@ Test decision.
 Test consequences.
 """)
         result = runner.invoke(
-            app, ["new", "MADR Test", "--template", "madr", "--file", str(content_file), "--no-edit"]
+            app,
+            [
+                "new",
+                "MADR Test",
+                "--template",
+                "madr",
+                "--file",
+                str(content_file),
+                "--no-edit",
+            ],
         )
         assert result.exit_code == 0
 
@@ -483,7 +494,16 @@ Test consequences.
         content_file = adr_repo_with_data / "invalid-template-content.md"
         content_file.write_text("# Test\n\nContent.")
         result = runner.invoke(
-            app, ["new", "Invalid Template", "--template", "nonexistent-template", "--file", str(content_file), "--no-edit"]
+            app,
+            [
+                "new",
+                "Invalid Template",
+                "--template",
+                "nonexistent-template",
+                "--file",
+                str(content_file),
+                "--no-edit",
+            ],
         )
         assert result.exit_code == 1
         assert "error" in result.output.lower()
@@ -510,7 +530,8 @@ Test decision.
 Test consequences.
 """)
         result = runner.invoke(
-            app, ["new", "Draft Test", "--draft", "--file", str(content_file), "--no-edit"]
+            app,
+            ["new", "Draft Test", "--draft", "--file", str(content_file), "--no-edit"],
         )
         assert result.exit_code == 0
         assert "draft" in result.output.lower()
@@ -534,7 +555,14 @@ class TestNewFileNotFound:
     def test_new_file_not_found(self, adr_repo_with_data: Path) -> None:
         """Test new with non-existent file (lines 273-275)."""
         result = runner.invoke(
-            app, ["new", "File Not Found", "--file", "/nonexistent/path/file.md", "--no-edit"]
+            app,
+            [
+                "new",
+                "File Not Found",
+                "--file",
+                "/nonexistent/path/file.md",
+                "--no-edit",
+            ],
         )
         assert result.exit_code == 1
         assert "not found" in result.output.lower() or "error" in result.output.lower()

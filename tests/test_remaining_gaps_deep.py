@@ -10,13 +10,12 @@ from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
 from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
-from git_adr.core.git import Git, GitError
+from git_adr.core.config import ConfigManager
+from git_adr.core.git import Git
 from git_adr.core.templates import TemplateEngine
 
 runner = CliRunner()
@@ -44,7 +43,7 @@ class TestAIAskCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["ai", "ask", "What databases do we use?"])
         assert result.exit_code == 1
@@ -116,7 +115,7 @@ class TestAISuggestCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["ai", "suggest", "some-adr"])
         assert result.exit_code == 1
@@ -171,9 +170,10 @@ class TestConfigCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
         subprocess.run(
             ["git", "commit", "--allow-empty", "-m", "Initial"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
@@ -348,7 +348,7 @@ class TestAttachCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["attach", "some-adr", "file.pdf"])
         assert result.exit_code == 1
@@ -360,7 +360,10 @@ class TestAttachCommand:
             app, ["attach", "20250110-use-postgresql", "/nonexistent/file.pdf"]
         )
         assert result.exit_code == 1
-        assert "not found" in result.output.lower() or "does not exist" in result.output.lower()
+        assert (
+            "not found" in result.output.lower()
+            or "does not exist" in result.output.lower()
+        )
 
     def test_attach_success(self, adr_repo_with_data: Path) -> None:
         """Test successful attachment."""
@@ -388,9 +391,7 @@ class TestSupersedeCommand:
         import os
 
         os.chdir(tmp_path)
-        result = runner.invoke(
-            app, ["supersede", "some-adr", "New Title"]
-        )
+        result = runner.invoke(app, ["supersede", "some-adr", "New Title"])
         assert result.exit_code == 1
         assert "not a git repository" in result.output.lower()
 
@@ -399,19 +400,15 @@ class TestSupersedeCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
-        result = runner.invoke(
-            app, ["supersede", "some-adr", "New Title"]
-        )
+        result = runner.invoke(app, ["supersede", "some-adr", "New Title"])
         assert result.exit_code == 1
         assert "init" in result.output.lower()
 
     def test_supersede_adr_not_found(self, adr_repo_with_data: Path) -> None:
         """Test supersede with non-existent ADR."""
-        result = runner.invoke(
-            app, ["supersede", "nonexistent-adr", "New Title"]
-        )
+        result = runner.invoke(app, ["supersede", "nonexistent-adr", "New Title"])
         assert result.exit_code == 1
         assert "not found" in result.output.lower()
 
@@ -453,19 +450,22 @@ class TestInitCommand:
         """Test init in fresh git repo."""
         import os
 
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
         subprocess.run(
             ["git", "config", "user.email", "test@example.com"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         subprocess.run(
             ["git", "config", "user.name", "Test User"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         subprocess.run(
             ["git", "commit", "--allow-empty", "-m", "Initial"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
@@ -498,7 +498,7 @@ class TestLinkCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["link", "some-adr", "abc123"])
         assert result.exit_code == 1
@@ -541,7 +541,7 @@ class TestStatsCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["stats"])
         assert result.exit_code == 1
@@ -580,7 +580,7 @@ class TestSearchCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["search", "database"])
         assert result.exit_code == 1

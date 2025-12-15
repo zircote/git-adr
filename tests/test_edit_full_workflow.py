@@ -5,20 +5,14 @@ Targets lines 187-233 in edit.py: the full editor workflow.
 
 from __future__ import annotations
 
-import subprocess
-import tempfile
-from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
+from git_adr.core.config import Config
 from git_adr.core.git import Git
-from git_adr.core.notes import NotesManager
 
 runner = CliRunner()
 
@@ -170,8 +164,9 @@ class TestEditorCommand:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test _find_editor uses environment variable."""
-        from git_adr.commands.new import _find_editor
         import os
+
+        from git_adr.commands.new import _find_editor
 
         # Mock shutil.which to return the editor we set
         mock_which.side_effect = lambda x: x if x in ["code", "vim"] else None
@@ -198,8 +193,9 @@ class TestEditorCommand:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test _find_editor uses config."""
-        from git_adr.commands.new import _find_editor
         import os
+
+        from git_adr.commands.new import _find_editor
 
         # Mock shutil.which to return nvim
         mock_which.side_effect = lambda x: x if x in ["nvim", "vim"] else None

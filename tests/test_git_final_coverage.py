@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import subprocess as sp
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -60,6 +60,7 @@ class TestGitRemoteOperations:
         # Add a remote
         sp.run(
             ["git", "remote", "add", "test-remote", "https://example.com/repo.git"],
+            check=False,
             cwd=adr_repo_with_data,
             capture_output=True,
         )
@@ -68,6 +69,7 @@ class TestGitRemoteOperations:
         # Clean up
         sp.run(
             ["git", "remote", "remove", "test-remote"],
+            check=False,
             cwd=adr_repo_with_data,
             capture_output=True,
         )
@@ -79,17 +81,32 @@ class TestGitBranchOperations:
     def test_get_current_branch_detached(self, adr_repo_with_data: Path) -> None:
         """Test get_current_branch returns None when detached (line 362)."""
         git = Git(cwd=adr_repo_with_data)
-        head = git.get_head_commit()
+        git.get_head_commit()
         # Detach HEAD
-        sp.run(["git", "checkout", "--detach"], cwd=adr_repo_with_data, capture_output=True)
+        sp.run(
+            ["git", "checkout", "--detach"],
+            check=False,
+            cwd=adr_repo_with_data,
+            capture_output=True,
+        )
         try:
             branch = git.get_current_branch()
             # Should return None in detached state
             assert branch is None
         finally:
             # Re-attach
-            sp.run(["git", "checkout", "main"], cwd=adr_repo_with_data, capture_output=True, check=False)
-            sp.run(["git", "checkout", "master"], cwd=adr_repo_with_data, capture_output=True, check=False)
+            sp.run(
+                ["git", "checkout", "main"],
+                cwd=adr_repo_with_data,
+                capture_output=True,
+                check=False,
+            )
+            sp.run(
+                ["git", "checkout", "master"],
+                cwd=adr_repo_with_data,
+                capture_output=True,
+                check=False,
+            )
 
 
 class TestGitNotesOperations:
@@ -101,18 +118,30 @@ class TestGitNotesOperations:
 
         # Create two commits to copy between
         (adr_repo_with_data / "copy-test.txt").write_text("test")
-        sp.run(["git", "add", "copy-test.txt"], cwd=adr_repo_with_data, capture_output=True)
+        sp.run(
+            ["git", "add", "copy-test.txt"],
+            check=False,
+            cwd=adr_repo_with_data,
+            capture_output=True,
+        )
         sp.run(
             ["git", "commit", "-m", "For copy test"],
+            check=False,
             cwd=adr_repo_with_data,
             capture_output=True,
         )
         commit1 = git.get_head_commit()
 
         (adr_repo_with_data / "copy-test2.txt").write_text("test2")
-        sp.run(["git", "add", "copy-test2.txt"], cwd=adr_repo_with_data, capture_output=True)
+        sp.run(
+            ["git", "add", "copy-test2.txt"],
+            check=False,
+            cwd=adr_repo_with_data,
+            capture_output=True,
+        )
         sp.run(
             ["git", "commit", "-m", "For copy test 2"],
+            check=False,
             cwd=adr_repo_with_data,
             capture_output=True,
         )
@@ -139,7 +168,9 @@ class TestGitNotesOperations:
         git.notes_add("Note 2", head, "refs/notes/merge-test-2")
 
         # Merge notes
-        git.notes_merge("refs/notes/merge-test-1", "refs/notes/merge-test-2", strategy="union")
+        git.notes_merge(
+            "refs/notes/merge-test-1", "refs/notes/merge-test-2", strategy="union"
+        )
 
 
 class TestGitFetchPush:
@@ -151,20 +182,32 @@ class TestGitFetchPush:
 
         # Add a remote
         sp.run(
-            ["git", "remote", "add", "fetch-test", "https://github.com/example/repo.git"],
+            [
+                "git",
+                "remote",
+                "add",
+                "fetch-test",
+                "https://github.com/example/repo.git",
+            ],
+            check=False,
             cwd=adr_repo_with_data,
             capture_output=True,
         )
 
         try:
             # Fetch with refspec and prune - may fail but exercises the code
-            git.fetch("fetch-test", refspec="refs/heads/main:refs/remotes/fetch-test/main", prune=True)
+            git.fetch(
+                "fetch-test",
+                refspec="refs/heads/main:refs/remotes/fetch-test/main",
+                prune=True,
+            )
         except GitError:
             # Expected to fail since remote doesn't exist
             pass
         finally:
             sp.run(
                 ["git", "remote", "remove", "fetch-test"],
+                check=False,
                 cwd=adr_repo_with_data,
                 capture_output=True,
             )
@@ -175,7 +218,14 @@ class TestGitFetchPush:
 
         # Add a remote
         sp.run(
-            ["git", "remote", "add", "push-test", "https://github.com/example/repo.git"],
+            [
+                "git",
+                "remote",
+                "add",
+                "push-test",
+                "https://github.com/example/repo.git",
+            ],
+            check=False,
             cwd=adr_repo_with_data,
             capture_output=True,
         )
@@ -189,6 +239,7 @@ class TestGitFetchPush:
         finally:
             sp.run(
                 ["git", "remote", "remove", "push-test"],
+                check=False,
                 cwd=adr_repo_with_data,
                 capture_output=True,
             )
@@ -255,25 +306,30 @@ class TestInitRemainingGaps:
     def test_init_with_remotes_for_coverage(self, tmp_path: Path) -> None:
         """Test init with remotes for better coverage (lines 87-88)."""
         import os
+
         from typer.testing import CliRunner
+
         from git_adr.cli import app
 
         runner = CliRunner()
 
         os.chdir(tmp_path)
-        sp.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        sp.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
         sp.run(
             ["git", "config", "user.email", "test@test.com"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "config", "user.name", "Test User"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "commit", "--allow-empty", "-m", "Initial"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
@@ -281,6 +337,7 @@ class TestInitRemainingGaps:
         # Add a real remote URL (won't work for push but valid for init)
         sp.run(
             ["git", "remote", "add", "origin", "git@github.com:example/test.git"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
@@ -289,7 +346,10 @@ class TestInitRemainingGaps:
         # Should configure notes sync
         assert result.exit_code in [0, 1]
         if result.exit_code == 0:
-            assert "configuring" in result.output.lower() or "sync" in result.output.lower()
+            assert (
+                "configuring" in result.output.lower()
+                or "sync" in result.output.lower()
+            )
 
 
 class TestAIAskRemainingGaps:
@@ -297,12 +357,14 @@ class TestAIAskRemainingGaps:
 
     def test_ai_ask_filter_includes_tag_match(self, adr_repo_with_data: Path) -> None:
         """Test ai ask properly filters by tag (lines 79-84)."""
+        from datetime import date
+
         from typer.testing import CliRunner
+
         from git_adr.cli import app
+        from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
         from git_adr.core.config import ConfigManager
         from git_adr.core.notes import NotesManager
-        from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-        from datetime import date
 
         runner = CliRunner()
 

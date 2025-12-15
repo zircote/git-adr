@@ -5,18 +5,14 @@ Covers artifact commands, attach, link, import, and other edge cases.
 
 from __future__ import annotations
 
-from datetime import date
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
+from git_adr.core.config import Config
 from git_adr.core.git import Git
-from git_adr.core.notes import NotesManager
 
 runner = CliRunner()
 
@@ -49,9 +45,7 @@ class TestArtifactsCommand:
 class TestAttachCommand:
     """Tests for attach command."""
 
-    def test_attach_file(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_attach_file(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test attaching a file to an ADR."""
         # Create a test file
         test_file = tmp_path / "diagram.png"
@@ -86,9 +80,7 @@ class TestAttachCommand:
         result = runner.invoke(app, ["attach", "nonexistent-adr", str(test_file)])
         assert result.exit_code != 0
 
-    def test_attach_not_initialized(
-        self, temp_git_repo: Path, tmp_path: Path
-    ) -> None:
+    def test_attach_not_initialized(self, temp_git_repo: Path, tmp_path: Path) -> None:
         """Test attach in non-initialized repo."""
         test_file = tmp_path / "test.txt"
         test_file.write_bytes(b"test")
@@ -138,16 +130,12 @@ class TestLinkCommand:
         git = Git(cwd=adr_repo_with_data)
         head = git.get_head_commit()
 
-        result = runner.invoke(
-            app, ["link", "20250110-use-postgresql", head]
-        )
+        result = runner.invoke(app, ["link", "20250110-use-postgresql", head])
         assert result.exit_code in [0, 1]
 
     def test_link_nonexistent_commit(self, adr_repo_with_data: Path) -> None:
         """Test linking non-existent commit."""
-        result = runner.invoke(
-            app, ["link", "20250110-use-postgresql", "0" * 40]
-        )
+        result = runner.invoke(app, ["link", "20250110-use-postgresql", "0" * 40])
         # Should handle gracefully
         assert result.exit_code in [0, 1]
 
@@ -205,18 +193,16 @@ Good things.
         result = runner.invoke(app, ["import", str(adr_file)])
         assert result.exit_code in [0, 1]
 
-    def test_import_directory(
-        self, initialized_adr_repo: Path, tmp_path: Path
-    ) -> None:
+    def test_import_directory(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
         """Test importing a directory of ADRs."""
         adr_dir = tmp_path / "adrs"
         adr_dir.mkdir()
 
         for i in range(3):
-            adr_file = adr_dir / f"000{i+1}-decision-{i}.md"
+            adr_file = adr_dir / f"000{i + 1}-decision-{i}.md"
             adr_file.write_text(f"""---
 title: Decision {i}
-date: 2025-01-{10+i}
+date: 2025-01-{10 + i}
 status: proposed
 ---
 
@@ -232,9 +218,7 @@ Decision {i}.
         result = runner.invoke(app, ["import", str(adr_dir)])
         assert result.exit_code in [0, 1]
 
-    def test_import_dry_run(
-        self, initialized_adr_repo: Path, tmp_path: Path
-    ) -> None:
+    def test_import_dry_run(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
         """Test import with dry-run flag."""
         adr_file = tmp_path / "test.md"
         adr_file.write_text("""# Test
@@ -275,9 +259,7 @@ Decision here.
 Consequences here.
 """)
 
-        result = runner.invoke(
-            app, ["import", str(adr_file), "--format", "nygard"]
-        )
+        result = runner.invoke(app, ["import", str(adr_file), "--format", "nygard"])
         assert result.exit_code in [0, 1]
 
     def test_import_nonexistent_path(self, initialized_adr_repo: Path) -> None:
@@ -347,9 +329,7 @@ class TestConfigCommandExtended:
 class TestExportCommandExtended:
     """Extended tests for export command."""
 
-    def test_export_json(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_export_json(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test exporting to JSON."""
         output = tmp_path / "adrs.json"
         result = runner.invoke(
@@ -358,9 +338,7 @@ class TestExportCommandExtended:
         assert result.exit_code == 0
         assert output.exists()
 
-    def test_export_markdown(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_export_markdown(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test exporting to markdown."""
         output = tmp_path / "adrs.md"
         result = runner.invoke(
@@ -368,9 +346,7 @@ class TestExportCommandExtended:
         )
         assert result.exit_code == 0
 
-    def test_export_html(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_export_html(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test exporting to HTML."""
         output = tmp_path / "adrs.html"
         result = runner.invoke(
@@ -378,9 +354,7 @@ class TestExportCommandExtended:
         )
         assert result.exit_code == 0
 
-    def test_export_csv(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_export_csv(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test exporting to CSV."""
         output = tmp_path / "adrs.csv"
         result = runner.invoke(
@@ -388,9 +362,7 @@ class TestExportCommandExtended:
         )
         assert result.exit_code == 0
 
-    def test_export_docx(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_export_docx(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test exporting to DOCX (may require optional dep)."""
         output = tmp_path / "adrs.docx"
         result = runner.invoke(

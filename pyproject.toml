@@ -120,7 +120,7 @@ ignore = [
 known-first-party = ["git_adr"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "ARG001", "PLR2004", "PLC0415"]
+"tests/**/*.py" = ["S101", "ARG001", "ARG005", "PLR2004", "PLC0415", "S108", "SIM105", "PTH108", "PTH110", "PTH111"]
 
 # mypy Configuration (Strict)
 [tool.mypy]
