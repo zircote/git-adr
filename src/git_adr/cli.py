@@ -1151,29 +1151,64 @@ def completion(
         err_console.print(f"Valid shells: {', '.join(valid_shells)}")
         raise typer.Exit(1)
 
-    # Use Typer's built-in completion script generation
-    from typer.completion import get_completion_script
-
     prog_name = "git-adr"
-    env_var = f"_{prog_name.upper().replace('-', '_')}_COMPLETE"
+    env_var = "_GIT_ADR_COMPLETE"
 
-    # S604: False positive - 'shell' is shell type (bash/zsh), not subprocess shell param
     if shell == "bash":
-        script = get_completion_script(  # noqa: S604
-            prog_name=prog_name, complete_var=env_var, shell="bash"
-        )
+        # Custom bash completion that supports both 'git-adr' and 'git adr'
+        script = '''# git-adr bash completion
+_git_adr_completion() {
+    local IFS=$'\\n'
+    COMPREPLY=( $( env COMP_WORDS="${COMP_WORDS[*]}" \\
+                   COMP_CWORD=$COMP_CWORD \\
+                   _GIT_ADR_COMPLETE=complete_bash git-adr ) )
+    return 0
+}
+
+# Register for direct command
+complete -o default -F _git_adr_completion git-adr
+
+# Register for git subcommand (git adr)
+_git_adr() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local commands="init new list show edit search link supersede log sync config convert attach artifacts artifact-get artifact-rm stats report metrics onboard export import completion ai wiki"
+
+    if [[ ${COMP_CWORD} -eq 2 ]]; then
+        COMPREPLY=( $(compgen -W "${commands}" -- "${cur}") )
+    else
+        local IFS=$'\\n'
+        local words=("git-adr" "${COMP_WORDS[@]:2}")
+        local cword=$((COMP_CWORD - 1))
+        COMPREPLY=( $( env COMP_WORDS="${words[*]}" \\
+                       COMP_CWORD=$cword \\
+                       _GIT_ADR_COMPLETE=complete_bash git-adr ) )
+    fi
+}
+
+# Hook into git completion for 'git adr'
+if type __git_complete &>/dev/null; then
+    __git_complete adr _git_adr
+fi
+'''
         config_file = "~/.bashrc"
     elif shell == "zsh":
+        # Use Typer's built-in for zsh
+        from typer.completion import get_completion_script
+
         script = get_completion_script(  # noqa: S604
             prog_name=prog_name, complete_var=env_var, shell="zsh"
         )
         config_file = "~/.zshrc"
     elif shell == "fish":
+        from typer.completion import get_completion_script
+
         script = get_completion_script(  # noqa: S604
             prog_name=prog_name, complete_var=env_var, shell="fish"
         )
         config_file = "~/.config/fish/completions/git-adr.fish"
     else:  # powershell
+        from typer.completion import get_completion_script
+
         script = get_completion_script(  # noqa: S604
             prog_name=prog_name, complete_var=env_var, shell="powershell"
         )
