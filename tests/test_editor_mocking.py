@@ -34,7 +34,9 @@ class TestNewCommandEditor:
             "## Context\n\nMocked context.\n\n## Decision\n\nMocked decision."
         )
 
-        result = runner.invoke(app, ["new", "Editor Test Decision"])
+        result = runner.invoke(
+            app, ["new", "Editor Test Decision", "--deciders", "Test User"]
+        )
         assert result.exit_code == 0
         assert "Created ADR" in result.output
 
@@ -503,6 +505,8 @@ class TestDraftMode:
                 "--file",
                 str(content_file),
                 "--no-edit",
+                "--deciders",
+                "Test User",
             ],
         )
         assert result.exit_code == 0

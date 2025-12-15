@@ -106,7 +106,17 @@ class TestNewCommand:
 
     def test_new_with_stdin(self, initialized_adr_repo: Path) -> None:
         """Test creating new ADR from stdin."""
-        content = "## Context\n\nTest context.\n\n## Decision\n\nTest decision."
+        content = """---
+deciders:
+  - Test User
+---
+## Context
+
+Test context.
+
+## Decision
+
+Test decision."""
 
         result = runner.invoke(
             app,

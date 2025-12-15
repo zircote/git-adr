@@ -6,6 +6,7 @@ Displays a single ADR with formatting and syntax highlighting.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import typer
@@ -29,6 +30,7 @@ def run_show(
     adr_id: str,
     format_: str = "markdown",
     metadata_only: bool = False,
+    interactive: bool = True,
 ) -> None:
     """Display a single ADR.
 
@@ -36,6 +38,7 @@ def run_show(
         adr_id: ADR ID to display.
         format_: Output format (markdown, yaml, json).
         metadata_only: Show only metadata.
+        interactive: Allow interactive prompts (e.g., to add missing deciders).
 
     Raises:
         typer.Exit: On error.
@@ -65,6 +68,15 @@ def run_show(
         if adr is None:
             err_console.print(f"[red]Error:[/red] ADR not found: {adr_id}")
             raise typer.Exit(1)
+
+        # Check for missing deciders and prompt if interactive
+        if (
+            interactive
+            and format_ == "markdown"
+            and not adr.metadata.deciders
+            and sys.stdin.isatty()
+        ):
+            adr = _prompt_for_deciders(adr, notes_manager)
 
         # Output based on format
         if format_ == "markdown":
@@ -97,6 +109,14 @@ def _output_markdown(adr, metadata_only: bool) -> None:
         f"Date: {adr.metadata.date.isoformat()}",
         f"Status: {_format_status(adr.metadata.status)}",
     ]
+
+    # Stakeholder metadata (RACI-inspired)
+    if adr.metadata.deciders:
+        header_content.append(f"Deciders: {', '.join(adr.metadata.deciders)}")
+    if adr.metadata.consulted:
+        header_content.append(f"Consulted: {', '.join(adr.metadata.consulted)}")
+    if adr.metadata.informed:
+        header_content.append(f"Informed: {', '.join(adr.metadata.informed)}")
 
     if adr.metadata.tags:
         header_content.append(f"Tags: {', '.join(adr.metadata.tags)}")
@@ -171,3 +191,52 @@ def _format_status(status) -> str:
     }
     style = styles.get(status, "default")
     return f"[{style}]{status.value}[/{style}]"
+
+
+def _prompt_for_deciders(adr, notes_manager: NotesManager):
+    """Prompt user to add deciders to an ADR missing them.
+
+    Args:
+        adr: ADR with missing deciders.
+        notes_manager: NotesManager for saving updates.
+
+    Returns:
+        Updated ADR (or original if user declines).
+    """
+    from dataclasses import replace
+
+    from git_adr.core import ADR
+
+    console.print()
+    console.print("[yellow]⚠ This ADR has no deciders recorded.[/yellow]")
+
+    if not typer.confirm("Would you like to add deciders now?", default=False):
+        return adr
+
+    deciders_input = typer.prompt(
+        "Enter deciders (comma-separated)",
+        default="",
+    )
+
+    if not deciders_input.strip():
+        console.print("[dim]No deciders added.[/dim]")
+        return adr
+
+    # Parse comma-separated deciders
+    deciders = [d.strip() for d in deciders_input.split(",") if d.strip()]
+
+    if not deciders:
+        console.print("[dim]No valid deciders provided.[/dim]")
+        return adr
+
+    # Update ADR metadata
+    updated_metadata = replace(adr.metadata, deciders=deciders)
+    updated_adr = ADR(metadata=updated_metadata, content=adr.content)
+
+    # Save to git notes
+    notes_manager.update(updated_adr)
+
+    console.print(f"[green]✓[/green] Added deciders: {', '.join(deciders)}")
+    console.print()
+
+    return updated_adr

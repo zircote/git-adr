@@ -387,12 +387,22 @@ Some consequences.
 """)
 
         result = runner.invoke(
-            app, ["new", "Test from File", "--file", str(content_file), "--no-edit"]
+            app,
+            [
+                "new",
+                "Test from File",
+                "--file",
+                str(content_file),
+                "--no-edit",
+                "--deciders",
+                "Test User",
+            ],
         )
         assert result.exit_code == 0 or "created" in result.output.lower()
 
     def test_new_draft_mode(self, initialized_adr_repo: Path) -> None:
         """Test creating ADR in draft mode."""
+        # Preview mode doesn't create ADR, so no deciders required
         result = runner.invoke(
             app, ["new", "Draft ADR", "--draft", "--no-edit", "--preview"]
         )

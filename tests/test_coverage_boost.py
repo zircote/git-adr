@@ -114,7 +114,15 @@ class TestNewCommandCoverage:
         )
         result = runner.invoke(
             app,
-            ["new", "File Decision", "--file", str(content_file), "--no-edit"],
+            [
+                "new",
+                "File Decision",
+                "--file",
+                str(content_file),
+                "--no-edit",
+                "--deciders",
+                "Test User",
+            ],
         )
         assert result.exit_code == 0
 

@@ -210,6 +210,8 @@ Chose Option A.
                 "File Input Decision",
                 "--file",
                 str(content_file),
+                "--deciders",
+                "Test User",
             ],
         )
         assert result.exit_code == 0
@@ -241,6 +243,8 @@ Use tags.
                 "testing",
                 "--tag",
                 "coverage",
+                "--deciders",
+                "Test User",
             ],
         )
         assert result.exit_code == 0
@@ -265,6 +269,8 @@ TBD.
                 "--file",
                 str(content_file),
                 "--draft",
+                "--deciders",
+                "Test User",
             ],
         )
         assert result.exit_code == 0
