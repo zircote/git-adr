@@ -46,6 +46,43 @@ pip install "git-adr[export]"
 pip install "git-adr[all]"
 ```
 
+### Shell Completion
+
+Enable tab completion for your shell:
+
+```bash
+# Automatic installation (detects your shell)
+git-adr --install-completion
+
+# Or manually for specific shells
+git-adr --show-completion bash >> ~/.bashrc
+git-adr --show-completion zsh >> ~/.zshrc
+git-adr --show-completion fish > ~/.config/fish/completions/git-adr.fish
+```
+
+### Man Pages
+
+Man pages are included in [GitHub releases](https://github.com/zircote/git-adr/releases).
+Download and install:
+
+```bash
+# Download from release (replace VERSION)
+curl -L https://github.com/zircote/git-adr/releases/download/vVERSION/git-adr-man-pages-VERSION.tar.gz | \
+  sudo tar -xzf - -C /usr/local/share/man/
+
+# Then use
+man git-adr
+man git-adr-new
+```
+
+Or build from source:
+
+```bash
+git clone https://github.com/zircote/git-adr.git
+cd git-adr
+make install-man  # Requires pandoc
+```
+
 ## Quick Start
 
 ```bash
