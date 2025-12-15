@@ -343,6 +343,30 @@ def edit(
 
 
 @app.command()
+def rm(
+    adr_id: Annotated[str, typer.Argument(help="ADR ID to remove.")],
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force",
+            "-f",
+            help="Skip confirmation prompt.",
+        ),
+    ] = False,
+) -> None:
+    """Remove an ADR from git notes.
+
+    Permanently removes the specified ADR from storage. This action
+    cannot be undone (though the ADR may be recoverable from git reflog).
+
+    Use --force to skip the confirmation prompt.
+    """
+    from git_adr.commands.rm import run_rm
+
+    run_rm(adr_id=adr_id, force=force)
+
+
+@app.command()
 def search(
     query: Annotated[str, typer.Argument(help="Search query.")],
     status: Annotated[
@@ -1171,7 +1195,7 @@ complete -o default -F _git_adr_completion git-adr
 # Register for git subcommand (git adr)
 _git_adr() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
-    local commands="init new list show edit search link supersede log sync config convert attach artifacts artifact-get artifact-rm stats report metrics onboard export import completion ai wiki"
+    local commands="init new list show edit rm search link supersede log sync config convert attach artifacts artifact-get artifact-rm stats report metrics onboard export import completion ai wiki"
 
     if [[ ${COMP_CWORD} -eq 2 ]]; then
         COMPREPLY=( $(compgen -W "${commands}" -- "${cur}") )
