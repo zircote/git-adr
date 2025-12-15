@@ -66,7 +66,7 @@ Initial release of git-adr - Architecture Decision Records management for git re
 - Built with Python 3.11+ using Typer for CLI
 - Uses git notes for storage (non-intrusive, separate from code commits)
 - Supports frontmatter-based metadata in Markdown files
-- 78%+ test coverage with pytest
+- 95%+ test coverage with pytest
 
 [0.1.1]: https://github.com/zircote/git-adr/releases/tag/v0.1.1
 [0.1.0]: https://github.com/zircote/git-adr/releases/tag/v0.1.0

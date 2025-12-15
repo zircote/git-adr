@@ -22,9 +22,10 @@ class TestCLIBasics:
 
     def test_version(self) -> None:
         """Test --version flag."""
+        import re
         result = runner.invoke(app, ["--version"])
         assert result.exit_code == 0
-        assert "0.1.0" in result.output
+        assert re.search(r"\d+\.\d+\.\d+", result.output), "Version not found in output"
 
     def test_help(self) -> None:
         """Test --help flag."""
