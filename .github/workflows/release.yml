@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.1.1)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -24,16 +30,23 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
 
-      - name: Update version from tag
+      - name: Update version from tag or input
         env:
           REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          VERSION="${REF_NAME#v}"
+          # Use input version for workflow_dispatch, or extract from tag
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION="${REF_NAME#v}"
+          fi
           echo "Setting version to ${VERSION}"
           sed -i "s/^version = .*/version = \"${VERSION}\"/" pyproject.toml
           sed -i "s/__version__ = .*/__version__ = \"${VERSION}\"/" src/git_adr/__init__.py
           grep "^version" pyproject.toml
           grep "__version__" src/git_adr/__init__.py
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Build package
         run: uv build
