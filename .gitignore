@@ -62,6 +62,9 @@ Thumbs.db
 .env.local
 *.local
 
+# Claude Code prompt logs
+.prompt-log.json
+
 # Distribution and build artifacts
 *.tar.gz
 *.whl
