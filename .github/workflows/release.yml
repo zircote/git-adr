@@ -296,21 +296,108 @@ jobs:
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           path: homebrew-tap
 
-      - name: Update formula
+      - name: Generate formula
         env:
           VERSION: ${{ steps.pypi.outputs.version }}
           SHA256: ${{ steps.pypi.outputs.sha256 }}
           URL: ${{ steps.pypi.outputs.url }}
         run: |
           cd homebrew-tap
-          echo "Updating formula with URL: ${URL}"
-          echo "SHA256: ${SHA256}"
-          sed -i 's|url ".*"|url "'"${URL}"'"|' Formula/git-adr.rb
-          sed -i 's|sha256 ".*"|sha256 "'"${SHA256}"'"|' Formula/git-adr.rb
-          sed -i '/# NOTE: Update to PyPI URL/d' Formula/git-adr.rb
-          sed -i '/# url "https:\/\/files.pythonhosted.org/d' Formula/git-adr.rb
-          echo "Updated formula:"
-          grep -E "url|sha256" Formula/git-adr.rb | head -4
+
+          # Function to get PyPI sdist info for a package
+          get_pypi_info() {
+            local pkg=$1
+            local json=$(curl -sf "https://pypi.org/pypi/${pkg}/json")
+            local url=$(echo "$json" | jq -r '.urls[] | select(.packagetype=="sdist") | .url' | head -1)
+            local sha=$(echo "$json" | jq -r '.urls[] | select(.packagetype=="sdist") | .digests.sha256' | head -1)
+            echo "${url}|${sha}"
+          }
+
+          echo "Fetching dependency info from PyPI..."
+
+          # Core dependencies (from pyproject.toml)
+          TYPER_INFO=$(get_pypi_info "typer")
+          RICH_INFO=$(get_pypi_info "rich")
+          FRONTMATTER_INFO=$(get_pypi_info "python-frontmatter")
+          MISTUNE_INFO=$(get_pypi_info "mistune")
+          PYYAML_INFO=$(get_pypi_info "pyyaml")
+
+          # Transitive dependencies
+          CLICK_INFO=$(get_pypi_info "click")
+          TYPING_EXT_INFO=$(get_pypi_info "typing-extensions")
+          SHELLINGHAM_INFO=$(get_pypi_info "shellingham")
+          MARKDOWN_IT_INFO=$(get_pypi_info "markdown-it-py")
+          MDURL_INFO=$(get_pypi_info "mdurl")
+          PYGMENTS_INFO=$(get_pypi_info "pygments")
+
+          # Generate formula with proper indentation
+          {
+            echo 'class GitAdr < Formula'
+            echo '  include Language::Python::Virtualenv'
+            echo ''
+            echo '  desc "Architecture Decision Records management using git notes"'
+            echo '  homepage "https://github.com/zircote/git-adr"'
+            echo '  license "MIT"'
+            echo "  url \"${URL}\""
+            echo "  sha256 \"${SHA256}\""
+            echo ''
+            echo '  depends_on "libyaml"'
+            echo '  depends_on "python@3.12"'
+            echo ''
+          } > Formula/git-adr.rb
+
+          # Add resource blocks
+          add_resource() {
+            local name=$1
+            local info=$2
+            local url=$(echo "$info" | cut -d'|' -f1)
+            local sha=$(echo "$info" | cut -d'|' -f2)
+            {
+              echo "  resource \"${name}\" do"
+              echo "    url \"${url}\""
+              echo "    sha256 \"${sha}\""
+              echo "  end"
+              echo ""
+            } >> Formula/git-adr.rb
+          }
+
+          add_resource "click" "$CLICK_INFO"
+          add_resource "markdown-it-py" "$MARKDOWN_IT_INFO"
+          add_resource "mdurl" "$MDURL_INFO"
+          add_resource "mistune" "$MISTUNE_INFO"
+          add_resource "pygments" "$PYGMENTS_INFO"
+          add_resource "python-frontmatter" "$FRONTMATTER_INFO"
+          add_resource "pyyaml" "$PYYAML_INFO"
+          add_resource "rich" "$RICH_INFO"
+          add_resource "shellingham" "$SHELLINGHAM_INFO"
+          add_resource "typer" "$TYPER_INFO"
+          add_resource "typing-extensions" "$TYPING_EXT_INFO"
+
+          {
+            echo '  def install'
+            echo '    virtualenv_install_with_resources'
+            echo ''
+            echo '    # Generate and install shell completions'
+            echo '    generate_completions_from_executable(bin/"git-adr", "completion")'
+            echo '  end'
+            echo ''
+            echo '  def caveats'
+            echo '    <<~EOS'
+            echo '      To use git-adr as a git subcommand, add this alias:'
+            echo '        git config --global alias.adr '"'"'!git-adr'"'"''
+            echo ''
+            echo '      Then you can use: git adr <command>'
+            echo '    EOS'
+            echo '  end'
+            echo ''
+            echo '  test do'
+            echo '    system bin/"git-adr", "--version"'
+            echo '  end'
+            echo 'end'
+          } >> Formula/git-adr.rb
+
+          echo "Generated formula:"
+          cat Formula/git-adr.rb
 
       - name: Commit and push
         env:
