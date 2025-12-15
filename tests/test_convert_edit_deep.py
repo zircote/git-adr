@@ -6,16 +6,12 @@ Targets uncovered code paths in convert.py and edit.py.
 from __future__ import annotations
 
 import subprocess
-from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
 from git_adr.core.git import Git, GitError
 
 runner = CliRunner()
@@ -43,7 +39,7 @@ class TestConvertCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["convert", "some-adr", "--to", "madr"])
         assert result.exit_code == 1
@@ -51,9 +47,7 @@ class TestConvertCommand:
 
     def test_convert_adr_not_found(self, adr_repo_with_data: Path) -> None:
         """Test convert with non-existent ADR."""
-        result = runner.invoke(
-            app, ["convert", "nonexistent-adr", "--to", "madr"]
-        )
+        result = runner.invoke(app, ["convert", "nonexistent-adr", "--to", "madr"])
         assert result.exit_code == 1
         assert "not found" in result.output.lower()
 
@@ -82,7 +76,9 @@ class TestConvertCommand:
         )
         assert result.exit_code in [0, 1]
         if result.exit_code == 0:
-            assert "preview" in result.output.lower() or "dry-run" in result.output.lower()
+            assert (
+                "preview" in result.output.lower() or "dry-run" in result.output.lower()
+            )
 
     def test_convert_success(self, adr_repo_with_data: Path) -> None:
         """Test successful conversion."""
@@ -129,7 +125,7 @@ class TestEditCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["edit", "some-adr"])
         assert result.exit_code == 1
@@ -177,9 +173,7 @@ class TestEditCommand:
         git = Git(cwd=adr_repo_with_data)
         head = git.get_head_commit()
 
-        result = runner.invoke(
-            app, ["edit", "20250110-use-postgresql", "--link", head]
-        )
+        result = runner.invoke(app, ["edit", "20250110-use-postgresql", "--link", head])
         assert result.exit_code == 0
         assert "linked" in result.output.lower() or "updated" in result.output.lower()
 
@@ -198,7 +192,9 @@ class TestEditCommand:
         )
         assert result.exit_code == 0
         # Should report no changes
-        assert "no changes" in result.output.lower() or "updated" in result.output.lower()
+        assert (
+            "no changes" in result.output.lower() or "updated" in result.output.lower()
+        )
 
 
 class TestEditFullWorkflow:
@@ -308,9 +304,7 @@ class TestEditHelpers:
         runner.invoke(app, ["edit", "20250110-use-postgresql", "--link", head])
 
         # Try to link again
-        result = runner.invoke(
-            app, ["edit", "20250110-use-postgresql", "--link", head]
-        )
+        result = runner.invoke(app, ["edit", "20250110-use-postgresql", "--link", head])
         # Should succeed but may report no changes
         assert result.exit_code == 0
 
@@ -332,9 +326,7 @@ class TestRunEditFunction:
 
             # ConfigManager raises GitError
             with patch("git_adr.commands.edit.ConfigManager") as mock_cm:
-                mock_cm.side_effect = GitError(
-                    "Config error", ["git", "config"], 1
-                )
+                mock_cm.side_effect = GitError("Config error", ["git", "config"], 1)
 
                 result = runner.invoke(app, ["edit", "some-adr"])
                 assert result.exit_code == 1
@@ -388,12 +380,8 @@ class TestRunConvertFunction:
 
             # ConfigManager raises GitError
             with patch("git_adr.commands.convert.ConfigManager") as mock_cm:
-                mock_cm.side_effect = GitError(
-                    "Config error", ["git", "config"], 1
-                )
+                mock_cm.side_effect = GitError("Config error", ["git", "config"], 1)
 
-                result = runner.invoke(
-                    app, ["convert", "some-adr", "--to", "madr"]
-                )
+                result = runner.invoke(app, ["convert", "some-adr", "--to", "madr"])
                 assert result.exit_code == 1
                 assert "error" in result.output.lower()

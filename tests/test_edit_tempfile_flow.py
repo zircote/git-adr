@@ -8,17 +8,13 @@ from __future__ import annotations
 
 import os
 import tempfile
-from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
-from io import StringIO
+from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
+from git_adr.core.config import ConfigManager
 from git_adr.core.git import Git
 
 runner = CliRunner()
@@ -77,9 +73,7 @@ Edited consequences.
 
                 with patch("tempfile.NamedTemporaryFile", return_value=mock_temp_file):
                     with patch("git_adr.commands.new._find_editor", return_value="cat"):
-                        result = runner.invoke(
-                            app, ["edit", "20250110-use-postgresql"]
-                        )
+                        result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
                         # Should process the edited content
                         assert result.exit_code in [0, 1]
         finally:
@@ -198,9 +192,7 @@ class TestArtifactGetDeep:
         # First attach a file
         test_file = adr_repo_with_data / "stdout-test.txt"
         test_file.write_text("Content for stdout")
-        runner.invoke(
-            app, ["attach", "20250110-use-postgresql", str(test_file)]
-        )
+        runner.invoke(app, ["attach", "20250110-use-postgresql", str(test_file)])
 
         # Get to stdout
         result = runner.invoke(
@@ -213,9 +205,7 @@ class TestArtifactGetDeep:
         # First attach a file
         test_file = adr_repo_with_data / "file-test.txt"
         test_file.write_text("Content for file output")
-        runner.invoke(
-            app, ["attach", "20250110-use-postgresql", str(test_file)]
-        )
+        runner.invoke(app, ["attach", "20250110-use-postgresql", str(test_file)])
 
         output_path = adr_repo_with_data / "output.txt"
         result = runner.invoke(
@@ -287,19 +277,22 @@ class TestStatsDeep:
         import subprocess as sp
 
         os.chdir(tmp_path)
-        sp.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        sp.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
         sp.run(
             ["git", "config", "user.email", "test@test.com"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "config", "user.name", "Test User"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "commit", "--allow-empty", "-m", "Initial"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
@@ -318,9 +311,7 @@ class TestShowDeep:
         # Attach an artifact
         test_file = adr_repo_with_data / "show-test.txt"
         test_file.write_text("Artifact content")
-        runner.invoke(
-            app, ["attach", "20250110-use-postgresql", str(test_file)]
-        )
+        runner.invoke(app, ["attach", "20250110-use-postgresql", str(test_file)])
 
         result = runner.invoke(app, ["show", "20250110-use-postgresql"])
         assert result.exit_code == 0

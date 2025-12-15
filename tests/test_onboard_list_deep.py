@@ -6,17 +6,11 @@ Targets uncovered lines in onboard.py and list.py.
 from __future__ import annotations
 
 import subprocess
-from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import ConfigManager
-from git_adr.core.git import Git
 
 runner = CliRunner()
 
@@ -133,7 +127,7 @@ class TestListNotInitialized:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["list"])
         assert result.exit_code == 1
@@ -214,25 +208,28 @@ class TestListEmptyRepo:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
         subprocess.run(
             ["git", "config", "user.email", "test@test.com"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         subprocess.run(
             ["git", "config", "user.name", "Test User"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         subprocess.run(
             ["git", "commit", "--allow-empty", "-m", "Initial"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
 
         # Initialize git-adr
-        init_result = runner.invoke(app, ["init"])
+        runner.invoke(app, ["init"])
 
         # Now list should show no ADRs (or error if init failed)
         result = runner.invoke(app, ["list"])
@@ -266,7 +263,8 @@ class TestArtifactRmADRNotFound:
     def test_artifact_rm_adr_not_found(self, adr_repo_with_data: Path) -> None:
         """Test artifact-rm when ADR doesn't exist."""
         result = runner.invoke(
-            app, ["artifact-rm", "nonexistent-adr", "some.txt"],
+            app,
+            ["artifact-rm", "nonexistent-adr", "some.txt"],
             input="y\n",
         )
         assert result.exit_code == 1
@@ -332,9 +330,7 @@ class TestSearchFilters:
 
     def test_search_filter_by_status(self, adr_repo_with_data: Path) -> None:
         """Test search filtering by status."""
-        result = runner.invoke(
-            app, ["search", "database", "--status", "accepted"]
-        )
+        result = runner.invoke(app, ["search", "database", "--status", "accepted"])
         assert result.exit_code in [0, 2]  # May not have --status option
 
     def test_search_filter_by_tag(self, adr_repo_with_data: Path) -> None:
@@ -399,7 +395,9 @@ class TestExportCommand:
         """Test export with Markdown format."""
         output = adr_repo_with_data / "export-md"
 
-        result = runner.invoke(app, ["export", "-o", str(output), "--format", "markdown"])
+        result = runner.invoke(
+            app, ["export", "-o", str(output), "--format", "markdown"]
+        )
         assert result.exit_code == 0
 
 

@@ -12,7 +12,6 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
-from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -32,19 +31,19 @@ if TYPE_CHECKING:
 # Test Markers
 # =============================================================================
 
+
 def pytest_configure(config: pytest.Config) -> None:
     """Register custom markers."""
     config.addinivalue_line(
         "markers", "integration: marks tests as integration tests (require git repos)"
     )
-    config.addinivalue_line(
-        "markers", "slow: marks tests as slow running"
-    )
+    config.addinivalue_line("markers", "slow: marks tests as slow running")
 
 
 # =============================================================================
 # Git Repository Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def temp_git_repo(tmp_path: Path) -> Iterator[Path]:
@@ -111,7 +110,9 @@ def temp_git_repo_with_commit(temp_git_repo: Path) -> Iterator[Path]:
 
 
 @pytest.fixture
-def initialized_adr_repo(temp_git_repo_with_commit: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
+def initialized_adr_repo(
+    temp_git_repo_with_commit: Path, monkeypatch: pytest.MonkeyPatch
+) -> Iterator[Path]:
     """Create a git repo with git-adr initialized.
 
     Changes the current working directory to the repo.
@@ -140,7 +141,7 @@ def adr_repo_with_data(initialized_adr_repo: Path) -> Iterator[Path]:
     Yields:
         Path to the repository with sample ADRs.
     """
-    from git_adr.core import NotesManager, ConfigManager
+    from git_adr.core import ConfigManager, NotesManager
 
     repo_path = initialized_adr_repo
     git = Git(cwd=repo_path)
@@ -195,6 +196,7 @@ def adr_repo_with_data(initialized_adr_repo: Path) -> Iterator[Path]:
 # Git Object Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def git(temp_git_repo: Path) -> Git:
     """Create a Git wrapper for a temp repo."""
@@ -210,6 +212,7 @@ def git_with_commit(temp_git_repo_with_commit: Path) -> Git:
 # =============================================================================
 # Config Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def default_config() -> Config:
@@ -230,6 +233,7 @@ def ai_config() -> Config:
 # =============================================================================
 # Sample Data Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def sample_adr() -> ADR:
@@ -270,6 +274,7 @@ def sample_adrs() -> list[ADR]:
 # Mock Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def mock_llm() -> MagicMock:
     """Create a mock LLM for AI service tests."""
@@ -295,10 +300,12 @@ def mock_ai_service(ai_config: Config, mock_llm: MagicMock) -> MagicMock:
 # CLI Runner Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def cli_runner():
     """Create a CLI runner for command tests."""
     from typer.testing import CliRunner
+
     return CliRunner()
 
 
@@ -321,6 +328,7 @@ def invoke_cli(cli_runner, initialized_adr_repo: Path):
 # Temporary Directory Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def test_tmp_dir(tmp_path: Path) -> Iterator[Path]:
     """Create a temporary directory for test artifacts.
@@ -341,6 +349,7 @@ def test_tmp_dir(tmp_path: Path) -> Iterator[Path]:
 # Helper Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def create_commit(temp_git_repo_with_commit: Path) -> Callable[[str], str]:
     """Create a helper function to add commits.
@@ -348,11 +357,13 @@ def create_commit(temp_git_repo_with_commit: Path) -> Callable[[str], str]:
     Returns:
         A callable that creates commits and returns the commit SHA.
     """
+
     def _create_commit(message: str) -> str:
         repo = temp_git_repo_with_commit
 
         # Create a unique file
         import uuid
+
         filename = f"file_{uuid.uuid4().hex[:8]}.txt"
         (repo / filename).write_text(f"Content for: {message}\n")
 

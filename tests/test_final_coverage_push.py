@@ -5,17 +5,15 @@ Targets remaining gaps in artifact_rm, init, templates, and git.
 
 from __future__ import annotations
 
-import subprocess as sp
 from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
 from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
+from git_adr.core.config import ConfigManager
 from git_adr.core.git import Git, GitError
 
 runner = CliRunner()
@@ -34,9 +32,7 @@ class TestArtifactRmCoverage:
         # First attach an artifact
         test_file = adr_repo_with_data / "to-remove.txt"
         test_file.write_text("Remove me")
-        runner.invoke(
-            app, ["attach", "20250110-use-postgresql", str(test_file)]
-        )
+        runner.invoke(app, ["attach", "20250110-use-postgresql", str(test_file)])
 
         # Now remove it
         result = runner.invoke(
@@ -326,7 +322,7 @@ class TestConfigManagerCoverage:
         cm = ConfigManager(git)
 
         # Global config access
-        value = cm.get("user.name", global_=True)
+        cm.get("user.name", global_=True)
         # May or may not be set
 
 
@@ -365,17 +361,16 @@ Changed decision.
 
 Changed consequences.
 """
-        import tempfile
         import os
+        import tempfile
 
         # Create temp file with edited content
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".md", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(edited_content)
             temp_path = f.name
 
         try:
+
             def write_content(cmd, **kwargs):
                 # Write edited content to the temp file that _full_edit creates
                 if cmd and len(cmd) > 0:
@@ -386,9 +381,7 @@ Changed consequences.
 
             with patch("subprocess.run", side_effect=write_content):
                 with patch("git_adr.commands.new._find_editor", return_value="cat"):
-                    result = runner.invoke(
-                        app, ["edit", "20250110-use-postgresql"]
-                    )
+                    result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
                     # Should succeed with changes
                     assert result.exit_code in [0, 1]
         finally:

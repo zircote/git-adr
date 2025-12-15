@@ -85,7 +85,9 @@ class TestAIAskTagFilter:
                 mock_adr.metadata.status.value = "accepted"
                 mock_notes.list_all.return_value = [mock_adr]
 
-                with patch("git_adr.commands.ai_ask.NotesManager", return_value=mock_notes):
+                with patch(
+                    "git_adr.commands.ai_ask.NotesManager", return_value=mock_notes
+                ):
                     # Make the import fail
                     with patch.dict("sys.modules", {"git_adr.ai": None}):
                         result = runner.invoke(app, ["ai", "ask", "test question?"])
@@ -118,24 +120,28 @@ class TestInitDeep:
         import os
 
         os.chdir(tmp_path)
-        sp.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        sp.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
         sp.run(
             ["git", "config", "user.email", "test@test.com"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "config", "user.name", "Test User"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "commit", "--allow-empty", "-m", "Initial"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "remote", "add", "origin", "https://github.com/example/repo.git"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
@@ -143,7 +149,10 @@ class TestInitDeep:
         result = runner.invoke(app, ["init"])
         # Should configure notes sync
         if result.exit_code == 0:
-            assert "configuring" in result.output.lower() or "sync" in result.output.lower()
+            assert (
+                "configuring" in result.output.lower()
+                or "sync" in result.output.lower()
+            )
 
     def test_init_initial_adr_exists(self, adr_repo_with_data: Path) -> None:
         """Test init when initial ADR already exists (lines 143-144)."""
@@ -157,19 +166,22 @@ class TestInitDeep:
         import os
 
         os.chdir(tmp_path)
-        sp.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        sp.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
         sp.run(
             ["git", "config", "user.email", "test@test.com"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "config", "user.name", "Test User"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "commit", "--allow-empty", "-m", "Initial"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
@@ -251,7 +263,9 @@ class TestArtifactGetDeep:
         # Should show available artifacts
         assert "available" in result.output.lower()
 
-    def test_artifact_get_content_retrieval_fails(self, adr_repo_with_data: Path) -> None:
+    def test_artifact_get_content_retrieval_fails(
+        self, adr_repo_with_data: Path
+    ) -> None:
         """Test artifact-get when content retrieval fails (lines 83-84)."""
         with patch("git_adr.commands.artifact_get.get_git") as mock_get_git:
             mock_git = MagicMock()
@@ -263,7 +277,9 @@ class TestArtifactGetDeep:
             mock_config = MagicMock()
             mock_cm.load.return_value = mock_config
 
-            with patch("git_adr.commands.artifact_get.ConfigManager", return_value=mock_cm):
+            with patch(
+                "git_adr.commands.artifact_get.ConfigManager", return_value=mock_cm
+            ):
                 mock_notes = MagicMock()
                 mock_adr = MagicMock()
                 mock_notes.get.return_value = mock_adr
@@ -277,7 +293,10 @@ class TestArtifactGetDeep:
                 # get_artifact returns None (failure)
                 mock_notes.get_artifact.return_value = None
 
-                with patch("git_adr.commands.artifact_get.NotesManager", return_value=mock_notes):
+                with patch(
+                    "git_adr.commands.artifact_get.NotesManager",
+                    return_value=mock_notes,
+                ):
                     result = runner.invoke(
                         app, ["artifact-get", "some-adr", "test.txt"]
                     )
@@ -291,7 +310,7 @@ class TestArtifactGetDeep:
         runner.invoke(app, ["attach", "20250110-use-postgresql", str(test_file)])
 
         # Create a file at the output location
-        output_file = adr_repo_with_data / "overwrite-test.txt"
+        adr_repo_with_data / "overwrite-test.txt"
 
         # Try to get artifact to existing file, cancel overwrite
         result = runner.invoke(

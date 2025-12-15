@@ -24,6 +24,7 @@ runner = CliRunner()
 # AI Service Tests
 # =============================================================================
 
+
 class TestAIServiceConfiguration:
     """Tests for AI service configuration."""
 
@@ -167,6 +168,7 @@ Scalable infrastructure.
 # AI Command Tests (CLI)
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestAIDraftCommand:
     """Tests for ai draft command."""
@@ -181,7 +183,11 @@ class TestAIDraftCommand:
         """Test draft fails without AI configuration."""
         result = runner.invoke(app, ["ai", "draft", "Test Title", "--no-edit"])
         # Should fail gracefully
-        assert "error" in result.output.lower() or "provider" in result.output.lower() or result.exit_code != 0
+        assert (
+            "error" in result.output.lower()
+            or "provider" in result.output.lower()
+            or result.exit_code != 0
+        )
 
     def test_draft_with_mock_ai(self, initialized_adr_repo: Path) -> None:
         """Test draft with mocked AI service."""
@@ -203,7 +209,11 @@ class TestAISuggestCommand:
         """Test suggest without AI configuration."""
         result = runner.invoke(app, ["ai", "suggest", "use-postgresql"])
         # Should fail gracefully without AI config
-        assert result.exit_code != 0 or "error" in result.output.lower() or "provider" in result.output.lower()
+        assert (
+            result.exit_code != 0
+            or "error" in result.output.lower()
+            or "provider" in result.output.lower()
+        )
 
 
 @pytest.mark.integration
@@ -239,6 +249,7 @@ class TestAIAskCommand:
 # =============================================================================
 # AI Response Tests
 # =============================================================================
+
 
 class TestAIResponse:
     """Tests for AIResponse dataclass."""

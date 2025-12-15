@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -72,9 +72,7 @@ Chose pytest.
         )
         assert result.exit_code == 0
 
-    def test_new_with_link(
-        self, initialized_adr_repo: Path, tmp_path: Path
-    ) -> None:
+    def test_new_with_link(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
         """Test new with --link option."""
         git = Git(cwd=initialized_adr_repo)
         head = git.get_head_commit()
@@ -87,8 +85,10 @@ Chose pytest.
             [
                 "new",
                 "Linked Decision",
-                "--file", str(content_file),
-                "--link", head,
+                "--file",
+                str(content_file),
+                "--link",
+                head,
             ],
         )
         assert result.exit_code == 0
@@ -362,7 +362,7 @@ class TestWikiServiceDeepCoverage:
         git = Git(cwd=wiki_configured_repo)
         config_manager = ConfigManager(git)
         config = config_manager.load()
-        notes_manager = NotesManager(git, config)
+        NotesManager(git, config)
 
         service = WikiService(git, config)
         assert service is not None
@@ -378,7 +378,12 @@ class TestWikiServiceDeepCoverage:
         service = WikiService(git, config)
         # Platform may or may not be detected depending on remote
         platform = service.detect_platform()
-        assert platform is None or platform in ["github", "gitlab", "azure", "bitbucket"]
+        assert platform is None or platform in [
+            "github",
+            "gitlab",
+            "azure",
+            "bitbucket",
+        ]
 
 
 @pytest.fixture
@@ -478,9 +483,7 @@ def ai_repo_with_data(ai_configured_repo: Path) -> Path:
 class TestExportDeepCoverage:
     """Deep coverage tests for export command."""
 
-    def test_export_csv_format(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_export_csv_format(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test export to CSV format."""
         output = tmp_path / "adrs.csv"
         result = runner.invoke(
@@ -569,18 +572,24 @@ def temp_git_repo_with_commit(tmp_path: Path) -> Path:
     subprocess.run(["git", "init"], cwd=repo_path, check=True, capture_output=True)
     subprocess.run(
         ["git", "config", "user.email", "test@test.com"],
-        cwd=repo_path, check=True, capture_output=True
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
     )
     subprocess.run(
         ["git", "config", "user.name", "Test"],
-        cwd=repo_path, check=True, capture_output=True
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
     )
 
     (repo_path / "README.md").write_text("# Test")
     subprocess.run(["git", "add", "."], cwd=repo_path, check=True, capture_output=True)
     subprocess.run(
         ["git", "commit", "-m", "Initial"],
-        cwd=repo_path, check=True, capture_output=True
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
     )
 
     return repo_path

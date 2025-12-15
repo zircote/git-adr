@@ -5,18 +5,12 @@ Tests the success paths and edge cases for commands with low coverage.
 
 from __future__ import annotations
 
-from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import ConfigManager
 from git_adr.core.git import Git
-from git_adr.core.notes import NotesManager
 
 runner = CliRunner()
 
@@ -69,13 +63,17 @@ class TestArtifactGetCoverage:
             output_file = tmp_path / "output.txt"
             result = runner.invoke(
                 app,
-                ["artifact-get", "20250110-use-postgresql", "source.txt", "--output", str(output_file)],
+                [
+                    "artifact-get",
+                    "20250110-use-postgresql",
+                    "source.txt",
+                    "--output",
+                    str(output_file),
+                ],
             )
             assert result.exit_code in [0, 1]
 
-    def test_artifact_get_nonexistent_artifact(
-        self, adr_repo_with_data: Path
-    ) -> None:
+    def test_artifact_get_nonexistent_artifact(self, adr_repo_with_data: Path) -> None:
         """Test getting non-existent artifact."""
         result = runner.invoke(
             app,
@@ -167,7 +165,8 @@ class TestNewCommandCoverage:
             [
                 "new",
                 "Nygard Format Decision",
-                "--template", "nygard",
+                "--template",
+                "nygard",
                 "--preview",
             ],
         )
@@ -180,15 +179,14 @@ class TestNewCommandCoverage:
             [
                 "new",
                 "Y Statement Decision",
-                "--template", "y-statement",
+                "--template",
+                "y-statement",
                 "--preview",
             ],
         )
         assert result.exit_code == 0
 
-    def test_new_with_file(
-        self, initialized_adr_repo: Path, tmp_path: Path
-    ) -> None:
+    def test_new_with_file(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
         """Test new with file input."""
         content_file = tmp_path / "adr-content.md"
         content_file.write_text("""## Context and Problem Statement
@@ -210,7 +208,8 @@ Chose Option A.
             [
                 "new",
                 "File Input Decision",
-                "--file", str(content_file),
+                "--file",
+                str(content_file),
             ],
         )
         assert result.exit_code == 0
@@ -234,17 +233,19 @@ Use tags.
             [
                 "new",
                 "Tagged Decision",
-                "--file", str(content_file),
-                "--status", "accepted",
-                "--tag", "testing",
-                "--tag", "coverage",
+                "--file",
+                str(content_file),
+                "--status",
+                "accepted",
+                "--tag",
+                "testing",
+                "--tag",
+                "coverage",
             ],
         )
         assert result.exit_code == 0
 
-    def test_new_draft_mode(
-        self, initialized_adr_repo: Path, tmp_path: Path
-    ) -> None:
+    def test_new_draft_mode(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
         """Test new in draft mode."""
         content_file = tmp_path / "draft.md"
         content_file.write_text("""## Context
@@ -261,7 +262,8 @@ TBD.
             [
                 "new",
                 "Draft Decision",
-                "--file", str(content_file),
+                "--file",
+                str(content_file),
                 "--draft",
             ],
         )
@@ -314,8 +316,10 @@ class TestEditCommandCoverage:
             [
                 "edit",
                 "20250110-use-postgresql",
-                "--add-tag", "important",
-                "--add-tag", "reviewed",
+                "--add-tag",
+                "important",
+                "--add-tag",
+                "reviewed",
             ],
         )
         assert result.exit_code == 0
@@ -327,8 +331,10 @@ class TestEditCommandCoverage:
             [
                 "edit",
                 "20250112-use-redis",
-                "--add-tag", "new-tag",
-                "--remove-tag", "caching",
+                "--add-tag",
+                "new-tag",
+                "--remove-tag",
+                "caching",
             ],
         )
         assert result.exit_code == 0
@@ -340,8 +346,10 @@ class TestEditCommandCoverage:
             [
                 "edit",
                 "20250112-use-redis",
-                "--status", "accepted",
-                "--add-tag", "approved",
+                "--status",
+                "accepted",
+                "--add-tag",
+                "approved",
             ],
         )
         assert result.exit_code == 0
@@ -389,9 +397,7 @@ class TestConvertCommandCoverage:
 class TestAttachCommandCoverage:
     """Coverage tests for attach command."""
 
-    def test_attach_png_file(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_attach_png_file(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test attaching PNG file."""
         # Create a minimal PNG file
         png_header = b"\x89PNG\r\n\x1a\n"
@@ -404,14 +410,13 @@ class TestAttachCommandCoverage:
                 "attach",
                 "20250110-use-postgresql",
                 str(test_file),
-                "--alt", "Architecture diagram",
+                "--alt",
+                "Architecture diagram",
             ],
         )
         assert result.exit_code in [0, 1]
 
-    def test_attach_pdf_file(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_attach_pdf_file(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test attaching PDF file."""
         # Create a minimal PDF file
         test_file = tmp_path / "document.pdf"
@@ -423,7 +428,8 @@ class TestAttachCommandCoverage:
                 "attach",
                 "20250110-use-postgresql",
                 str(test_file),
-                "--name", "design-doc.pdf",
+                "--name",
+                "design-doc.pdf",
             ],
         )
         assert result.exit_code in [0, 1]
@@ -661,9 +667,7 @@ class TestMetricsCommandCoverage:
         result = runner.invoke(app, ["metrics", "--format", "csv"])
         assert result.exit_code == 0
 
-    def test_metrics_to_file(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_metrics_to_file(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test metrics output to file."""
         output = tmp_path / "metrics.json"
         result = runner.invoke(app, ["metrics", "--output", str(output)])
@@ -683,9 +687,7 @@ class TestReportCommandCoverage:
         result = runner.invoke(app, ["report"])
         assert result.exit_code == 0
 
-    def test_report_format_html(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_report_format_html(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test report with HTML format."""
         output = tmp_path / "report.html"
         result = runner.invoke(

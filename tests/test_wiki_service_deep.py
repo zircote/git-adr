@@ -6,8 +6,7 @@ Targets uncovered code paths with comprehensive mocking.
 from __future__ import annotations
 
 from datetime import date
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -111,9 +110,7 @@ class TestWikiServicePlatformDetection:
 class TestWikiServicePageGeneration:
     """Tests for wiki page generation (private methods)."""
 
-    def test_generate_page(
-        self, mock_git: MagicMock, sample_adrs: list[ADR]
-    ) -> None:
+    def test_generate_page(self, mock_git: MagicMock, sample_adrs: list[ADR]) -> None:
         """Test generating wiki page from ADR."""
         config = Config()
         service = WikiService(mock_git, config)
@@ -122,9 +119,7 @@ class TestWikiServicePageGeneration:
         assert "PostgreSQL" in page
         assert "Context" in page or "Decision" in page
 
-    def test_generate_index(
-        self, mock_git: MagicMock, sample_adrs: list[ADR]
-    ) -> None:
+    def test_generate_index(self, mock_git: MagicMock, sample_adrs: list[ADR]) -> None:
         """Test generating wiki index page."""
         config = Config()
         service = WikiService(mock_git, config)
@@ -193,15 +188,25 @@ class TestSyncResult:
 
     def test_sync_result_has_changes(self) -> None:
         """Test SyncResult.has_changes."""
-        result = SyncResult(created=["adr1"], updated=[], skipped=[], errors=[], deleted=[])
+        result = SyncResult(
+            created=["adr1"], updated=[], skipped=[], errors=[], deleted=[]
+        )
         assert result.has_changes is True
 
-        empty_result = SyncResult(created=[], updated=[], skipped=[], errors=[], deleted=[])
+        empty_result = SyncResult(
+            created=[], updated=[], skipped=[], errors=[], deleted=[]
+        )
         assert empty_result.has_changes is False
 
     def test_sync_result_total_synced(self) -> None:
         """Test SyncResult.total_synced."""
-        result = SyncResult(created=["adr1"], updated=["adr2", "adr3"], skipped=[], errors=[], deleted=[])
+        result = SyncResult(
+            created=["adr1"],
+            updated=["adr2", "adr3"],
+            skipped=[],
+            errors=[],
+            deleted=[],
+        )
         assert result.total_synced == 3
 
 

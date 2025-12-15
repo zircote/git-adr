@@ -7,7 +7,6 @@ from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
@@ -35,7 +34,9 @@ class TestInitNotARepositoryError:
 class TestInitInitialADRExists:
     """Test init when initial ADR already exists (lines 143-144)."""
 
-    def test_init_force_with_existing_initial_adr(self, adr_repo_with_data: Path) -> None:
+    def test_init_force_with_existing_initial_adr(
+        self, adr_repo_with_data: Path
+    ) -> None:
         """Test init --force when initial ADR already exists."""
         from git_adr.core.notes import NotesManager
 
@@ -65,7 +66,10 @@ class TestInitInitialADRExists:
         # Check that it mentioned already exists or skipping
         assert result.exit_code == 0
         # Should contain "already exists" or "skipping"
-        assert "already exists" in result.output.lower() or "skipping" in result.output.lower()
+        assert (
+            "already exists" in result.output.lower()
+            or "skipping" in result.output.lower()
+        )
 
 
 class TestInitGitErrorCreatingADR:
@@ -76,19 +80,22 @@ class TestInitGitErrorCreatingADR:
         import os
 
         os.chdir(tmp_path)
-        sp.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        sp.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
         sp.run(
             ["git", "config", "user.email", "test@test.com"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "config", "user.name", "Test User"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "commit", "--allow-empty", "-m", "Initial"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
@@ -103,7 +110,10 @@ class TestInitGitErrorCreatingADR:
             result = runner.invoke(app, ["init"])
             # Should show warning but may still succeed
             assert result.exit_code in [0, 1]
-            if "warning" in result.output.lower() or "could not create" in result.output.lower():
+            if (
+                "warning" in result.output.lower()
+                or "could not create" in result.output.lower()
+            ):
                 assert True  # Got expected warning
 
 
@@ -115,25 +125,29 @@ class TestRemotesInInit:
         import os
 
         os.chdir(tmp_path)
-        sp.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        sp.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
         sp.run(
             ["git", "config", "user.email", "test@test.com"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "config", "user.name", "Test User"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "commit", "--allow-empty", "-m", "Initial"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         # Add a remote
         sp.run(
             ["git", "remote", "add", "origin", "git@github.com:test/repo.git"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
@@ -173,4 +187,7 @@ class TestAIAskTagFiltering:
         # Should fail with "no ADRs found with tag" or AI not configured
         if result.exit_code in [0, 1]:
             # May show "no ADRs found" message
-            assert "no adrs" in result.output.lower() or "not configured" in result.output.lower()
+            assert (
+                "no adrs" in result.output.lower()
+                or "not configured" in result.output.lower()
+            )

@@ -5,19 +5,13 @@ Targets the specific uncovered code paths in the _full_edit function.
 
 from __future__ import annotations
 
-import subprocess
-import tempfile
-from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
 from git_adr.core.config import Config
-from git_adr.core.git import Git
 
 runner = CliRunner()
 
@@ -133,7 +127,9 @@ class TestFullEditWorkflowLines187To233:
         mock_find_editor.return_value = "vim"
         mock_subprocess.return_value = MagicMock(returncode=0)
         # Return invalid content
-        mock_read_text.return_value = "This is not valid ADR format\nNo frontmatter here"
+        mock_read_text.return_value = (
+            "This is not valid ADR format\nNo frontmatter here"
+        )
 
         result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
         # Should handle parsing error
@@ -329,8 +325,9 @@ class TestFindEditorFallbacks:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test _find_editor uses config.editor first."""
-        from git_adr.commands.new import _find_editor
         import os
+
+        from git_adr.commands.new import _find_editor
 
         # Clear environment variables
         for var in ["EDITOR", "VISUAL"]:
@@ -348,8 +345,9 @@ class TestFindEditorFallbacks:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test _find_editor fallback to vim."""
-        from git_adr.commands.new import _find_editor
         import os
+
+        from git_adr.commands.new import _find_editor
 
         # Clear env vars
         old_editor = os.environ.pop("EDITOR", None)
@@ -373,8 +371,9 @@ class TestFindEditorFallbacks:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test _find_editor fallback to nano."""
-        from git_adr.commands.new import _find_editor
         import os
+
+        from git_adr.commands.new import _find_editor
 
         old_editor = os.environ.pop("EDITOR", None)
         old_visual = os.environ.pop("VISUAL", None)
@@ -397,8 +396,9 @@ class TestFindEditorFallbacks:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test _find_editor fallback to vi."""
-        from git_adr.commands.new import _find_editor
         import os
+
+        from git_adr.commands.new import _find_editor
 
         old_editor = os.environ.pop("EDITOR", None)
         old_visual = os.environ.pop("VISUAL", None)
@@ -421,8 +421,9 @@ class TestFindEditorFallbacks:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test _find_editor returns None when no editor found (line 399)."""
-        from git_adr.commands.new import _find_editor
         import os
+
+        from git_adr.commands.new import _find_editor
 
         old_editor = os.environ.pop("EDITOR", None)
         old_visual = os.environ.pop("VISUAL", None)
@@ -446,7 +447,14 @@ class TestEditQuickOperations:
 
     def test_quick_edit_all_status_values(self, adr_repo_with_data: Path) -> None:
         """Test quick edit with all valid status values."""
-        statuses = ["draft", "proposed", "accepted", "deprecated", "rejected", "superseded"]
+        statuses = [
+            "draft",
+            "proposed",
+            "accepted",
+            "deprecated",
+            "rejected",
+            "superseded",
+        ]
 
         for status in statuses:
             result = runner.invoke(
@@ -462,7 +470,9 @@ class TestEditQuickOperations:
         # Should handle gracefully
         assert result.exit_code in [0, 1]
 
-    def test_quick_edit_unlink_nonexistent_commit(self, adr_repo_with_data: Path) -> None:
+    def test_quick_edit_unlink_nonexistent_commit(
+        self, adr_repo_with_data: Path
+    ) -> None:
         """Test quick edit unlinking commit that's not linked."""
         result = runner.invoke(
             app, ["edit", "20250110-use-postgresql", "--unlink", "abcdef123456"]

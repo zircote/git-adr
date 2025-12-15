@@ -7,7 +7,6 @@ show, log, onboard, sync, and core/git.
 from __future__ import annotations
 
 import subprocess
-from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -15,9 +14,13 @@ import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
-from git_adr.core.git import Git, GitError, GitNotFoundError, GitResult, NotARepositoryError
+from git_adr.core.git import (
+    Git,
+    GitError,
+    GitNotFoundError,
+    GitResult,
+    NotARepositoryError,
+)
 
 runner = CliRunner()
 
@@ -44,7 +47,7 @@ class TestArtifactRmCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["artifact-rm", "some-adr", "file.pdf"])
         assert result.exit_code == 1
@@ -52,9 +55,7 @@ class TestArtifactRmCommand:
 
     def test_artifact_rm_adr_not_found(self, adr_repo_with_data: Path) -> None:
         """Test artifact-rm with non-existent ADR."""
-        result = runner.invoke(
-            app, ["artifact-rm", "nonexistent-adr", "file.pdf"]
-        )
+        result = runner.invoke(app, ["artifact-rm", "nonexistent-adr", "file.pdf"])
         assert result.exit_code == 1
         assert "not found" in result.output.lower()
 
@@ -71,9 +72,7 @@ class TestArtifactRmCommand:
         # First attach an artifact
         test_file = adr_repo_with_data / "test.txt"
         test_file.write_text("Test content")
-        runner.invoke(
-            app, ["attach", "20250110-use-postgresql", str(test_file)]
-        )
+        runner.invoke(app, ["attach", "20250110-use-postgresql", str(test_file)])
 
         # Try to remove but abort
         result = runner.invoke(
@@ -89,9 +88,7 @@ class TestArtifactRmCommand:
         # First attach an artifact
         test_file = adr_repo_with_data / "test_rm.txt"
         test_file.write_text("Test content for removal")
-        runner.invoke(
-            app, ["attach", "20250110-use-postgresql", str(test_file)]
-        )
+        runner.invoke(app, ["attach", "20250110-use-postgresql", str(test_file)])
 
         # Now remove it
         result = runner.invoke(
@@ -125,7 +122,7 @@ class TestArtifactGetCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["artifact-get", "some-adr", "file.pdf"])
         assert result.exit_code == 1
@@ -133,9 +130,7 @@ class TestArtifactGetCommand:
 
     def test_artifact_get_adr_not_found(self, adr_repo_with_data: Path) -> None:
         """Test artifact-get with non-existent ADR."""
-        result = runner.invoke(
-            app, ["artifact-get", "nonexistent-adr", "file.pdf"]
-        )
+        result = runner.invoke(app, ["artifact-get", "nonexistent-adr", "file.pdf"])
         assert result.exit_code == 1
         assert "not found" in result.output.lower()
 
@@ -147,20 +142,26 @@ class TestArtifactGetCommand:
         assert result.exit_code == 1
         assert "artifact not found" in result.output.lower()
 
-    def test_artifact_get_success(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
+    def test_artifact_get_success(
+        self, adr_repo_with_data: Path, tmp_path: Path
+    ) -> None:
         """Test successful artifact retrieval."""
         # First attach an artifact
         test_file = adr_repo_with_data / "test_get.txt"
         test_file.write_text("Test content for get")
-        runner.invoke(
-            app, ["attach", "20250110-use-postgresql", str(test_file)]
-        )
+        runner.invoke(app, ["attach", "20250110-use-postgresql", str(test_file)])
 
         # Now retrieve it
         output_file = tmp_path / "output.txt"
         result = runner.invoke(
             app,
-            ["artifact-get", "20250110-use-postgresql", "test_get.txt", "-o", str(output_file)],
+            [
+                "artifact-get",
+                "20250110-use-postgresql",
+                "test_get.txt",
+                "-o",
+                str(output_file),
+            ],
         )
         assert result.exit_code in [0, 1]
 
@@ -187,7 +188,7 @@ class TestArtifactsCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["artifacts", "some-adr"])
         assert result.exit_code == 1
@@ -228,7 +229,7 @@ class TestShowCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["show", "some-adr"])
         assert result.exit_code == 1
@@ -301,7 +302,7 @@ class TestLogCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["log"])
         assert result.exit_code == 1
@@ -345,7 +346,7 @@ class TestSyncCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["sync"])
         assert result.exit_code == 1
@@ -379,7 +380,7 @@ class TestOnboardCommand:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         result = runner.invoke(app, ["onboard"])
         assert result.exit_code == 1
@@ -477,9 +478,7 @@ class TestGitClass:
 
     @patch("shutil.which")
     @patch("pathlib.Path.exists")
-    def test_git_not_found(
-        self, mock_exists: MagicMock, mock_which: MagicMock
-    ) -> None:
+    def test_git_not_found(self, mock_exists: MagicMock, mock_which: MagicMock) -> None:
         """Test Git init when git is not found."""
         mock_which.return_value = None
         mock_exists.return_value = False
@@ -570,25 +569,19 @@ class TestGitParseErrors:
         msg = git._parse_error_message("error: permission denied", 1)
         assert "Permission denied" in msg
 
-    def test_parse_error_could_not_resolve_host(
-        self, adr_repo_with_data: Path
-    ) -> None:
+    def test_parse_error_could_not_resolve_host(self, adr_repo_with_data: Path) -> None:
         """Test parsing 'could not resolve host' error."""
         git = Git(cwd=adr_repo_with_data)
         msg = git._parse_error_message("fatal: could not resolve host", 1)
         assert "Network error" in msg
 
-    def test_parse_error_authentication_failed(
-        self, adr_repo_with_data: Path
-    ) -> None:
+    def test_parse_error_authentication_failed(self, adr_repo_with_data: Path) -> None:
         """Test parsing 'authentication failed' error."""
         git = Git(cwd=adr_repo_with_data)
         msg = git._parse_error_message("error: authentication failed", 1)
         assert "Authentication failed" in msg
 
-    def test_parse_error_repository_not_found(
-        self, adr_repo_with_data: Path
-    ) -> None:
+    def test_parse_error_repository_not_found(self, adr_repo_with_data: Path) -> None:
         """Test parsing 'repository not found' error."""
         git = Git(cwd=adr_repo_with_data)
         msg = git._parse_error_message("fatal: repository not found", 1)
