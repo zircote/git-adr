@@ -170,7 +170,7 @@ def _full_edit(notes_manager: NotesManager, adr: ADR, config) -> None:
         adr: ADR to edit.
         config: Configuration.
     """
-    import subprocess
+    import subprocess  # nosec B404 - subprocess needed to launch user's editor
     import tempfile
 
     from git_adr.commands.new import _build_editor_command, _find_editor
@@ -200,7 +200,8 @@ def _full_edit(notes_manager: NotesManager, adr: ADR, config) -> None:
         cmd = _build_editor_command(editor_cmd, temp_path)
         console.print(f"[dim]Opening editor: {editor_cmd}[/dim]")
 
-        result = subprocess.run(cmd, check=False)
+        # cmd is built from user's $EDITOR (trusted) + temp file path we control
+        result = subprocess.run(cmd, check=False)  # nosec B603
 
         if result.returncode != 0:
             err_console.print(
