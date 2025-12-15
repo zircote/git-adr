@@ -57,23 +57,42 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Install Python package (unless --man-only)
 if [ "$man_only" = false ]; then
     echo "==> Installing git-adr..."
+    installed=false
+
     if command -v uv >/dev/null 2>&1; then
-        uv tool install git-adr || uv pip install git-adr || pip install git-adr
-    elif command -v pip >/dev/null 2>&1; then
-        pip install git-adr
-    else
-        echo "Error: Neither uv nor pip found." >&2
-        echo "Install pip: https://pip.pypa.io/en/stable/installation/" >&2
+        echo "    Using uv..."
+        if uv tool install git-adr 2>/dev/null; then
+            installed=true
+        elif uv pip install git-adr 2>/dev/null; then
+            installed=true
+        fi
+    fi
+
+    if [ "$installed" = false ] && command -v pip >/dev/null 2>&1; then
+        echo "    Using pip..."
+        if pip install git-adr; then
+            installed=true
+        fi
+    fi
+
+    if [ "$installed" = false ]; then
+        echo "Error: Failed to install git-adr." >&2
+        echo "Try manually: pip install git-adr" >&2
         exit 1
     fi
 fi
 
 # Install man pages if present and prefix is writable
-if [ -d "$SCRIPT_DIR/man" ]; then
+if [ -d "$SCRIPT_DIR/man" ] && [ -d "$SCRIPT_DIR/man/man1" ]; then
     if [ -w "$prefix" ] || [ -w "$(dirname "$prefix")" ]; then
-        echo "==> Installing man pages to $prefix/share/man..."
-        mkdir -p "$prefix/share/man/man1"
-        cp -r "$SCRIPT_DIR/man/man1/"* "$prefix/share/man/man1/" 2>/dev/null || true
+        # Check if man pages exist before copying
+        if ls "$SCRIPT_DIR/man/man1/"*.1 >/dev/null 2>&1; then
+            echo "==> Installing man pages to $prefix/share/man..."
+            mkdir -p "$prefix/share/man/man1"
+            cp "$SCRIPT_DIR/man/man1/"*.1 "$prefix/share/man/man1/"
+        else
+            echo "Note: No man pages found in tarball."
+        fi
     else
         echo "Note: Cannot write to $prefix. Man pages not installed."
         echo "      Run with sudo or use --local flag."
