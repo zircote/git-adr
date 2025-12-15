@@ -1,0 +1,48 @@
+---
+date: '2025-12-15'
+format: nygard
+id: 00000000-use-adrs
+status: accepted
+tags:
+- documentation
+- process
+title: Use Architecture Decision Records
+---
+
+# Use Architecture Decision Records
+
+## Status
+
+accepted
+
+## Context
+
+We need to record the architectural decisions made on this project.
+
+## Decision
+
+We will use Architecture Decision Records (ADRs) stored in git notes,
+as described by git-adr. This approach:
+
+- Keeps ADRs invisible in the working tree but visible in history
+- Eliminates merge conflicts from sequential numbering
+- Associates decisions with implementing commits
+- Syncs automatically with regular git operations
+
+## Consequences
+
+### Positive
+
+- Decisions are documented and searchable
+- Context is preserved for future team members
+- ADRs don't clutter the repository file tree
+- Natural integration with git workflow
+
+### Negative
+
+- Team members need to learn git-adr commands
+- Git notes require configuration for remote sync
+
+### Neutral
+
+- Existing file-based ADRs can be imported
