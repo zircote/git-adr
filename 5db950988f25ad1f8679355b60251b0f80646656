@@ -1,0 +1,47 @@
+---
+date: '2025-12-15'
+id: adr009-ai-draft-uses-interactive-elicitation-by
+status: accepted
+tags:
+- git-adr-cli
+title: AI draft uses interactive elicitation by default
+---
+
+# AI draft uses interactive elicitation by default
+
+**Date**: 2025-12-15
+**Status**: Accepted
+**Deciders**: User
+
+### Context
+
+`git adr draft` needs to help users create ADRs with AI assistance. Two modes are possible:
+1. **Batch**: AI generates from commits/context in one shot
+2. **Interactive**: AI guides user through Socratic questioning
+
+### Decision
+
+When AI is enabled, `git adr draft` defaults to **interactive elicitation mode**.
+
+The AI asks sequential questions:
+1. "What problem are you solving?"
+2. "What options have you considered?"
+3. "What's driving this decision?"
+4. "What are the trade-offs/consequences?"
+
+Then synthesizes answers into a complete ADR.
+
+`--batch` flag available for scripted/automated usage.
+
+### Consequences
+
+**Positive:**
+- AI acts as collaborative partner, not just generator
+- Ensures users think through all decision aspects
+- Higher quality ADRs through guided reflection
+- Natural for users unfamiliar with ADR structure
+
+**Negative:**
+- More complex implementation (conversation state)
+- Slower than one-shot generation
+- Requires terminal interactivity (not pure stdin/stdout)
