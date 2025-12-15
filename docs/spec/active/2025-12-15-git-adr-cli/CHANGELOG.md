@@ -2,6 +2,35 @@
 
 All notable changes to this planning project will be documented here.
 
+## [1.1.0] - 2025-12-15
+
+### Scope Creep & Late Additions
+
+The following items were added during implementation beyond the original specification:
+
+#### New Features (Not Originally Planned)
+- **`git adr rm` command** - Remove ADRs from git notes (user request)
+- **git-lfs style distribution** - Makefile, install.sh, release.yml (user request)
+- **Extended bash completion** - Support both `git-adr` and `git adr` invocations
+
+#### Infrastructure Changes (Not Originally Planned)
+- **Coverage target raised** - From 90% to 95% (PR requirement)
+- **Shell completion tests** - Added to meet coverage target
+- **GitHub Actions v6/v7** - Upgraded for consistency with ci.yml
+- **`.gitignore` fixes** - Prevent ignoring docs/man/ source files
+
+#### Documentation Extensions
+- Man page for `rm` command (docs/man/git-adr-rm.1.md)
+- Updated COMMANDS.md with rm command
+- Updated main man page with rm command reference
+
+### Impact Assessment
+- **Scope increase**: ~15% additional work
+- **Risk**: Low (features align with tool philosophy)
+- **Technical debt**: None introduced
+
+---
+
 ## [1.0.0] - 2025-12-15
 
 ### Added
