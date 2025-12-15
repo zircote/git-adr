@@ -1,0 +1,36 @@
+---
+date: '2025-12-15'
+id: adr010-auto-configure-notes-sync-in-git-adr-ini
+status: accepted
+tags:
+- git-adr-cli
+title: Auto-configure notes sync in `git adr init`
+---
+
+# Auto-configure notes sync in `git adr init`
+
+**Date**: 2025-12-15
+**Status**: Accepted
+**Deciders**: Planning (risk mitigation)
+
+### Context
+
+Git notes are NOT pushed or fetched by default. Users will lose ADRs if they don't configure remotes.
+
+### Decision
+
+`git adr init` automatically configures:
+- `remote.origin.fetch` to include notes refs
+- `remote.origin.push` to include notes refs
+- `notes.rewriteRef` for rebase safety
+- `notes.rewrite.rebase` and `notes.rewrite.amend`
+
+### Consequences
+
+**Positive:**
+- Users don't lose ADRs due to misconfiguration
+- Notes automatically sync with regular push/pull
+
+**Negative:**
+- Modifies user's git config (expected behavior for init)
+- May conflict with existing notes configuration (handle gracefully)
