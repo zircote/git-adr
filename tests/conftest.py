@@ -28,6 +28,19 @@ if TYPE_CHECKING:
 
 
 # =============================================================================
+# Test Markers
+# =============================================================================
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Register custom markers for test categorization."""
+    config.addinivalue_line(
+        "markers", "integration: marks tests as integration tests (require git repos)"
+    )
+    config.addinivalue_line("markers", "slow: marks tests as slow running")
+
+
+# =============================================================================
 # Git Repository Fixtures
 # =============================================================================
 
