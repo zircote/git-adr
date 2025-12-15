@@ -13,21 +13,21 @@ import pytest
 
 from git_adr.core.adr import ADR, ADRMetadata, ADRStatus, generate_adr_id, validate_adr
 from git_adr.core.config import Config, ConfigManager
-from git_adr.core.git import Git, GitError, GitResult
+from git_adr.core.git import Git, GitResult
 from git_adr.core.notes import NotesManager
 from git_adr.core.templates import TemplateEngine
-
 
 # =============================================================================
 # ADR Parsing and Serialization Tests
 # =============================================================================
+
 
 class TestADRParsing:
     """Tests for ADR parsing and serialization."""
 
     def test_parse_madr_format(self) -> None:
         """Test parsing MADR format ADR."""
-        content = '''---
+        content = """---
 id: use-postgres
 title: Use PostgreSQL
 date: 2025-01-15
@@ -50,7 +50,7 @@ Use PostgreSQL.
 ## Consequences
 
 Good performance.
-'''
+"""
         adr = ADR.from_markdown(content)
         assert adr.metadata.id == "use-postgres"
         assert adr.metadata.title == "Use PostgreSQL"
@@ -152,6 +152,7 @@ class TestADRStatus:
 # Git Wrapper Tests
 # =============================================================================
 
+
 class TestGitWrapper:
     """Tests for Git wrapper class."""
 
@@ -233,7 +234,12 @@ class TestGitNotes:
         # Create multiple commits with notes
         for i in range(3):
             (temp_git_repo_with_commit / f"file{i}.txt").write_text(f"content {i}")
-            subprocess.run(["git", "add", "."], cwd=temp_git_repo_with_commit, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "add", "."],
+                cwd=temp_git_repo_with_commit,
+                check=True,
+                capture_output=True,
+            )
             subprocess.run(
                 ["git", "commit", "-m", f"Commit {i}"],
                 cwd=temp_git_repo_with_commit,
@@ -262,6 +268,7 @@ class TestGitNotes:
 # =============================================================================
 # Config Manager Tests
 # =============================================================================
+
 
 class TestConfigManager:
     """Tests for ConfigManager."""
@@ -317,6 +324,7 @@ class TestConfigManager:
 # Notes Manager Tests
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestNotesManager:
     """Tests for NotesManager."""
@@ -369,6 +377,7 @@ class TestNotesManager:
 # =============================================================================
 # Template Engine Tests
 # =============================================================================
+
 
 class TestTemplateEngine:
     """Tests for TemplateEngine."""

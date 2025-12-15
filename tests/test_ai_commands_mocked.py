@@ -115,9 +115,7 @@ class TestAIDraftCommand:
             provider="openai",
         )
 
-        result = runner.invoke(
-            app, ["ai", "draft", "Test ADR Title", "--batch"]
-        )
+        result = runner.invoke(app, ["ai", "draft", "Test ADR Title", "--batch"])
         assert result.exit_code == 0
         assert "Created ADR" in result.output or "gpt-4" in result.output
 
@@ -176,9 +174,7 @@ class TestAIDraftCommand:
 
     def test_draft_no_ai_provider(self, initialized_adr_repo: Path) -> None:
         """Test draft without AI provider configured."""
-        result = runner.invoke(
-            app, ["ai", "draft", "Test ADR", "--batch"]
-        )
+        result = runner.invoke(app, ["ai", "draft", "Test ADR", "--batch"])
         assert result.exit_code != 0
         assert "provider" in result.output.lower()
 
@@ -198,9 +194,7 @@ class TestAIDraftCommand:
         mock_ai_service.return_value = mock_instance
         mock_instance.draft_adr.side_effect = Exception("API rate limited")
 
-        result = runner.invoke(
-            app, ["ai", "draft", "Test ADR", "--batch"]
-        )
+        result = runner.invoke(app, ["ai", "draft", "Test ADR", "--batch"])
         assert result.exit_code != 0
         assert "error" in result.output.lower()
 
@@ -224,9 +218,7 @@ class TestAIAskCommand:
             content="Based on the ADRs, PostgreSQL is used for the database."
         )
 
-        result = runner.invoke(
-            app, ["ai", "ask", "What database do we use?"]
-        )
+        result = runner.invoke(app, ["ai", "ask", "What database do we use?"])
         assert result.exit_code == 0
         assert "PostgreSQL" in result.output or "Answer" in result.output
 
@@ -267,9 +259,7 @@ class TestAIAskCommand:
         mock_ai_service.return_value = mock_instance
         mock_instance.ask_question.return_value = MockAIResponse()
 
-        result = runner.invoke(
-            app, ["ai", "ask", "What decisions were made?"]
-        )
+        result = runner.invoke(app, ["ai", "ask", "What decisions were made?"])
         # Should succeed but may report no ADRs
         assert result.exit_code == 0
 
@@ -311,25 +301,19 @@ class TestAISuggestCommand:
             content="## Suggestions\n\n1. Add more context about alternatives considered."
         )
 
-        result = runner.invoke(
-            app, ["ai", "suggest", "20250110-use-postgresql"]
-        )
+        result = runner.invoke(app, ["ai", "suggest", "20250110-use-postgresql"])
         assert result.exit_code == 0
         assert "Suggestions" in result.output or "Improvement" in result.output
 
     def test_suggest_adr_not_found(self, ai_repo_with_data: Path) -> None:
         """Test suggest with non-existent ADR."""
-        result = runner.invoke(
-            app, ["ai", "suggest", "nonexistent-adr-id"]
-        )
+        result = runner.invoke(app, ["ai", "suggest", "nonexistent-adr-id"])
         assert result.exit_code != 0
         assert "not found" in result.output.lower()
 
     def test_suggest_no_ai_provider(self, adr_repo_with_data: Path) -> None:
         """Test suggest without AI provider configured."""
-        result = runner.invoke(
-            app, ["ai", "suggest", "20250110-use-postgresql"]
-        )
+        result = runner.invoke(app, ["ai", "suggest", "20250110-use-postgresql"])
         assert result.exit_code != 0
         assert "provider" in result.output.lower()
 
@@ -342,9 +326,7 @@ class TestAISuggestCommand:
         mock_ai_service.return_value = mock_instance
         mock_instance.suggest_improvements.side_effect = Exception("Invalid API key")
 
-        result = runner.invoke(
-            app, ["ai", "suggest", "20250110-use-postgresql"]
-        )
+        result = runner.invoke(app, ["ai", "suggest", "20250110-use-postgresql"])
         assert result.exit_code != 0
 
 
@@ -424,6 +406,7 @@ class TestAIServiceModule:
         """Test that AI service can be imported."""
         try:
             from git_adr.ai import AIService
+
             assert AIService is not None
         except ImportError:
             # AI dependencies not installed - acceptable

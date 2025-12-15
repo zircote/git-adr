@@ -5,15 +5,14 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
 from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
 from git_adr.core.config import ConfigManager
 from git_adr.core.git import Git
-from git_adr.core.notes import NotesManager
 from git_adr.core.index import IndexManager
+from git_adr.core.notes import NotesManager
 
 runner = CliRunner()
 
@@ -21,6 +20,7 @@ runner = CliRunner()
 # =============================================================================
 # Index Edge Cases
 # =============================================================================
+
 
 class TestIndexEdgeCases:
     """Tests for IndexManager edge cases."""
@@ -68,6 +68,7 @@ class TestIndexEdgeCases:
 # Git Edge Cases
 # =============================================================================
 
+
 class TestGitEdgeCases:
     """Tests for Git wrapper edge cases."""
 
@@ -98,6 +99,7 @@ class TestGitEdgeCases:
 # =============================================================================
 # Template Edge Cases
 # =============================================================================
+
 
 class TestTemplateEdgeCases:
     """Tests for TemplateEngine edge cases."""
@@ -134,6 +136,7 @@ class TestTemplateEdgeCases:
 # ADR Edge Cases
 # =============================================================================
 
+
 class TestADREdgeCases:
     """Tests for ADR model edge cases."""
 
@@ -156,12 +159,20 @@ class TestADREdgeCases:
     def test_adr_status_values(self) -> None:
         """Test all ADR status values."""
         for status in ADRStatus:
-            assert status.value in ["draft", "proposed", "accepted", "rejected", "deprecated", "superseded"]
+            assert status.value in [
+                "draft",
+                "proposed",
+                "accepted",
+                "rejected",
+                "deprecated",
+                "superseded",
+            ]
 
 
 # =============================================================================
 # CLI Aliases
 # =============================================================================
+
 
 class TestCLIAliases:
     """Tests for CLI command aliases."""
@@ -191,6 +202,7 @@ class TestCLIAliases:
 # Notes Manager Edge Cases
 # =============================================================================
 
+
 class TestNotesManagerEdgeCases:
     """Tests for NotesManager edge cases."""
 
@@ -218,18 +230,21 @@ class TestNotesManagerEdgeCases:
 # Formats Module Coverage
 # =============================================================================
 
+
 class TestFormatsModule:
     """Tests for the formats module."""
 
     def test_formats_import(self) -> None:
         """Test that formats module can be imported."""
         from git_adr import formats
+
         assert formats.__all__ == []
 
 
 # =============================================================================
 # Additional Coverage Boosters
 # =============================================================================
+
 
 class TestAdditionalCoverage:
     """Additional tests to boost coverage."""
@@ -283,6 +298,7 @@ This is the decision.
     def test_config_defaults(self) -> None:
         """Test Config with default values."""
         from git_adr.core.config import Config
+
         config = Config()
         assert config.namespace == "adr"
         assert config.notes_ref == "refs/notes/adr"
@@ -290,6 +306,7 @@ This is the decision.
     def test_git_result_properties(self) -> None:
         """Test GitResult properties."""
         from git_adr.core.git import GitResult
+
         result = GitResult(stdout="output", stderr="", exit_code=0)
         assert result.stdout == "output"
         assert result.stderr == ""
@@ -298,6 +315,7 @@ This is the decision.
     def test_template_get_format_names(self) -> None:
         """Test getting template format names."""
         from git_adr.core.templates import TemplateEngine
+
         engine = TemplateEngine()
         formats = engine.list_formats()
         assert "madr" in formats
@@ -307,6 +325,7 @@ This is the decision.
     def test_generate_adr_id_collision(self) -> None:
         """Test generating ADR ID when collision exists."""
         from git_adr.core.adr import generate_adr_id
+
         existing = {"20250115-use-postgres"}
         adr_id = generate_adr_id("Use Postgres", existing)
         # Should generate a different ID since base exists
@@ -315,6 +334,7 @@ This is the decision.
     def test_validate_adr_complete(self) -> None:
         """Test validating a complete ADR."""
         from git_adr.core.adr import validate_adr
+
         adr = ADR(
             metadata=ADRMetadata(
                 id="20250115-complete",

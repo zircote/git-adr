@@ -5,18 +5,11 @@ Targets uncovered code paths with comprehensive mocking.
 
 from __future__ import annotations
 
-from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import ConfigManager
-from git_adr.core.git import Git
-from git_adr.core.notes import NotesManager
 
 runner = CliRunner()
 
@@ -29,9 +22,7 @@ runner = CliRunner()
 class TestAttachCommand:
     """Tests for attach command."""
 
-    def test_attach_success(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_attach_success(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test successful file attachment."""
         # Create a test file
         test_file = tmp_path / "diagram.png"
@@ -44,9 +35,7 @@ class TestAttachCommand:
         assert result.exit_code == 0
         assert "Attached" in result.output
 
-    def test_attach_with_name(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_attach_with_name(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test attachment with custom name."""
         test_file = tmp_path / "diagram.png"
         test_file.write_bytes(b"fake png content")
@@ -63,9 +52,7 @@ class TestAttachCommand:
         )
         assert result.exit_code == 0
 
-    def test_attach_with_alt(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_attach_with_alt(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test attachment with alt text."""
         test_file = tmp_path / "diagram.png"
         test_file.write_bytes(b"fake png content")
@@ -121,9 +108,7 @@ class TestAttachCommand:
         # May succeed but with warning
         assert result.exit_code in [0, 1]
 
-    def test_attach_not_initialized(
-        self, temp_git_repo: Path, tmp_path: Path
-    ) -> None:
+    def test_attach_not_initialized(self, temp_git_repo: Path, tmp_path: Path) -> None:
         """Test attachment in non-initialized repo."""
         test_file = tmp_path / "diagram.png"
         test_file.write_bytes(b"fake png content")
@@ -253,9 +238,7 @@ class TestArtifactRmCommand:
             )
             assert result.exit_code in [0, 1]
 
-    def test_artifact_rm_abort(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_artifact_rm_abort(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test aborting artifact removal."""
         # First attach a file
         test_file = tmp_path / "keep.png"

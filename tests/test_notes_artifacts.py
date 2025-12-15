@@ -14,7 +14,7 @@ import pytest
 from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
 from git_adr.core.config import ConfigManager
 from git_adr.core.git import Git
-from git_adr.core.notes import NotesManager, ArtifactInfo, _guess_mime_type
+from git_adr.core.notes import NotesManager, _guess_mime_type
 
 
 class TestNotesManagerArtifacts:
@@ -116,9 +116,7 @@ class TestNotesManagerArtifacts:
         with pytest.raises(FileNotFoundError):
             notes_manager.attach_artifact("20250115-test-nofile", nonexistent)
 
-    def test_get_artifact(
-        self, initialized_adr_repo: Path, tmp_path: Path
-    ) -> None:
+    def test_get_artifact(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
         """Test retrieving an attached artifact."""
         git = Git(cwd=initialized_adr_repo)
         config_manager = ConfigManager(git)
@@ -161,9 +159,7 @@ class TestNotesManagerArtifacts:
         result = notes_manager.get_artifact("0" * 64)
         assert result is None
 
-    def test_list_artifacts(
-        self, initialized_adr_repo: Path, tmp_path: Path
-    ) -> None:
+    def test_list_artifacts(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
         """Test listing artifacts for an ADR."""
         git = Git(cwd=initialized_adr_repo)
         config_manager = ConfigManager(git)
@@ -205,9 +201,7 @@ class TestNotesManagerArtifacts:
         artifacts = notes_manager.list_artifacts("nonexistent-adr")
         assert artifacts == []
 
-    def test_remove_artifact(
-        self, initialized_adr_repo: Path, tmp_path: Path
-    ) -> None:
+    def test_remove_artifact(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
         """Test removing an artifact from ADR."""
         git = Git(cwd=initialized_adr_repo)
         config_manager = ConfigManager(git)
@@ -297,9 +291,7 @@ class TestNotesManagerInitialization:
 
         assert notes_manager.is_initialized() is False
 
-    def test_initialize_creates_refs(
-        self, temp_git_repo_with_commit: Path
-    ) -> None:
+    def test_initialize_creates_refs(self, temp_git_repo_with_commit: Path) -> None:
         """Test initialize sets up notes refs."""
         git = Git(cwd=temp_git_repo_with_commit)
         config_manager = ConfigManager(git)
@@ -311,9 +303,7 @@ class TestNotesManagerInitialization:
         # Check config was set
         assert git.config_get("adr.initialized") == "true"
 
-    def test_initialize_with_remote(
-        self, temp_git_repo_with_commit: Path
-    ) -> None:
+    def test_initialize_with_remote(self, temp_git_repo_with_commit: Path) -> None:
         """Test initialize configures remote refs."""
         git = Git(cwd=temp_git_repo_with_commit)
 
@@ -329,7 +319,7 @@ class TestNotesManagerInitialization:
         notes_manager.initialize()
 
         # Verify remote fetch refspecs were added
-        fetch_config = git.config_get("remote.origin.fetch")
+        git.config_get("remote.origin.fetch")
         # May have multiple values, just verify command succeeded
 
     def test_initialize_force(self, initialized_adr_repo: Path) -> None:

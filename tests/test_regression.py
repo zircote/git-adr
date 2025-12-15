@@ -7,13 +7,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.config import ConfigManager
 from git_adr.core.git import Git
-from git_adr.core.notes import NotesManager
 
 runner = CliRunner()
 
@@ -38,9 +35,7 @@ class TestInitListConsistency:
         assert list_result.exit_code == 0, f"List failed: {list_result.output}"
         assert "not initialized" not in list_result.output.lower()
 
-    def test_init_and_list_state_consistent(
-        self, initialized_adr_repo: Path
-    ) -> None:
+    def test_init_and_list_state_consistent(self, initialized_adr_repo: Path) -> None:
         """Test that init and list agree on initialization state."""
         # List should work in initialized repo
         list1 = runner.invoke(app, ["list"])
@@ -97,9 +92,7 @@ class TestConfigNotesSyncBug:
         list_result = runner.invoke(app, ["list"])
         assert list_result.exit_code == 0
 
-    def test_manual_config_clear_recovery(
-        self, initialized_adr_repo: Path
-    ) -> None:
+    def test_manual_config_clear_recovery(self, initialized_adr_repo: Path) -> None:
         """Test recovery when config is manually cleared."""
         # Manually clear the initialized flag (simulating corruption)
         git = Git(cwd=initialized_adr_repo)
@@ -112,7 +105,10 @@ class TestConfigNotesSyncBug:
         list_result = runner.invoke(app, ["list"])
         # Check behavior is graceful (either fails with init message or works)
         if list_result.exit_code != 0:
-            assert "init" in list_result.output.lower() or "not initialized" in list_result.output.lower()
+            assert (
+                "init" in list_result.output.lower()
+                or "not initialized" in list_result.output.lower()
+            )
 
         # Re-initialize should work
         git.config_set("adr.initialized", "true")
@@ -149,7 +145,9 @@ class TestEdgeCaseRegressions:
         result = runner.invoke(app, ["metrics"])
         assert result.exit_code == 0
 
-    def test_export_empty_repo(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
+    def test_export_empty_repo(
+        self, initialized_adr_repo: Path, tmp_path: Path
+    ) -> None:
         """Test that export in empty repo handles gracefully."""
         output = tmp_path / "export.json"
         result = runner.invoke(

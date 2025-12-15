@@ -6,19 +6,12 @@ Focuses on commands that need more test coverage:
 
 from __future__ import annotations
 
-import json
-from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import ConfigManager
-from git_adr.core.git import Git
-from git_adr.core.notes import NotesManager
 
 runner = CliRunner()
 
@@ -26,6 +19,7 @@ runner = CliRunner()
 # =============================================================================
 # Edit Command Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestEditCommand:
@@ -69,6 +63,7 @@ class TestEditCommand:
 # Convert Command Tests
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestConvertCommand:
     """Tests for the convert command."""
@@ -89,15 +84,14 @@ class TestConvertCommand:
 
     def test_convert_nonexistent_adr(self, initialized_adr_repo: Path) -> None:
         """Test converting nonexistent ADR."""
-        result = runner.invoke(
-            app, ["convert", "nonexistent-adr", "--to", "nygard"]
-        )
+        result = runner.invoke(app, ["convert", "nonexistent-adr", "--to", "nygard"])
         assert result.exit_code != 0 or "not found" in result.output.lower()
 
 
 # =============================================================================
 # Attach/Artifact Commands Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestAttachCommand:
@@ -176,6 +170,7 @@ class TestArtifactRmCommand:
 # Link Command Tests
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestLinkCommand:
     """Tests for the link command."""
@@ -185,16 +180,12 @@ class TestLinkCommand:
         result = runner.invoke(app, ["link", "--help"])
         assert result.exit_code == 0
 
-    def test_link_adr_to_commit(
-        self, adr_repo_with_data: Path, create_commit
-    ) -> None:
+    def test_link_adr_to_commit(self, adr_repo_with_data: Path, create_commit) -> None:
         """Test linking an ADR to a commit."""
         # Create a commit to link to
         commit_sha = create_commit("Test commit for linking")
 
-        result = runner.invoke(
-            app, ["link", "20250110-use-postgresql", commit_sha[:7]]
-        )
+        result = runner.invoke(app, ["link", "20250110-use-postgresql", commit_sha[:7]])
         # May succeed or fail
         assert "error" not in result.output.lower() or result.exit_code in [0, 1]
 
@@ -211,6 +202,7 @@ class TestLinkCommand:
 # =============================================================================
 # Onboard Command Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestOnboardCommand:
@@ -242,6 +234,7 @@ class TestOnboardCommand:
 # Import Command Tests
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestImportCommand:
     """Tests for the import command."""
@@ -272,9 +265,7 @@ Test context.
 Test decision.
 """)
 
-        result = runner.invoke(
-            app, ["import", str(tmp_path), "--dry-run"]
-        )
+        result = runner.invoke(app, ["import", str(tmp_path), "--dry-run"])
         # Should show what would be imported
         assert result.exit_code == 0 or "import" in result.output.lower()
 
@@ -287,6 +278,7 @@ Test decision.
 # =============================================================================
 # Show Command Extended Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestShowCommandExtended:
@@ -310,6 +302,7 @@ class TestShowCommandExtended:
 # =============================================================================
 # List Command Extended Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestListCommandExtended:
@@ -340,15 +333,14 @@ class TestListCommandExtended:
 # Search Command Extended Tests
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestSearchCommandExtended:
     """Extended tests for the search command."""
 
     def test_search_case_sensitive(self, adr_repo_with_data: Path) -> None:
         """Test case-sensitive search."""
-        result = runner.invoke(
-            app, ["search", "PostgreSQL", "--case-sensitive"]
-        )
+        result = runner.invoke(app, ["search", "PostgreSQL", "--case-sensitive"])
         assert result.exit_code == 0
 
     def test_search_regex(self, adr_repo_with_data: Path) -> None:
@@ -372,6 +364,7 @@ class TestSearchCommandExtended:
 # =============================================================================
 # New Command Extended Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestNewCommandExtended:
@@ -410,6 +403,7 @@ Some consequences.
 # Report Command Extended Tests
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestReportCommandExtended:
     """Extended tests for the report command."""
@@ -436,6 +430,7 @@ class TestReportCommandExtended:
 # =============================================================================
 # Wiki Command Extended Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestWikiCommandsExtended:

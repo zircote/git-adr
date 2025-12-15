@@ -7,15 +7,12 @@ from __future__ import annotations
 
 import json
 import subprocess
-from datetime import date, datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
 from git_adr.core.git import Git, GitError
 
 runner = CliRunner()
@@ -45,7 +42,7 @@ class TestImportNotInitialized:
         import os
 
         os.chdir(tmp_path)
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
 
         test_file = tmp_path / "test.md"
         test_file.write_text("# Test ADR\n")
@@ -75,19 +72,28 @@ class TestImportAlreadyExists:
         """Test import skips existing ADR."""
         # Create JSON with existing ADR ID
         json_file = adr_repo_with_data / "existing.json"
-        json_file.write_text(json.dumps({
-            "adrs": [{
-                "id": "20250110-use-postgresql",
-                "title": "Use PostgreSQL Duplicate",
-                "date": "2025-01-10",
-                "status": "proposed",
-                "content": "Duplicate content"
-            }]
-        }))
+        json_file.write_text(
+            json.dumps(
+                {
+                    "adrs": [
+                        {
+                            "id": "20250110-use-postgresql",
+                            "title": "Use PostgreSQL Duplicate",
+                            "date": "2025-01-10",
+                            "status": "proposed",
+                            "content": "Duplicate content",
+                        }
+                    ]
+                }
+            )
+        )
 
         result = runner.invoke(app, ["import", str(json_file)])
         assert result.exit_code == 0
-        assert "skipping" in result.output.lower() or "already exists" in result.output.lower()
+        assert (
+            "skipping" in result.output.lower()
+            or "already exists" in result.output.lower()
+        )
 
 
 class TestImportGitError:
@@ -96,15 +102,21 @@ class TestImportGitError:
     def test_import_git_error(self, adr_repo_with_data: Path) -> None:
         """Test import when GitError is raised."""
         json_file = adr_repo_with_data / "test.json"
-        json_file.write_text(json.dumps({
-            "adrs": [{
-                "id": "new-adr-test",
-                "title": "New ADR",
-                "date": "2025-01-15",
-                "status": "draft",
-                "content": "Content"
-            }]
-        }))
+        json_file.write_text(
+            json.dumps(
+                {
+                    "adrs": [
+                        {
+                            "id": "new-adr-test",
+                            "title": "New ADR",
+                            "date": "2025-01-15",
+                            "status": "draft",
+                            "content": "Content",
+                        }
+                    ]
+                }
+            )
+        )
 
         with patch("git_adr.commands.import_.get_git") as mock_get_git:
             mock_git = MagicMock()
@@ -130,15 +142,21 @@ class TestImportFormatDetection:
     def test_detect_json_format(self, adr_repo_with_data: Path) -> None:
         """Test auto-detecting JSON format (line 129)."""
         json_file = adr_repo_with_data / "test.json"
-        json_file.write_text(json.dumps({
-            "adrs": [{
-                "id": "json-test",
-                "title": "JSON Test",
-                "date": "2025-01-15",
-                "status": "draft",
-                "content": "Content"
-            }]
-        }))
+        json_file.write_text(
+            json.dumps(
+                {
+                    "adrs": [
+                        {
+                            "id": "json-test",
+                            "title": "JSON Test",
+                            "date": "2025-01-15",
+                            "status": "draft",
+                            "content": "Content",
+                        }
+                    ]
+                }
+            )
+        )
 
         result = runner.invoke(app, ["import", str(json_file)])
         assert result.exit_code == 0
@@ -201,7 +219,7 @@ Content.
 
     def test_import_markdown_datetime_date(self, adr_repo_with_data: Path) -> None:
         """Test markdown import with datetime date (lines 161-164)."""
-        from datetime import datetime as dt
+
         md_file = adr_repo_with_data / "test-datetime.md"
         md_file.write_text("""---
 title: DateTime Test
@@ -274,12 +292,16 @@ class TestImportJson:
     def test_import_json_no_date(self, adr_repo_with_data: Path) -> None:
         """Test JSON import with no date (line 212)."""
         json_file = adr_repo_with_data / "no-date.json"
-        json_file.write_text(json.dumps({
-            "id": "no-date-test",
-            "title": "No Date Test",
-            "status": "draft",
-            "content": "Content"
-        }))
+        json_file.write_text(
+            json.dumps(
+                {
+                    "id": "no-date-test",
+                    "title": "No Date Test",
+                    "status": "draft",
+                    "content": "Content",
+                }
+            )
+        )
 
         result = runner.invoke(app, ["import", str(json_file)])
         assert result.exit_code == 0
@@ -287,13 +309,17 @@ class TestImportJson:
     def test_import_json_invalid_status(self, adr_repo_with_data: Path) -> None:
         """Test JSON import with invalid status (lines 222-223)."""
         json_file = adr_repo_with_data / "invalid-status.json"
-        json_file.write_text(json.dumps({
-            "id": "invalid-status-json",
-            "title": "Invalid Status Test",
-            "date": "2025-01-15",
-            "status": "not-a-real-status",
-            "content": "Content"
-        }))
+        json_file.write_text(
+            json.dumps(
+                {
+                    "id": "invalid-status-json",
+                    "title": "Invalid Status Test",
+                    "date": "2025-01-15",
+                    "status": "not-a-real-status",
+                    "content": "Content",
+                }
+            )
+        )
 
         result = runner.invoke(app, ["import", str(json_file)])
         # Should succeed, defaulting to draft
@@ -305,14 +331,18 @@ class TestImportJson:
         head = git.get_head_commit()
 
         json_file = adr_repo_with_data / "linked.json"
-        json_file.write_text(json.dumps({
-            "id": "linked-commits-test",
-            "title": "Linked Commits Test",
-            "date": "2025-01-15",
-            "status": "accepted",
-            "content": "Content",
-            "linked_commits": [head]
-        }))
+        json_file.write_text(
+            json.dumps(
+                {
+                    "id": "linked-commits-test",
+                    "title": "Linked Commits Test",
+                    "date": "2025-01-15",
+                    "status": "accepted",
+                    "content": "Content",
+                    "linked_commits": [head],
+                }
+            )
+        )
 
         result = runner.invoke(app, ["import", str(json_file)])
         assert result.exit_code == 0
@@ -320,14 +350,18 @@ class TestImportJson:
     def test_import_json_with_supersedes(self, adr_repo_with_data: Path) -> None:
         """Test JSON import with supersedes relationship."""
         json_file = adr_repo_with_data / "supersedes.json"
-        json_file.write_text(json.dumps({
-            "id": "supersedes-test",
-            "title": "Supersedes Test",
-            "date": "2025-01-15",
-            "status": "accepted",
-            "content": "Content",
-            "supersedes": "old-adr-id"
-        }))
+        json_file.write_text(
+            json.dumps(
+                {
+                    "id": "supersedes-test",
+                    "title": "Supersedes Test",
+                    "date": "2025-01-15",
+                    "status": "accepted",
+                    "content": "Content",
+                    "supersedes": "old-adr-id",
+                }
+            )
+        )
 
         result = runner.invoke(app, ["import", str(json_file)])
         assert result.exit_code == 0
@@ -460,19 +494,28 @@ class TestImportDryRun:
     def test_import_dry_run(self, adr_repo_with_data: Path) -> None:
         """Test import with dry run."""
         json_file = adr_repo_with_data / "dry-run.json"
-        json_file.write_text(json.dumps({
-            "adrs": [{
-                "id": "dry-run-test",
-                "title": "Dry Run Test",
-                "date": "2025-01-15",
-                "status": "draft",
-                "content": "Content"
-            }]
-        }))
+        json_file.write_text(
+            json.dumps(
+                {
+                    "adrs": [
+                        {
+                            "id": "dry-run-test",
+                            "title": "Dry Run Test",
+                            "date": "2025-01-15",
+                            "status": "draft",
+                            "content": "Content",
+                        }
+                    ]
+                }
+            )
+        )
 
         result = runner.invoke(app, ["import", str(json_file), "--dry-run"])
         assert result.exit_code == 0
-        assert "would import" in result.output.lower() or "dry-run" in result.output.lower()
+        assert (
+            "would import" in result.output.lower()
+            or "dry-run" in result.output.lower()
+        )
 
 
 class TestImportWithFormat:
@@ -481,13 +524,17 @@ class TestImportWithFormat:
     def test_import_with_explicit_format(self, adr_repo_with_data: Path) -> None:
         """Test import with explicit format option."""
         json_file = adr_repo_with_data / "explicit.json"
-        json_file.write_text(json.dumps({
-            "id": "explicit-format",
-            "title": "Explicit Format Test",
-            "date": "2025-01-15",
-            "status": "draft",
-            "content": "Content"
-        }))
+        json_file.write_text(
+            json.dumps(
+                {
+                    "id": "explicit-format",
+                    "title": "Explicit Format Test",
+                    "date": "2025-01-15",
+                    "status": "draft",
+                    "content": "Content",
+                }
+            )
+        )
 
         result = runner.invoke(app, ["import", str(json_file), "--format", "json"])
         assert result.exit_code == 0

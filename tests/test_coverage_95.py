@@ -6,17 +6,15 @@ Tests all remaining uncovered code paths with deep mocking.
 from __future__ import annotations
 
 import json
-import os
 from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
+from git_adr.core.adr import ADRMetadata, ADRStatus
+from git_adr.core.config import ConfigManager
 from git_adr.core.git import Git, GitError, GitResult
 from git_adr.core.notes import NotesManager
 
@@ -227,9 +225,7 @@ class TestLinkCommand:
         git = Git(cwd=adr_repo_with_data)
         head = git.get_head_commit()
 
-        result = runner.invoke(
-            app, ["link", "20250110-use-postgresql", head]
-        )
+        result = runner.invoke(app, ["link", "20250110-use-postgresql", head])
         assert result.exit_code in [0, 1]
 
     def test_unlink_commit(self, adr_repo_with_data: Path) -> None:
@@ -280,7 +276,6 @@ class TestIndexTests:
     def test_index_rebuild(self, adr_repo_with_data: Path) -> None:
         """Test index rebuild via IndexManager."""
         from git_adr.core.index import IndexManager
-        from git_adr.core.config import ConfigManager
 
         git = Git(cwd=adr_repo_with_data)
         config_manager = ConfigManager(git)
@@ -294,7 +289,6 @@ class TestIndexTests:
     def test_index_get_stats(self, adr_repo_with_data: Path) -> None:
         """Test index get_stats via IndexManager."""
         from git_adr.core.index import IndexManager
-        from git_adr.core.config import ConfigManager
 
         git = Git(cwd=adr_repo_with_data)
         config_manager = ConfigManager(git)

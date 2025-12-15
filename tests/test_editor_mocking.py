@@ -6,19 +6,13 @@ Targets uncovered code paths in new.py, supersede.py, log.py, and edit.py.
 from __future__ import annotations
 
 import os
-from datetime import date
-from io import StringIO
 from pathlib import Path
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
-from git_adr.core.git import Git
-from git_adr.core.notes import NotesManager
+from git_adr.core.config import Config
 
 runner = CliRunner()
 
@@ -106,7 +100,9 @@ class TestNewCommandHelpers:
 
         with patch.dict(os.environ, {"VISUAL": "code", "EDITOR": ""}, clear=False):
             with patch("shutil.which") as mock_which:
-                mock_which.side_effect = lambda x: f"/usr/bin/{x}" if x == "code" else None
+                mock_which.side_effect = (
+                    lambda x: f"/usr/bin/{x}" if x == "code" else None
+                )
                 editor = _find_editor(config)
                 assert editor == "code"
 
@@ -203,7 +199,10 @@ class TestSupersedeCommand:
             app, ["supersede", "20250110-use-postgresql", "New Database Decision"]
         )
         assert result.exit_code == 0
-        assert "Created superseding ADR" in result.output or "supersede" in result.output.lower()
+        assert (
+            "Created superseding ADR" in result.output
+            or "supersede" in result.output.lower()
+        )
 
     @patch("git_adr.commands.new._open_editor")
     def test_supersede_aborted(
@@ -223,14 +222,10 @@ class TestSupersedeCommand:
         self, mock_editor: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test supersede on already superseded ADR."""
-        mock_editor.return_value = (
-            "## Context\n\nContext.\n\n## Decision\n\nDecision."
-        )
+        mock_editor.return_value = "## Context\n\nContext.\n\n## Decision\n\nDecision."
 
         # First supersede
-        result1 = runner.invoke(
-            app, ["supersede", "20250110-use-postgresql", "First Supersede"]
-        )
+        runner.invoke(app, ["supersede", "20250110-use-postgresql", "First Supersede"])
 
         # Try to supersede again
         result2 = runner.invoke(
@@ -341,7 +336,11 @@ class TestEditCommand:
     @patch("subprocess.run")
     @patch("git_adr.commands.new._find_editor")
     def test_edit_full_mode(
-        self, mock_find: MagicMock, mock_run: MagicMock, adr_repo_with_data: Path, tmp_path: Path
+        self,
+        mock_find: MagicMock,
+        mock_run: MagicMock,
+        adr_repo_with_data: Path,
+        tmp_path: Path,
     ) -> None:
         """Test edit command in full editor mode."""
         mock_find.return_value = "nano"
@@ -519,9 +518,7 @@ class TestDraftMode:
 class TestInvalidStatus:
     """Tests for invalid status handling."""
 
-    def test_new_invalid_status(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_new_invalid_status(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test new with invalid status."""
         content_file = tmp_path / "status.md"
         content_file.write_text("## Context\n\nTest.\n\n## Decision\n\nTest.")
@@ -553,7 +550,14 @@ class TestTemplateErrors:
     def test_new_invalid_template(self, adr_repo_with_data: Path) -> None:
         """Test new with invalid template."""
         result = runner.invoke(
-            app, ["new", "Invalid Template", "--template", "nonexistent_template", "--preview"]
+            app,
+            [
+                "new",
+                "Invalid Template",
+                "--template",
+                "nonexistent_template",
+                "--preview",
+            ],
         )
         assert result.exit_code != 0
         assert "error" in result.output.lower() or "template" in result.output.lower()

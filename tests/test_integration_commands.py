@@ -6,17 +6,13 @@ Tests CLI commands with real git repositories.
 from __future__ import annotations
 
 import json
-import os
-from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
+from git_adr.core.config import ConfigManager
 from git_adr.core.git import Git
 from git_adr.core.notes import NotesManager
 
@@ -26,6 +22,7 @@ runner = CliRunner()
 # =============================================================================
 # Init Command Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestInitCommand:
@@ -88,7 +85,9 @@ class TestInitCommand:
         # Should have at least the initial ADR
         assert len(adrs) >= 1
 
-    def test_init_fails_outside_git_repo(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_init_fails_outside_git_repo(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test init fails gracefully outside git repo."""
         monkeypatch.chdir(tmp_path)
 
@@ -99,6 +98,7 @@ class TestInitCommand:
 # =============================================================================
 # New Command Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestNewCommand:
@@ -129,7 +129,16 @@ class TestNewCommand:
         """Test creating new ADR with tags."""
         result = runner.invoke(
             app,
-            ["new", "Tagged ADR", "--tag", "database", "--tag", "backend", "--no-edit", "--preview"],
+            [
+                "new",
+                "Tagged ADR",
+                "--tag",
+                "database",
+                "--tag",
+                "backend",
+                "--no-edit",
+                "--preview",
+            ],
         )
         assert result.exit_code == 0
 
@@ -147,6 +156,7 @@ class TestNewCommand:
 # List Command Tests
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestListCommand:
     """Tests for the list command."""
@@ -162,7 +172,11 @@ class TestListCommand:
         assert result.exit_code == 0
         # Check for parts of the ADR IDs or titles
         output_lower = result.output.lower()
-        assert "postgresql" in output_lower or "postgres" in output_lower or "20250110" in result.output
+        assert (
+            "postgresql" in output_lower
+            or "postgres" in output_lower
+            or "20250110" in result.output
+        )
 
     def test_list_filter_by_status(self, adr_repo_with_data: Path) -> None:
         """Test filtering list by status."""
@@ -191,6 +205,7 @@ class TestListCommand:
 # Show Command Tests
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestShowCommand:
     """Tests for the show command."""
@@ -208,13 +223,16 @@ class TestShowCommand:
 
     def test_show_json_format(self, adr_repo_with_data: Path) -> None:
         """Test showing ADR in JSON format."""
-        result = runner.invoke(app, ["show", "20250110-use-postgresql", "--format", "json"])
+        result = runner.invoke(
+            app, ["show", "20250110-use-postgresql", "--format", "json"]
+        )
         assert result.exit_code == 0
 
 
 # =============================================================================
 # Search Command Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestSearchCommand:
@@ -235,6 +253,7 @@ class TestSearchCommand:
 # Stats Command Tests
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestStatsCommand:
     """Tests for the stats command."""
@@ -253,6 +272,7 @@ class TestStatsCommand:
 # =============================================================================
 # Metrics Command Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestMetricsCommand:
@@ -279,6 +299,7 @@ class TestMetricsCommand:
 # Export Command Tests
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestExportCommand:
     """Tests for the export command."""
@@ -286,26 +307,33 @@ class TestExportCommand:
     def test_export_json(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test exporting to JSON."""
         output_file = tmp_path / "adrs.json"
-        result = runner.invoke(app, ["export", "--format", "json", "--output", str(output_file)])
+        result = runner.invoke(
+            app, ["export", "--format", "json", "--output", str(output_file)]
+        )
         assert result.exit_code == 0
         assert output_file.exists()
 
     def test_export_markdown(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test exporting to Markdown."""
         output_dir = tmp_path / "adrs"
-        result = runner.invoke(app, ["export", "--format", "markdown", "--output", str(output_dir)])
+        result = runner.invoke(
+            app, ["export", "--format", "markdown", "--output", str(output_dir)]
+        )
         assert result.exit_code == 0
 
     def test_export_html(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test exporting to HTML."""
         output_dir = tmp_path / "adrs_html"
-        result = runner.invoke(app, ["export", "--format", "html", "--output", str(output_dir)])
+        result = runner.invoke(
+            app, ["export", "--format", "html", "--output", str(output_dir)]
+        )
         assert result.exit_code == 0
 
 
 # =============================================================================
 # Supersede Command Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestSupersedeCommand:
@@ -326,6 +354,7 @@ class TestSupersedeCommand:
 # Report Command Tests
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestReportCommand:
     """Tests for the report command."""
@@ -344,6 +373,7 @@ class TestReportCommand:
 # =============================================================================
 # Config Command Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestConfigCommand:
@@ -370,6 +400,7 @@ class TestConfigCommand:
 # Sync Command Tests
 # =============================================================================
 
+
 @pytest.mark.integration
 class TestSyncCommand:
     """Tests for the sync command."""
@@ -378,7 +409,11 @@ class TestSyncCommand:
         """Test sync pull (may fail without remote, but should not crash)."""
         result = runner.invoke(app, ["sync", "--pull"])
         # Expect failure since no remote, but should handle gracefully
-        assert result.exit_code != 0 or "remote" in result.output.lower() or "origin" in result.output.lower()
+        assert (
+            result.exit_code != 0
+            or "remote" in result.output.lower()
+            or "origin" in result.output.lower()
+        )
 
     def test_sync_help(self, adr_repo_with_data: Path) -> None:
         """Test sync help."""
@@ -391,6 +426,7 @@ class TestSyncCommand:
 # =============================================================================
 # Log Command Tests
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestLogCommand:

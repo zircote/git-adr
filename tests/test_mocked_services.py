@@ -5,7 +5,6 @@ Uses mocking to test code paths that require external services.
 
 from __future__ import annotations
 
-from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -13,8 +12,7 @@ import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
-from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
+from git_adr.core.config import ConfigManager
 from git_adr.core.git import Git
 
 runner = CliRunner()
@@ -23,6 +21,7 @@ runner = CliRunner()
 # =============================================================================
 # AI Draft Command with Mocking
 # =============================================================================
+
 
 class TestAIDraftMocked:
     """Tests for AI draft command with mocked AI service."""
@@ -65,12 +64,17 @@ Generated consequences.
         # Should fail gracefully due to missing API key
         with patch.dict("os.environ", {}, clear=True):
             result = runner.invoke(app, ["ai", "draft", "Test ADR", "--batch"])
-            assert result.exit_code != 0 or "error" in result.output.lower() or "key" in result.output.lower()
+            assert (
+                result.exit_code != 0
+                or "error" in result.output.lower()
+                or "key" in result.output.lower()
+            )
 
 
 # =============================================================================
 # AI Suggest Command with Mocking
 # =============================================================================
+
 
 class TestAISuggestMocked:
     """Tests for AI suggest command with mocked service."""
@@ -84,6 +88,7 @@ class TestAISuggestMocked:
 # =============================================================================
 # AI Summarize Command with Mocking
 # =============================================================================
+
 
 class TestAISummarizeMocked:
     """Tests for AI summarize command with mocked service."""
@@ -105,6 +110,7 @@ class TestAISummarizeMocked:
 # AI Ask Command with Mocking
 # =============================================================================
 
+
 class TestAIAskMocked:
     """Tests for AI ask command with mocked service."""
 
@@ -118,10 +124,13 @@ class TestAIAskMocked:
 # Import Command Tests
 # =============================================================================
 
+
 class TestImportCommandExtended:
     """Extended tests for import command."""
 
-    def test_import_single_file(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
+    def test_import_single_file(
+        self, initialized_adr_repo: Path, tmp_path: Path
+    ) -> None:
         """Test importing a single ADR file."""
         # Create an ADR file
         adr_file = tmp_path / "0001-test-decision.md"
@@ -156,7 +165,7 @@ Some consequences.
             adr_file = tmp_path / f"000{i}-decision-{i}.md"
             adr_file.write_text(f"""---
 title: Decision {i}
-date: 2025-01-{10+i}
+date: 2025-01-{10 + i}
 status: proposed
 ---
 
@@ -172,7 +181,9 @@ Decision {i}.
         result = runner.invoke(app, ["import", str(tmp_path), "--dry-run"])
         assert result.exit_code in [0, 1]
 
-    def test_import_with_format(self, initialized_adr_repo: Path, tmp_path: Path) -> None:
+    def test_import_with_format(
+        self, initialized_adr_repo: Path, tmp_path: Path
+    ) -> None:
         """Test importing with explicit format."""
         adr_file = tmp_path / "decision.md"
         adr_file.write_text("""# Decision
@@ -196,6 +207,7 @@ Decision.
 # Wiki Sync Command Tests
 # =============================================================================
 
+
 class TestWikiSyncMocked:
     """Tests for wiki sync with mocked platform API."""
 
@@ -217,6 +229,7 @@ class TestWikiSyncMocked:
 # =============================================================================
 # Sync Command Tests
 # =============================================================================
+
 
 class TestSyncCommandMocked:
     """Tests for sync command."""
@@ -247,6 +260,7 @@ class TestSyncCommandMocked:
 # Onboard Command Tests
 # =============================================================================
 
+
 class TestOnboardCommandExtended:
     """Extended tests for onboard command."""
 
@@ -270,6 +284,7 @@ class TestOnboardCommandExtended:
 # Log Command Tests
 # =============================================================================
 
+
 class TestLogCommandExtended:
     """Extended tests for log command."""
 
@@ -288,6 +303,7 @@ class TestLogCommandExtended:
 # =============================================================================
 # Notes Manager Tests
 # =============================================================================
+
 
 class TestNotesManagerMocked:
     """Tests for NotesManager with mocking."""
@@ -319,6 +335,7 @@ class TestNotesManagerMocked:
 # Index Tests
 # =============================================================================
 
+
 class TestIndexMocked:
     """Tests for ADR index functionality."""
 
@@ -343,6 +360,7 @@ class TestIndexMocked:
 # Config Command Extended Tests
 # =============================================================================
 
+
 class TestConfigCommandExtended:
     """Extended tests for config command."""
 
@@ -365,6 +383,7 @@ class TestConfigCommandExtended:
 # Export/Convert Extended Tests
 # =============================================================================
 
+
 class TestExportConvertExtended:
     """Extended export and convert tests."""
 
@@ -380,13 +399,15 @@ class TestExportConvertExtended:
     def test_convert_to_y_statement(self, adr_repo_with_data: Path) -> None:
         """Test converting to Y-statement format."""
         result = runner.invoke(
-            app, ["convert", "20250110-use-postgresql", "--to", "y-statement", "--dry-run"]
+            app,
+            ["convert", "20250110-use-postgresql", "--to", "y-statement", "--dry-run"],
         )
         assert result.exit_code in [0, 1]
 
     def test_convert_to_alexandrian(self, adr_repo_with_data: Path) -> None:
         """Test converting to Alexandrian format."""
         result = runner.invoke(
-            app, ["convert", "20250110-use-postgresql", "--to", "alexandrian", "--dry-run"]
+            app,
+            ["convert", "20250110-use-postgresql", "--to", "alexandrian", "--dry-run"],
         )
         assert result.exit_code in [0, 1]

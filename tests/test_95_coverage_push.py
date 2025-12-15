@@ -6,7 +6,7 @@ Targets remaining gaps in templates, stats, log, sync, artifact_rm.
 from __future__ import annotations
 
 import subprocess as sp
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -15,7 +15,7 @@ from typer.testing import CliRunner
 
 from git_adr.cli import app
 from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
-from git_adr.core.config import Config, ConfigManager
+from git_adr.core.config import ConfigManager
 from git_adr.core.git import Git, GitError
 
 runner = CliRunner()
@@ -389,9 +389,13 @@ class TestLogDeep:
             # ConfigManager mock
             mock_config_manager = MagicMock()
             mock_config_manager.get.return_value = True
-            mock_config_manager.load.return_value = MagicMock(notes_ref="refs/notes/adr")
+            mock_config_manager.load.return_value = MagicMock(
+                notes_ref="refs/notes/adr"
+            )
 
-            with patch("git_adr.commands.log.ConfigManager", return_value=mock_config_manager):
+            with patch(
+                "git_adr.commands.log.ConfigManager", return_value=mock_config_manager
+            ):
                 mock_git.run.side_effect = GitError("Git log error", ["git", "log"], 1)
 
                 result = runner.invoke(app, ["log"])
@@ -411,7 +415,9 @@ class TestLogDeep:
             mock_config.notes_ref = "refs/notes/adr"
             mock_config_manager.load.return_value = mock_config
 
-            with patch("git_adr.commands.log.ConfigManager", return_value=mock_config_manager):
+            with patch(
+                "git_adr.commands.log.ConfigManager", return_value=mock_config_manager
+            ):
                 mock_result = MagicMock()
                 mock_result.success = False
                 mock_result.stderr = "git log failed"
@@ -468,7 +474,9 @@ class TestSyncDeep:
                     "Different error", ["git", "fetch"], 1
                 )
 
-                with patch("git_adr.commands.sync.NotesManager", return_value=mock_notes):
+                with patch(
+                    "git_adr.commands.sync.NotesManager", return_value=mock_notes
+                ):
                     result = runner.invoke(app, ["sync"])
                     # Should propagate the error
                     assert result.exit_code == 1
@@ -494,7 +502,9 @@ class TestSyncDeep:
                     "Permission denied error", ["git", "push"], 1
                 )
 
-                with patch("git_adr.commands.sync.NotesManager", return_value=mock_notes):
+                with patch(
+                    "git_adr.commands.sync.NotesManager", return_value=mock_notes
+                ):
                     result = runner.invoke(app, ["sync", "--pull", "--push"])
                     # Should propagate the error
                     assert result.exit_code == 1
@@ -517,7 +527,9 @@ class TestSyncDeep:
                 mock_notes.sync_pull.return_value = None
                 mock_notes.sync_push.return_value = None
 
-                with patch("git_adr.commands.sync.NotesManager", return_value=mock_notes):
+                with patch(
+                    "git_adr.commands.sync.NotesManager", return_value=mock_notes
+                ):
                     result = runner.invoke(app, ["sync", "--pull", "--push"])
                     # Should succeed
                     assert result.exit_code == 0
@@ -565,7 +577,10 @@ class TestArtifactRmDeep:
         )
         assert result.exit_code == 1
         # Should show available artifacts
-        assert "available-test.txt" in result.output.lower() or "available" in result.output.lower()
+        assert (
+            "available-test.txt" in result.output.lower()
+            or "available" in result.output.lower()
+        )
 
     def test_artifact_rm_remove_failure(self, adr_repo_with_data: Path) -> None:
         """Test artifact-rm when remove fails (lines 98-99)."""
@@ -579,7 +594,9 @@ class TestArtifactRmDeep:
             mock_config = MagicMock()
             mock_cm.load.return_value = mock_config
 
-            with patch("git_adr.commands.artifact_rm.ConfigManager", return_value=mock_cm):
+            with patch(
+                "git_adr.commands.artifact_rm.ConfigManager", return_value=mock_cm
+            ):
                 mock_notes = MagicMock()
                 mock_adr = MagicMock()
                 mock_notes.get.return_value = mock_adr
@@ -593,7 +610,9 @@ class TestArtifactRmDeep:
                 # Remove returns False (failure)
                 mock_notes.remove_artifact.return_value = False
 
-                with patch("git_adr.commands.artifact_rm.NotesManager", return_value=mock_notes):
+                with patch(
+                    "git_adr.commands.artifact_rm.NotesManager", return_value=mock_notes
+                ):
                     result = runner.invoke(
                         app,
                         ["artifact-rm", "some-adr", "test.txt"],
@@ -631,24 +650,28 @@ class TestInitDeep:
         import os
 
         os.chdir(tmp_path)
-        sp.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        sp.run(["git", "init"], check=False, cwd=tmp_path, capture_output=True)
         sp.run(
             ["git", "config", "user.email", "test@test.com"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "config", "user.name", "Test User"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "commit", "--allow-empty", "-m", "Initial"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
         sp.run(
             ["git", "remote", "add", "origin", "https://github.com/example/repo.git"],
+            check=False,
             cwd=tmp_path,
             capture_output=True,
         )
@@ -694,9 +717,7 @@ class TestConfigCommandDeep:
 
     def test_config_set_known_key(self, adr_repo_with_data: Path) -> None:
         """Test config --set with a known key."""
-        result = runner.invoke(
-            app, ["config", "--set", "default.template", "madr"]
-        )
+        result = runner.invoke(app, ["config", "--set", "default.template", "madr"])
         assert result.exit_code == 0
 
     def test_config_get_key(self, adr_repo_with_data: Path) -> None:
@@ -729,9 +750,7 @@ class TestExportDeep:
     def test_export_html_format(self, adr_repo_with_data: Path) -> None:
         """Test export in HTML format."""
         output = adr_repo_with_data / "export.html"
-        result = runner.invoke(
-            app, ["export", "-o", str(output), "--format", "html"]
-        )
+        result = runner.invoke(app, ["export", "-o", str(output), "--format", "html"])
         assert result.exit_code == 0
 
 

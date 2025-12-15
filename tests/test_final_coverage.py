@@ -5,11 +5,9 @@ Targets specific uncovered code paths using extensive mocking.
 
 from __future__ import annotations
 
-import os
-import subprocess
 from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -60,7 +58,9 @@ class TestNewDeep:
         )
         assert result.exit_code in [0, 1]
 
-    def test_new_with_all_options(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
+    def test_new_with_all_options(
+        self, adr_repo_with_data: Path, tmp_path: Path
+    ) -> None:
         """Test new with all options combined."""
         content_file = tmp_path / "content.md"
         content_file.write_text("## Context\n\nContext.\n\n## Decision\n\nDecision.")
@@ -228,7 +228,13 @@ class TestCoreDeep:
             ADRStatus.SUPERSEDED,
         ]
         for status in statuses:
-            assert status.value in ["proposed", "accepted", "rejected", "deprecated", "superseded"]
+            assert status.value in [
+                "proposed",
+                "accepted",
+                "rejected",
+                "deprecated",
+                "superseded",
+            ]
 
     def test_config_notes_ref_default(self) -> None:
         """Test Config notes_ref with default namespace."""
@@ -516,7 +522,14 @@ class TestAIDraftCommits:
 
         result = runner.invoke(
             app,
-            ["ai", "draft", "Commit Decision", "--batch", "--from-commits", "HEAD~1..HEAD"],
+            [
+                "ai",
+                "draft",
+                "Commit Decision",
+                "--batch",
+                "--from-commits",
+                "HEAD~1..HEAD",
+            ],
         )
         assert result.exit_code in [0, 1]
 
@@ -547,9 +560,7 @@ class TestAISummarizeDeep:
         )
 
         for fmt in ["markdown", "slack", "email", "standup"]:
-            result = runner.invoke(
-                app, ["ai", "summarize", "--format", fmt]
-            )
+            result = runner.invoke(app, ["ai", "summarize", "--format", fmt])
             assert result.exit_code in [0, 1]
 
 
@@ -604,7 +615,7 @@ class TestWikiSyncDeep:
     @patch("subprocess.run")
     def test_wiki_clone_and_sync(self, mock_subprocess: MagicMock) -> None:
         """Test wiki clone and sync workflow."""
-        from git_adr.wiki.service import WikiService, SyncResult
+        from git_adr.wiki.service import SyncResult, WikiService
 
         mock_subprocess.return_value = MagicMock(returncode=0)
 
@@ -844,9 +855,7 @@ class TestAISummarizeFull:
 
         mock_ai_class.side_effect = ImportError("No AI module")
 
-        result = runner.invoke(
-            app, ["ai", "summarize", "--period", "365d"]
-        )
+        result = runner.invoke(app, ["ai", "summarize", "--period", "365d"])
         assert result.exit_code != 0
 
     @patch("git_adr.ai.AIService")
@@ -862,9 +871,7 @@ class TestAISummarizeFull:
         mock_ai_class.return_value = mock_ai
         mock_ai.summarize_adrs.side_effect = Exception("API rate limit")
 
-        result = runner.invoke(
-            app, ["ai", "summarize", "--period", "365d"]
-        )
+        result = runner.invoke(app, ["ai", "summarize", "--period", "365d"])
         assert result.exit_code != 0
 
 
@@ -886,7 +893,7 @@ class TestWikiServiceFullSync:
         mock_subprocess: MagicMock,
     ) -> None:
         """Test wiki sync push with ADRs."""
-        from git_adr.wiki.service import WikiService, SyncResult
+        from git_adr.wiki.service import SyncResult, WikiService
 
         mock_mkdtemp.return_value = "/tmp/wiki"
         mock_subprocess.return_value = MagicMock(returncode=0, stderr="", stdout="")
@@ -963,9 +970,7 @@ class TestConvertFull:
 class TestArtifactsFull:
     """Full coverage tests for artifact commands."""
 
-    def test_attach_and_list(
-        self, adr_repo_with_data: Path, tmp_path: Path
-    ) -> None:
+    def test_attach_and_list(self, adr_repo_with_data: Path, tmp_path: Path) -> None:
         """Test attach and list workflow."""
         # Create test file
         test_file = tmp_path / "diagram.png"

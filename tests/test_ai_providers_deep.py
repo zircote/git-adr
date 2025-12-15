@@ -7,20 +7,22 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 from types import ModuleType
+from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
-from git_adr.cli import app
 from git_adr.ai.service import AIService, AIServiceError
+from git_adr.cli import app
 from git_adr.core.config import Config
 
 runner = CliRunner()
 
 
-def make_config(provider: str, model: str | None = None, temperature: float = 0.7) -> Config:
+def make_config(
+    provider: str, model: str | None = None, temperature: float = 0.7
+) -> Config:
     """Create a Config with AI settings."""
     config = Config()
     config.ai_provider = provider
@@ -42,7 +44,7 @@ class TestAIServiceProviders:
             with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
                 config = make_config("openai", "gpt-4")
                 service = AIService(config)
-                llm = service._get_llm()
+                service._get_llm()
 
                 mock_chat_openai.assert_called_once()
                 call_kwargs = mock_chat_openai.call_args[1]
@@ -58,7 +60,7 @@ class TestAIServiceProviders:
             with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):
                 config = make_config("anthropic", "claude-3-opus")
                 service = AIService(config)
-                llm = service._get_llm()
+                service._get_llm()
 
                 mock_chat_anthropic.assert_called_once()
                 call_kwargs = mock_chat_anthropic.call_args[1]
@@ -74,7 +76,7 @@ class TestAIServiceProviders:
             with patch.dict("os.environ", {"GOOGLE_API_KEY": "test-key"}):
                 config = make_config("google", "gemini-pro")
                 service = AIService(config)
-                llm = service._get_llm()
+                service._get_llm()
 
                 mock_chat_google.assert_called_once()
 
@@ -87,7 +89,7 @@ class TestAIServiceProviders:
         with patch.dict(sys.modules, {"langchain_ollama": mock_langchain_ollama}):
             config = make_config("ollama", "llama2")
             service = AIService(config)
-            llm = service._get_llm()
+            service._get_llm()
 
             mock_chat_ollama.assert_called_once()
 
@@ -117,7 +119,9 @@ class TestAIServiceProviders:
                 _ = service._get_llm()
 
             error_msg = str(exc_info.value).lower()
-            assert "requires additional dependencies" in error_msg or "import" in error_msg
+            assert (
+                "requires additional dependencies" in error_msg or "import" in error_msg
+            )
 
     def test_llm_caching(self) -> None:
         """Test LLM is cached (line 134 return)."""
@@ -242,7 +246,10 @@ class TestAICommandsNoProvider:
         # Should fail because provider not configured
         assert result.exit_code == 1
         # Should mention provider not configured
-        assert "provider" in result.output.lower() or "not configured" in result.output.lower()
+        assert (
+            "provider" in result.output.lower()
+            or "not configured" in result.output.lower()
+        )
 
     def test_ai_draft_no_provider(self, adr_repo_with_data: Path) -> None:
         """Test ai draft without provider configured."""
