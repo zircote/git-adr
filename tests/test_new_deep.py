@@ -86,7 +86,16 @@ Content.
 """)
 
         result = runner.invoke(
-            app, ["new", "Fallback Title", "--file", str(content_file), "--no-edit"]
+            app,
+            [
+                "new",
+                "Fallback Title",
+                "--file",
+                str(content_file),
+                "--no-edit",
+                "--deciders",
+                "Test User",
+            ],
         )
         # Should succeed using fallback
         assert result.exit_code == 0
@@ -97,6 +106,7 @@ Content.
         content_file.write_text("""---
 title: Date Test
 date: "2024-06-15"
+deciders: [Test User]
 ---
 
 # Date Test
@@ -116,6 +126,7 @@ Content with date in frontmatter.
         content_file.write_text("""---
 title: Date Object Test
 date: 2024-06-15
+deciders: [Test User]
 ---
 
 # Date Object Test
@@ -134,6 +145,7 @@ Content.
         content_file.write_text("""---
 title: Invalid Date
 date: not-a-date
+deciders: [Test User]
 ---
 
 # Invalid Date
@@ -181,7 +193,16 @@ class TestNewValidationWarnings:
         content_file.write_text("# Minimal")
 
         result = runner.invoke(
-            app, ["new", "Validation Test", "--file", str(content_file), "--no-edit"]
+            app,
+            [
+                "new",
+                "Validation Test",
+                "--file",
+                str(content_file),
+                "--no-edit",
+                "--deciders",
+                "Test User",
+            ],
         )
         assert result.exit_code == 0
 
@@ -454,6 +475,8 @@ Test consequences.
                 "--file",
                 str(content_file),
                 "--no-edit",
+                "--deciders",
+                "Test User",
             ],
         )
         assert result.exit_code == 0
@@ -485,6 +508,8 @@ Test consequences.
                 "--file",
                 str(content_file),
                 "--no-edit",
+                "--deciders",
+                "Test User",
             ],
         )
         assert result.exit_code == 0
@@ -531,7 +556,16 @@ Test consequences.
 """)
         result = runner.invoke(
             app,
-            ["new", "Draft Test", "--draft", "--file", str(content_file), "--no-edit"],
+            [
+                "new",
+                "Draft Test",
+                "--draft",
+                "--file",
+                str(content_file),
+                "--no-edit",
+                "--deciders",
+                "Test User",
+            ],
         )
         assert result.exit_code == 0
         assert "draft" in result.output.lower()

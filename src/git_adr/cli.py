@@ -117,6 +117,14 @@ def new_adr(
             help="Tags for categorization (can be repeated).",
         ),
     ] = None,
+    deciders: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--deciders",
+            "-d",
+            help="Decision makers (comma-separated or repeated).",
+        ),
+    ] = None,
     link: Annotated[
         str | None,
         typer.Option(
@@ -179,6 +187,7 @@ def new_adr(
         title=title,
         status=status,
         tags=tags or [],
+        deciders=deciders,
         link=link,
         template=template,
         file=file,
@@ -273,6 +282,13 @@ def show(
             help="Show only metadata, not content.",
         ),
     ] = False,
+    no_interactive: Annotated[
+        bool,
+        typer.Option(
+            "--no-interactive",
+            help="Suppress interactive prompts.",
+        ),
+    ] = False,
 ) -> None:
     """Display a single ADR with formatting.
 
@@ -281,7 +297,12 @@ def show(
     """
     from git_adr.commands.show import run_show
 
-    run_show(adr_id=adr_id, format_=format_, metadata_only=metadata_only)
+    run_show(
+        adr_id=adr_id,
+        format_=format_,
+        metadata_only=metadata_only,
+        interactive=not no_interactive,
+    )
 
 
 @app.command()
