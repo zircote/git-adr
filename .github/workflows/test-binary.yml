@@ -37,7 +37,7 @@ jobs:
 
       # Rust installation (required for tiktoken)
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
 
       # Python setup
       - name: Install uv
