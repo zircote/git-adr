@@ -14,6 +14,16 @@ description: >
 
 Comprehensive skill for managing Architecture Decision Records using the git-adr CLI tool.
 
+## CRITICAL RULES
+
+**NEVER modify user configuration without explicit permission.**
+
+- Do NOT run `git-adr config --set` or `git config adr.*` commands unless the user explicitly asks to change config
+- Do NOT "check" config by running set commands - use `git config --get` or `git-adr config --get` only
+- Before using AI features, READ the existing config with `git config --local --list | grep adr` - do NOT assume or set values
+- If AI config is missing, ASK the user what provider/model they want - do NOT set defaults
+- The user's config is sacred - treat it as read-only unless explicitly told otherwise
+
 ## What is git-adr?
 
 git-adr is a command-line tool that manages ADRs using **git notes** instead of files:
