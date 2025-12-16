@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2025-12-16
+
+### Added
+
+- **`git adr issue` command** - Create GitHub issues directly from project templates
+  - Supports bug, feature, and documentation issue types
+  - Interactive prompts for required fields from `.github/ISSUE_TEMPLATE/` templates
+  - Supports both markdown and YAML form-based templates
+  - Preview, edit, and submit workflow with `--dry-run` and `--local` options
+  - Auto-detects `gh` CLI authentication status
+
+- **Git Hooks and SDLC Integration**
+  - `git adr hooks install/uninstall/status` - Manage git hooks for ADR workflows
+  - `git adr ci github/gitlab` - Generate CI/CD workflow files for ADR sync and validation
+  - `git adr templates pr/issue/codeowners` - Generate PR templates, issue templates, and CODEOWNERS files
+  - Pre-push hook validates ADR references in commits
+
+### Fixed
+
+- `make ci` now mirrors GitHub Actions CI workflow exactly
+  - Lint and format commands use `.` (entire repo) to match CI
+- Suppressed LangChain Pydantic v1 deprecation warning on Python 3.14+
+  - Warning was cosmetic but noisy; underlying issue is in LangChain internals
+
+## [0.1.5] - 2025-12-16
+
+### Changed
+
+- Homebrew formula now includes all optional extras (ai, wiki, export) by default
+  - Users no longer need to manually install AI dependencies after Homebrew install
+  - All langchain providers, PyGithub, python-gitlab, and python-docx are bundled
+
 ## [0.1.4] - 2025-12-16
 
 ### Fixed
@@ -95,6 +127,8 @@ Initial release of git-adr - Architecture Decision Records management for git re
 - Supports frontmatter-based metadata in Markdown files
 - 95%+ test coverage with pytest
 
+[0.1.6]: https://github.com/zircote/git-adr/releases/tag/v0.1.6
+[0.1.5]: https://github.com/zircote/git-adr/releases/tag/v0.1.5
 [0.1.4]: https://github.com/zircote/git-adr/releases/tag/v0.1.4
 [0.1.3]: https://github.com/zircote/git-adr/releases/tag/v0.1.3
 [0.1.2]: https://github.com/zircote/git-adr/releases/tag/v0.1.2
