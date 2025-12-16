@@ -1,0 +1,118 @@
+---
+date: '2025-12-16'
+id: 20251216-disable-upx-compression-for-pyinstaller-binaries
+status: proposed
+title: Disable UPX Compression for PyInstaller Binaries
+---
+
+# Disable UPX Compression for PyInstaller Binaries
+
+Status: Accepted
+Date: 2025-12-16
+Deciders: Release Engineering, Build/Packaging Maintainers, Security Lead, Project Maintainers
+
+## Context and Problem Statement
+
+We produce standalone binaries using PyInstaller for distributing the CLI. Historically UPX (Ultimate Packer for eXecutables) was used to reduce binary size by compressing the generated executables/artifacts. During a Copilot-driven code review and subsequent repository cleanup the team discovered an inconsistency between the PyInstaller spec file (upx=True) and the project documentation (which recommends upx=False). This surfaced distribution issues and triggered an explicit decision point about whether UPX should remain enabled.
+
+Problems observed and motivating facts:
+
+- macOS Gatekeeper heuristics are more likely to flag UPX-compressed binaries as suspicious, increasing the chance of the user seeing "unidentified developer" or quarantine prompts even when code-signed and notarized.
+- Windows Defender and other AV engines have a higher rate of false positives for UPX-packed executables; some real-world antivirus products may block or quarantine UPX-packed binaries outright.
+- UPX adds a decompression step at process start, which increases startup latency. Our target for CLI startup is < 1 second; unpacking can push some cases over that threshold.
+- The codebase recently added PyInstaller binary distribution support (commit f9d8313) and follow-on fixes addressing review findings (commit b619ea7). The review specifically pointed out the upx inconsistency.
+- The spec file can be configured to disable UPX per-PyInstaller constructs (EXE(..., upx=False) and COLLECT(..., upx=False)), or the build CLI can use --noupx.
+
+We must decide whether to keep UPX enabled, disable it entirely, or use a hybrid approach.
+
+## Decision Drivers
+
+- Reduce end-user friction (Gatekeeper/AV false positives) and avoid support noise.
+- Meet CLI startup latency target (< 1 second).
+- Maintain predictable, debuggable, and reproducible binaries.
+- Keep distribution artifact size within acceptable limits (project accepts some size increase).
+- Keep CI/package build complexity minimal and maintainable.
+- Align documentation and actual build configuration to avoid confusion and accidental regressions.
+- Minimize platform-specific troubleshooting and support burden.
+
+## Considered Options
+
+- Disable UPX globally for all PyInstaller outputs (set upx=False in spec; or pass --noupx for CLI builds).
+- Keep UPX enabled globally (current behavior in some spec files: upx=True).
+- Disable UPX only on platforms known to be problematic (macOS and Windows), keep UPX on Linux.
+- Keep UPX enabled but sign/notarize binaries more aggressively to mitigate Gatekeeper/AV concerns.
+- Keep UPX for release builds but disable in CI/alpha/dev builds (per-channel setting).
+- Replace UPX with a different packing/compression strategy or custom post-processing (alternative packer, delta-compression distribution, or compression at archive level rather than executable-level).
+
+## Decision Outcome (Chosen option with justification)
+
+Chosen option
+- Disable UPX globally for PyInstaller-produced binaries by:
+  - Updating PyInstaller spec files to set upx=False for both EXE and COLLECT operations: EXE(..., upx=False) and COLLECT(..., upx=False).
+  - Ensuring any CLI packaging commands use the --noupx flag where CLI invocation is used instead of spec files.
+  - Updating CI workflows, release scripts, documentation, and changelog to reflect the change and the rationale.
+
+Justification
+- Security and compatibility outweigh the binary-size savings:
+  - Disabling UPX materially reduces false positives from macOS Gatekeeper and Windows Defender and lowers the probability of third-party AV blocking distributions—directly reducing user friction and support burden.
+  - Eliminates the executable decompression step at process start, improving startup latency and helping meet our <1s startup target.
+- Alignment and correctness:
+  - This resolves the observed inconsistency between spec (upx=True) and docs (upx=False) surfaced by Copilot review (see commit f9d8313 and follow-on fix b619ea7).
+  - Having documentation and build artifacts reflect the same configuration reduces accidental regressions.
+- Operational simplicity:
+  - A global policy (disable UPX everywhere) is simpler to maintain than a per-platform or per-channel policy, reducing CI complexity and chance of mistakes.
+- Size increase is acceptable per product team constraints and was explicitly stated as acceptable in the context.
+
+Implementation notes (technical)
+- Edit PyInstaller spec files:
+  - For EXE(...) add/upate argument upx=False.
+  - For COLLECT(...) add/upate argument upx=False.
+- If builds use CLI flags, ensure packaging steps call pyinstaller --noupx ... for those builds.
+- Update packaging-related CI/CD workflows (GitHub Actions, release scripts) to reflect no UPX.
+- Update documentation (README, packaging docs, CHANGELOG) and Homebrew formula / release artifacts to note the policy and implications.
+- Reference commits related to binary distribution work:
+  - f9d8313 feat: add PyInstaller binary distribution
+  - b619ea7 fix: address Copilot review findings for binary distribution
+- Add a short test/QA step in release verification to check that produced binaries are not UPX-packed (e.g., use file inspection or strings to detect UPX signature).
+
+## Consequences
+
+Good
+- Reduced false positives from antivirus and Gatekeeper:
+  - Fewer user interruptions and fewer support tickets about "blocked" or "suspicious" binaries.
+- Improved startup latency:
+  - No runtime decompression; binaries start faster and are more likely to meet the <1s startup target.
+- Simpler debugging:
+  - Unpacked binaries are easier to inspect, attach debuggers to, and reason about stack traces or crash dumps.
+- Reduced build-time uncertainty:
+  - Pack/unpack steps are removed, making build outputs more predictable and reproducible.
+- Documentation and build configuration now align, reducing cognitive overhead and accidental misconfiguration (addresses the Copilot review/consistency issue).
+
+Bad
+- Larger binary size:
+  - Disabling UPX increases artifact size (exact delta varies by binary and platform). This increases storage and network transfer costs for CI artifacts, release hosting, and end-user downloads.
+- Potentially longer upload and distribution times:
+  - Larger artifacts increase time to upload to GitHub Releases / package registries and to download for users on slow links.
+- Slightly larger disk footprint on the user's machine.
+- For extremely size-sensitive distribution channels (rare), we may need alternative optimizations (strip debug symbols, LTO, optimize dependencies) to regain space.
+
+Neutral / Mitigations
+- CI build time impact: skipping UPX compression will slightly reduce build CPU time; however upload times may increase due to larger artifacts — net effect depends on network vs. CPU.
+- If binary size becomes problematic later:
+  - We can revisit platform-specific policies (e.g., enable UPX only on Linux) or use per-release channels (release vs. dev).
+  - Alternative mitigations: strip symbols, enable compiler-level optimizations, or distribute gzip-compressed archives/installer bundles rather than packed executables.
+  - Signing and notarization remain recommended for macOS and Windows; disabling UPX reduces but does not eliminate Gatekeeper/AV risks — continue to sign/notarize release artifacts.
+- Monitoring:
+  - Add release verification steps to check for reduced AV reports and startup time compliance, and track download size metrics to ensure the size increase stays within acceptable bounds.
+
+Rollback plan
+- If disabling UPX causes unacceptable distribution/regression issues, we can:
+  - Temporarily revert to previous spec files (upx=True) and reintroduce upx for a limited set of platforms while we implement alternative mitigations (stronger code signing, notarization, or alternative packers).
+  - Use feature-flagged packaging in CI to publish an alternate UPX-enabled artifact channel for specific customers/pipelines until we find a durable solution.
+
+Related commits
+- f9d8313 feat: add PyInstaller binary distribution
+- b619ea7 fix: address Copilot review findings for binary distribution
+
+Summary
+- We will disable UPX for all PyInstaller outputs (EXE and COLLECT: upx=False / --noupx). This reduces security/tooling friction and startup latency at the cost of larger binaries. The size trade-off is acceptable given the compatibility, security, and user experience benefits.
