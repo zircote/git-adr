@@ -1,0 +1,65 @@
+---
+date: '2025-12-16'
+deciders:
+- Claude
+- User
+id: 20251216-use-stdin-for-gh-cli-body-content
+status: proposed
+title: Use stdin for gh CLI body content
+---
+
+# Use stdin for gh CLI body content
+
+## Context and Problem Statement
+
+When creating GitHub issues via the gh CLI, we need to pass the issue body content. The body can contain arbitrary user content including special characters, quotes, and multiline text. We need a safe, reliable method to pass this content to the gh CLI.
+
+## Decision Drivers
+
+* Security: Avoid shell injection vulnerabilities
+* Reliability: Handle special characters and multiline content correctly
+* Length limits: Command-line arguments have length restrictions
+* Simplicity: Minimize escaping complexity
+
+## Considered Options
+
+* Option 1: Pass body as command-line argument with escaping
+* Option 2: Write body to temporary file and use --body-file path
+* Option 3: Use stdin with --body-file - (CHOSEN)
+
+## Decision Outcome
+
+Chosen option: "Use stdin with --body-file -", because it:
+- Eliminates shell escaping issues entirely
+- Has no command-line length limits
+- Avoids temporary file management
+- Is the safest approach for arbitrary user content
+
+### Consequences
+
+* Good, because no shell injection vulnerabilities
+* Good, because handles unlimited content length
+* Good, because no temporary file cleanup needed
+* Good, because special characters handled automatically
+* Neutral, requires subprocess.run() with input parameter
+
+## Implementation
+
+```python
+# gh_client.py:148-155
+cmd = ["gh", "issue", "create", "--title", issue.title, "--body-file", "-"]
+result = subprocess.run(
+    cmd,
+    input=issue.body,  # Body via stdin
+    capture_output=True,
+    text=True,
+    timeout=60,
+)
+```
+
+## Validation
+
+Code review confirmed:
+- No shell injection vectors
+- List-based command (not shell string)
+- Body passed via stdin prevents escaping issues
