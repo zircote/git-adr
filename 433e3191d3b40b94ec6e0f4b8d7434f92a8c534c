@@ -4,7 +4,7 @@ deciders:
 - Claude
 - User
 id: 20251216-use-importlibresources-for-bundled-templates
-status: proposed
+status: accepted
 title: Use importlib.resources for bundled templates
 ---
 
