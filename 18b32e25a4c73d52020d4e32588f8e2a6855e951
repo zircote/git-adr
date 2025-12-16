@@ -1,0 +1,122 @@
+---
+date: '2025-12-16'
+id: 20251216-drop-macos-intel-binary-builds
+status: proposed
+title: Drop macOS Intel Binary Builds
+---
+
+# Drop macOS Intel Binary Builds
+
+## Context and Problem Statement
+
+- GitHub has retired Intel (x86_64) macOS runners from its hosted Actions fleet. Our CI no longer provides macOS x86_64 runners; only ARM64 macOS runners are available.
+- A code change (commit d578718) removed macOS Intel x86_64 binary builds from our CI pipeline.
+- Historically we produced macOS x86_64 wheels (macosx_*_x86_64) in the release pipeline and ran CI test matrices against those builds.
+- Continuing to produce and validate x86_64 macOS binaries now requires either:
+  - Self-hosted Intel macOS runners (hardware + maintenance), or
+  - Complex cross-compilation/packaging workarounds that add CI complexity and fragility.
+- We must decide whether to:
+  - invest in and maintain an alternative infrastructure to continue producing macOS x86_64 binaries, or
+  - stop building and shipping macOS x86_64 binary artifacts and rely on alternate distribution/installation paths for Intel Mac users.
+- Current project direction and telemetry:
+  - ARM64 (Apple Silicon) is the primary macOS target and is actively tested and built in CI.
+  - Intel macOS usage is declining; our internal download/usage metrics show low percentage of macOS users on Intel hardware.
+- Mitigation paths for Intel users:
+  - pip install (source build / wheels from PyPI if available).
+  - Homebrew with our Python-aware formula (which installs package into the user's Python or uses a bottle).
+- Decision implemented in repository: commit d578718 removed Intel macOS binary build jobs from CI.
+
+## Decision Drivers
+
+- Availability of CI infrastructure
+  - GitHub retirement of Intel macOS runners makes hosted x86_64 macOS CI unavailable.
+- Operational cost and maintenance
+  - Self-hosted macOS hardware requires procurement, secure hosting, OS upgrades, and maintenance.
+- Build/test coverage and quality
+  - Maintaining parity between two macOS arch targets increases CI matrix complexity and flakiness.
+- Release artifact correctness and reproducibility
+  - Cross-compilation / emulation for macOS x86_64 increases build complexity and risk of producing incorrect artifacts.
+- User impact and migration paths
+  - Existence of practical alternatives (pip source builds, Homebrew installs) for Intel users reduces the mandatory need for prebuilt x86_64 binaries.
+- Strategic platform focus
+  - Apple platform trend: Apple Silicon is the strategic primary for macOS (ARM64); focusing CI on ARM64 aligns with platform direction.
+- Security and surface area
+  - Running and managing additional runners increases attack surface and operational overhead.
+- Time-to-release and developer productivity
+  - Reduced build matrix shortens CI run times and reduces churn in builds and packaging.
+
+## Considered Options
+
+- Keep producing macOS x86_64 binary builds by provisioning self-hosted Intel macOS runners
+  - Maintain parity in build matrix; continue shipping x86_64 macOS wheels.
+- Produce a universal2 macOS wheel (single artifact containing both arm64 and x86_64)
+  - Build universal2 artifacts on ARM64 runners using cross-compilation or on a macOS builder that supports universal builds.
+- Cross-compile x86_64 macOS wheels on ARM64 CI using tools (clang cross flags / cctools / osxcross)
+  - Attempt to produce valid macosx_x86_64 wheel targets without real Intel hardware.
+- Stop producing macOS x86_64 binary builds (drop x86_64 artifacts)
+  - Only produce macOS ARM64 (and other existing artifacts); direct Intel mac users to pip install (source) or Homebrew.
+- Produce only source distributions (sdist) and rely on downstream packagers
+  - Publish only sdist on PyPI; leave wheel production to downstream (e.g., Homebrew bottles, conda-forge).
+- Use emulation (Rosetta 2) in CI to run ARM64 builds under x86_64 or vice versa
+  - Attempt to exercise some compatibility paths without producing separate x86_64 binaries.
+- Maintain a smaller subset of x86_64 testing (smoke tests) via intermittent self-hosted runner(s)
+  - Only run minimal coverage tests occasionally to detect regressions on Intel.
+
+## Decision Outcome (Chosen option with justification)
+
+Chosen option: Stop producing macOS Intel x86_64 binary builds in CI (drop x86_64 macOS binary artifacts).
+
+Justification:
+- Primary, decisive constraint is CI infrastructure availability: GitHub retired Intel macOS runners and using hosted x86_64 macOS CI is no longer possible. The operational burden to replace that with self-hosted runners is non-trivial and not justified by current usage metrics.
+- Project strategic alignment: macOS ARM64 (Apple Silicon) is the clear strategic target for macOS; continuing to prioritize ARM64 in CI aligns with platform trends and our user base.
+- Cost-benefit: The marginal benefit of continuing x86_64 macOS builds is low (small Intel user base) while cost, complexity, and maintenance burden are high (self-hosted hardware, security, longer CI matrix).
+- Viable alternatives exist for Intel users:
+  - pip install from PyPI will either install an available wheel (if downstream/third-party publishes) or build from source. This path is standard for Python packages and documented for our users.
+  - Homebrew with the project's Python formula can provide a supported installation path for Intel users; Homebrew maintains bottles and will handle Intel-specific packaging.
+- The change is already implemented in commit d578718, confirming operational feasibility and immediate CI simplification.
+- Risk mitigation: We will document the change clearly in installation docs and release notes, and provide build-from-source instructions (including Xcode command-line tools, SDK versions, and known build flags) for Intel mac users who need to compile locally.
+
+Status: Accepted and applied (commit d578718).
+
+## Consequences
+
+Good
+- Simpler CI pipeline
+  - Reduced CI matrix: fewer jobs, lower queue contention, faster overall feedback loops.
+- Lower operational overhead
+  - No need to procure and maintain self-hosted Intel mac hardware and runners.
+- Improved reliability
+  - Fewer platform-specific flakiness and fewer host-specific CI failures.
+- Faster releases
+  - Less packaging work per release; fewer artifacts to produce and validate.
+- Alignment with platform trend
+  - Focusing on ARM64 matches Apple’s platform direction and most active dev/test effort.
+
+Bad
+- Intel macOS users will not receive prebuilt x86_64 wheels from our CI/releases
+  - They may need to build from source (pip install will compile C extensions) or rely on Homebrew bottles/third-party wheels.
+- Increased potential for user friction or support requests
+  - Users on older Intel macs may encounter compilation issues (missing SDKs, incompatible flags, native extension build errors) requiring more hands-on support or troubleshooting.
+- Potential for regressions that only manifest on Intel hardware to go undetected
+  - Some architecture-specific bugs (x86_64-specific floating point, alignment, atomic operations, or packaging issues) may not be detected in ARM64-only CI. This increases risk that Intel users experience bugs not caught by our test matrix.
+- Third-party packaging implications
+  - Downstream packagers (e.g., conda-forge, Homebrew) may need to maintain their own build pipelines for Intel mac bottles/wheels.
+
+Neutral
+- Installation options remain: pip and Homebrew are unchanged as viable install paths; the change only affects our prebuilt release artifacts.
+- Linux and Windows builds are unaffected by this decision.
+- Source distribution (sdist) availability and codebase remain unchanged; users can still build from source with documented prerequisites.
+- Future reversibility
+  - If demand or resources change, the decision can be reversed by provisioning self-hosted Intel mac runners or by investing in universal2 builds; however, reversal requires non-trivial infrastructure or packaging work.
+
+Mitigations and action items
+- Update documentation and release notes to clearly state:
+  - macOS ARM64 is the primary supported binary target.
+  - Intel mac users should use "pip install <package>" (with note about possible source build and prerequisites) or Homebrew (link to our formula).
+  - Provide explicit build-from-source instructions (Xcode command-line tools, SDK target, build flags).
+- Add targeted monitoring:
+  - Track support requests/issues from Intel mac users to quantify impact and revisit the decision if necessary.
+- Consider future options:
+  - If demand increases, evaluate producing universal2 wheels (single artifact containing arm64 & x86_64) or operating intermittent self-hosted Intel runners for smoke/regression tests only.
+
+Commit implementing removal: d578718 (CI: remove macOS Intel x86_64 build jobs).
