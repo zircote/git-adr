@@ -1,7 +1,13 @@
 ---
 date: '2025-12-16'
 id: 20251216-ci-gate-before-binary-builds
-status: proposed
+linked_commits:
+- 109cf5d
+status: accepted
+tags:
+- ci-cd
+- github-actions
+- quality-gates
 title: CI Gate Before Binary Builds
 ---
 
