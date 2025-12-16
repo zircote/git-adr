@@ -4,7 +4,7 @@ deciders:
 - Claude
 - User
 id: 20251216-use-yamlsafe-load-for-template-parsing
-status: proposed
+status: accepted
 title: Use yaml.safe_load() for template parsing
 ---
 
