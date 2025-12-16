@@ -144,6 +144,6 @@ jobs:
             START=$(python3 -c "import time; print(time.time())")
             ./dist/git-adr/git-adr --version > /dev/null 2>&1
             END=$(python3 -c "import time; print(time.time())")
-            DURATION=$(python3 -c "print(f'{$END - $START:.3f}')")
-            echo "Run $i: ${DURATION}s"
+            DURATION=$(echo "$END - $START" | bc)
+            printf "Run %d: %.3fs\n" "$i" "$DURATION"
           done
