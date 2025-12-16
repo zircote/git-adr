@@ -293,6 +293,9 @@ def _prompt_multiline(prompt: str) -> str:
         except EOFError:
             break
 
+    # Remove trailing empty lines for cleaner output
+    while lines and lines[-1] == "":
+        lines.pop()
     return "\n".join(lines).strip()
 
 
