@@ -7,7 +7,7 @@ Complete reference for all git-adr commands.
 ### init - Initialize ADR tracking
 
 ```bash
-git adr init [--force] [--namespace TEXT] [--template madr|nygard|y-statements]
+git adr init [--force] [--namespace TEXT] [--template madr|nygard|y-statement]
 ```
 
 - `--force`, `-f`: Reinitialize even if already initialized
@@ -225,7 +225,7 @@ git adr import PATH [OPTIONS]
 git adr convert ADR_ID --to FORMAT [--dry-run]
 ```
 
-Available formats: madr, nygard, y-statements, alexandrian, business, planguage
+Available formats: madr, nygard, y-statement, alexandrian, business, planguage
 
 ## Config Commands
 
@@ -259,7 +259,7 @@ git adr config --unset KEY [--global]
 
 | Key | Description |
 |-----|-------------|
-| `adr.template` | Default template: madr, nygard, y-statements |
+| `adr.template` | Default template: madr, nygard, y-statement |
 | `adr.editor` | Editor command for ADRs |
 | `adr.namespace` | Git notes namespace |
 | `adr.sync.auto_push` | Auto-push after modifications |
