@@ -1,0 +1,105 @@
+---
+date: '2025-12-16'
+id: 20251216-homebrew-formula-uses-pre-built-release-binaries
+status: proposed
+title: Homebrew Formula Uses Pre-built Release Binaries
+---
+
+# Title
+Homebrew Formula Uses Pre-built Release Binaries
+
+## Context and Problem Statement
+- Previously, the Homebrew formula for git-adr installed the package by building from source via pip during brew install. That process installed Python dependencies and compiled native extensions, causing install times consistently >5 minutes and frequently failing on user machines while compiling Python packages (cryptography, cffi, etc.).
+- Homebrew users expect fast, robust installs (seconds), not lengthy source builds and compilation. Slow installs degrade user experience and increase support load.
+- Upstream publishes PyInstaller "onedir" release artifacts (a directory containing the single executable and its _internal support directory) for supported platforms on GitHub Releases. Using these pre-built binaries can avoid the pip build process entirely.
+- The decision implements a Homebrew formula change to:
+  - Download platform-specific pre-built PyInstaller artifacts from GitHub Releases (URL per platform).
+  - Verify downloaded artifacts with SHA256 checksums in the formula.
+  - Install the onedir artifact into libexec and create a symlink in bin to expose the executable.
+  - For unsupported platforms (notably macOS Intel in our case where no pre-built artifact exists), the formula emits an error instructing users to install via pip (e.g., pip3 install git-adr) or use another supported platform.
+- Outcome: installation time reduced from >5 minutes to <30 seconds for supported platforms.
+
+## Decision Drivers
+- Fast, predictable installation time for Homebrew users.
+- Minimal runtime/installation failures due to compiling Python dependencies on end-user systems.
+- Security and integrity of the installed binary (must verify downloaded artifacts).
+- Maintainability of the Homebrew formula and compatibility with Homebrew policies.
+- Support for multiple platforms (macOS arm64, Linux x86_64, etc.) where upstream provides binaries.
+- Clear, actionable guidance for users on unsupported platforms.
+- Minimal changes to upstream release process if possible (but may require building release artifacts per platform).
+
+## Considered Options
+- Keep current approach: build from source with pip in the formula.
+  - Pros: no need for upstream binary artifacts; full reproducibility from source.
+  - Cons: slow installs, frequent build failures, poor UX.
+- Build Homebrew bottles (Homebrew-managed binary packages).
+  - Pros: integrates with Homebrew's binary distribution infrastructure; fast installs.
+  - Cons: requires Homebrew maintainers to build and host bottles; longer process to get updates; does not address users who build from source locally.
+- Bundle and vendor all Python dependencies into the formula or the repo (vendoring).
+  - Pros: eliminates pip network builds.
+  - Cons: large formula complexity, licensing and maintenance burden, potential security issues, still may require compiling native extensions on install.
+- Generate and publish PyPI wheels for all platforms and use pip wheels in formula.
+  - Pros: pip wheels avoid source builds.
+  - Cons: building and publishing many-platform wheels may be non-trivial; Homebrew generally prefers bottles or executables rather than running pip during install.
+- Use upstream PyInstaller pre-built release artifacts (chosen).
+  - Pros: extremely fast installs (<30s), simple formula changes, straightforward integrity verification via SHA256, low maintenance on the Homebrew side beyond updating URLs/checksums.
+  - Cons: relies on upstream to publish artifacts for each platform; unsupported platforms need fallback instructions.
+- Force-build only for unsupported platforms (i.e., build from source only on unsupported platforms).
+  - Pros: covers more platforms.
+  - Cons: complexity in formula, slow installs for those platforms, build failures risk.
+
+## Decision Outcome (Chosen option with justification)
+We chose to change the Homebrew formula to download and install upstream PyInstaller "onedir" pre-built release artifacts (platform-specific) from GitHub Releases, install them into libexec, and expose the executable via a symlink in bin. Specifically:
+- For each supported platform (e.g., macOS arm64, Linux x86_64), the formula contains a platform-specific URL pointing to the corresponding GitHub release artifact and the SHA256 checksum for verification.
+- Installation steps implemented in the formula:
+  - Download the archive (tar.gz or zip) for the appropriate platform.
+  - Extract the onedir artifact, producing a directory like git-adr/ containing:
+    - the git-adr executable
+    - the _internal/ support directory and other runtime files.
+  - Use libexec.install to put the onedir directory into libexec:
+    - libexec.install Dir["git-adr/*"] or libexec.install "git-adr"
+  - Create a symlink in Homebrew's bin to the executable:
+    - bin.install_symlink libexec/"git-adr"/"git-adr"
+- Verify artifact integrity with SHA256 entries in the formula to ensure tamper-proof downloads.
+- For unsupported platforms (notably macOS Intel/x86_64 where no pre-built artifact is available), the formula intentionally fails early with a clear error message directing users to:
+  - Use pip as a fallback: pip3 install git-adr
+  - Or install on a supported platform.
+- Justification:
+  - This option gives the largest UX improvement with minimal Homebrew maintenance cost.
+  - It avoids compiling Python dependencies on user machines, drastically reducing install time and failure rates.
+  - SHA256 verification addresses security/integrity concerns.
+  - Using libexec.install and bin.install_symlink follows Homebrew conventions for installing pre-built onedir PyInstaller artifacts and keeps the installation isolated from Homebrew-managed Python environments.
+
+## Consequences
+
+Good
+- Installation time reduced dramatically from >5 minutes to <30 seconds for supported platforms, meeting Homebrew user expectations.
+- Elimination of long source builds and native extension compilation reduces install-time failures and support burden.
+- Simpler formula: fewer build-time dependencies and less build logic.
+- Integrity checks (SHA256) minimize risk of tampered binaries.
+- Predictable runtime: using the same upstream binary that CI/tested artifacts use reduces divergence between developer and user environments.
+- Lower CI and network load on Homebrew maintainers and users (no need to compile on install).
+
+Bad
+- Dependency on upstream to publish pre-built artifacts for every supported platform. If upstream omits a platform (macOS Intel in our case), those users must use pip or be unsupported by the formula.
+- Increased release burden on maintainers/upstream: every release must include pre-built binaries for every platform we intend to support, or Homebrew users on those platforms will be blocked.
+- Potential portability and compatibility issues if upstream-built artifacts contain platform-specific assumptions or linked runtime libraries incompatible with some user systems.
+- Homebrew maintainers may prefer bottles (Homebrew-hosted binaries) over upstream release artifacts; this approach diverges from a fully Homebrew-managed binary distribution model.
+- Slightly larger install footprint compared to a minimal source install (pre-built onedir may include more bundled runtime files).
+- If an artifact is compromised upstream, users may receive malicious binaries — SHA256 helps detect tampering, but provenance depends on upstream release signing/controls.
+
+Neutral
+- Formula complexity moves from build-time dependency management to release-URL and checksum maintenance: more frequent checksum updates per release, but less build logic.
+- Users on unsupported platforms must be explicitly directed to pip; this is clear but not seamless.
+- Caching behavior: downloads are fast and cache-friendly, but relying on upstream release URLs means Homebrew caches are only as reliable as the upstream hosting.
+
+Implementation notes (technical)
+- Use platform conditionals in the Homebrew formula to select url/sha256 per OS/CPU target (e.g., on_macos do |c| and on_linux do).
+- Install pattern for PyInstaller onedir:
+  - After extracting the archive, the top-level directory (e.g., git-adr) should be moved into libexec:
+    - libexec.install Dir["git-adr/*"] or libexec.install "git-adr"
+  - Create the symlink to the main executable:
+    - bin.install_symlink libexec/"git-adr"/"git-adr"
+- Provide a clear error path for unsupported platforms:
+  - Use abort or odie with a message describing the lack of pre-built binary and recommending pip3 install git-adr as the supported alternative.
+- Keep SHA256 updated per release and include clear comments in the formula about the provenance (GitHub Releases tag) and how to update checksums when bumping versions.
