@@ -4,6 +4,8 @@ deciders:
 - Claude
 - User
 id: 20251216-use-yamlsafe-load-for-template-parsing
+linked_commits:
+- 38de6db8b28d791bd976eac0a97b8f5f74403b0e
 status: accepted
 tags:
 - parsing
