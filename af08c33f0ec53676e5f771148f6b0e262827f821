@@ -1,0 +1,174 @@
+---
+date: '2025-12-16'
+id: 20251216-github-issue-creation-command
+status: proposed
+title: GitHub Issue Creation Command
+---
+
+# Title
+GitHub Issue Creation Command
+
+## Context and Problem Statement
+We added a new CLI command, `git adr issue`, to create GitHub issues directly from project templates in `.github/ISSUE_TEMPLATE/`. The command must support the three canonical issue types used by our templates: bug, feature, and documentation. Templates in the repository may be provided as:
+
+- Markdown files (`*.md`) containing either:
+  - YAML front matter metadata (title, labels, etc.), or
+  - markdown sections and inline comments that indicate fields to be filled.
+- GitHub issue forms (`*.yml` / `*.yaml`) that express structured fields (text, textarea, dropdown, checkboxes, boolean, required flags, default values, labels).
+
+Required UX and feature constraints:
+- Interactive prompts for all required fields defined by the templates.
+- Support for preview -> edit -> submit workflow:
+  - Preview rendered markdown locally.
+  - Allow editing the generated body in the user's $EDITOR before submitting.
+  - Submit the finalized issue to GitHub.
+- Support `--dry-run` to preview the final HTTP request / JSON payload without creating an issue.
+- Support `--local` to save a draft locally (in repo) and not call GitHub.
+- Must work against GitHub.com and GitHub Enterprise (detect API base from `origin` remote).
+- Commit implementing the feature: 2eda340.
+
+Problem statement:
+We need to define a clear architecture decision for how the `git adr issue` command will parse templates, gather user input, render and edit the issue body, and submit (or optionally not submit) the issue to GitHub. The decision must address authentication, template parsing for both markdown and YAML-based issue forms, error handling, preview/edit workflow, and local/dry-run modes.
+
+## Decision Drivers
+- Must support both markdown templates and YAML "issue_form" templates from `.github/ISSUE_TEMPLATE/`.
+- Interactive CLI experience that enforces required fields and respects template defaults.
+- Ability to preview and edit final markdown body prior to submission.
+- Safety: users must be able to validate without sending network requests (`--dry-run`) or save a local draft (`--local`).
+- Work with GitHub.com and GitHub Enterprise (API base dynamic).
+- Keep external dependencies minimal, use widely available tools where practical ($EDITOR, pager).
+- Proper authentication with least-privilege tokens and helpful guidance on missing credentials.
+- Handle common template metadata (title, labels, assignees, projects/milestone if present).
+- Graceful behavior for fields/features that cannot be fully automated (e.g., file uploads in forms).
+
+## Considered Options
+- Option A — Use GitHub REST API (v3) directly from the command:
+  - Parse templates locally, build JSON payload, and POST to /repos/{owner}/{repo}/issues.
+  - Implement auth handling (GITHUB_TOKEN env, prompt for PAT, or delegate to `gh auth`).
+  - Render preview locally. Use /repos API to set labels, assignees, milestone.
+
+- Option B — Delegate submission to GitHub CLI (`gh issue create`) when available:
+  - Translate template fields to `gh issue create --title ... --body ... --label ...`.
+  - Fall back to Option A when `gh` is missing or for advanced features.
+  - Rely on `gh` for authentication and GitHub Enterprise support.
+
+- Option C — Local-only approach / produce files only:
+  - Parse templates and write draft issue files under `.git/ISSUE_DRAFTS/` or similar.
+  - Let users manually submit through the GitHub web UI or other tools.
+  - No network integration.
+
+- Option D — Use GitHub GraphQL API:
+  - Use GraphQL to create issues and set all metadata in a single mutation.
+  - More complex schema handling, but offers more structured control for connected objects (projects, etc.).
+
+- Option E — Hybrid: Use REST API for creation and `gh` as a user-preferred fallback for submission and auth.
+  - Parse templates as in Option A, but if `--use-gh` or `gh` available and configured, use `gh` for final submit; otherwise perform REST call.
+
+## Decision Outcome (Chosen option with justification)
+Chosen option: Option A with a lightweight Option E fallback behavior (primary implementation uses GitHub REST API v3; if the user explicitly requests or when helpful, prefer `gh` for submission/auth).
+
+Justifications:
+- Direct control: Implementing the end-to-end flow ourselves provides deterministic behavior for parsing templates and mapping template metadata into the final issue payload. It also allows precise implementation of `--dry-run` and `--local`.
+- Compatibility: REST API v3 endpoints for creating issues are stable and sufficient to set title, body, labels, assignees, and milestone. They work for both GitHub.com and GitHub Enterprise by changing the API base URL derived from the repository's `origin` remote.
+- Predictability and testability: Building the payload ourselves makes it easy to show the JSON in `--dry-run`, to validate required fields before submission, and to unit test parsing & UI behavior.
+- Practical fallback: Many users will have `gh` installed and configured; providing a fallback to use `gh` for submission (or for auth resolution) reduces friction and leverages the existing credential store. We make it an explicit fallback or opt-in, not a hard dependency.
+- GraphQL is not required for our needs and would add extra complexity. Local-only (Option C) is insufficient because the primary use case is to create issues remotely.
+
+Implementation summary (concrete technical decisions):
+- Template discovery:
+  - Read `.github/ISSUE_TEMPLATE/` in repo. Accept files with extensions `.md`, `.markdown`, `.yml`, `.yaml`.
+  - For `.yml`/`.yaml` files that declare `name`, `body`/`fields` (GitHub issue forms), parse as YAML and map each field to prompt widgets.
+  - For `.md` files:
+    - If a YAML front matter block exists at the top (between --- markers), parse it for metadata (title, labels, about).
+    - Otherwise, parse markdown headings (`##`, `###`) and HTML comment markers commonly used by templates to identify sections to fill. Heuristics:
+      - Headings with default placeholder text become prompts.
+      - HTML comments like <!-- required: true --> near a section mark that field required.
+- Interactive prompts:
+  - Map YAML field types to CLI prompt types:
+    - input (short string)
+    - textarea (multi-line)
+    - dropdown/select (single choice)
+    - checkboxes/multi-select (multiple choices)
+    - boolean (yes/no)
+  - Enforce `required: true` by re-prompting until satisfied.
+  - Provide default values from template metadata or field defaults.
+- Preview and edit:
+  - After collecting values, generate a markdown body by:
+    - For YAML forms: render a human-friendly markdown that lists each field and the value, with template-provided body sections included.
+    - For markdown templates: substitute placeholders with provided values.
+  - Render preview via a local CommonMark renderer and show in $PAGER, or open raw markdown preview.
+  - Allow user to edit the markdown body in $EDITOR before finalizing. Changes are picked up into final body.
+- Submission:
+  - By default, POST to {api_base}/repos/{owner}/{repo}/issues with JSON:
+    - title: string
+    - body: markdown string
+    - labels: array (if present)
+    - assignees: array (if present)
+    - milestone: integer (if present and resolvable)
+  - Authentication:
+    - Prefer GITHUB_TOKEN or GH_TOKEN environment variables.
+    - If not present, check git config for remote URL and detect if `gh` token is available (via `gh auth status` probe). If `gh` available and authenticated, prefer using its token (or hand off submission to `gh` if requested).
+    - If no token, prompt the user to provide a Personal Access Token (with `repo` or `public_repo` scope), or instruct to run `gh auth login`.
+  - `--dry-run`: show final JSON payload and the HTTP request that would be executed; do not perform any network I/O beyond auth probes.
+  - `--local`: write the generated markdown to `.git/ISSUE_DRAFTS/<timestamp>-<slug>.md` (create dir if missing) and exit without network calls.
+- Error handling:
+  - Validate repo existence and token scopes before submit. Provide clear messages for 401/403/422 (validation errors).
+  - Rate limiting: respect `X-RateLimit-Remaining` and present an explicit error and retry suggestions.
+- Enterprise & base URLs:
+  - Determine API base by inspecting the `origin` remote URL:
+    - If host is github.com -> https://api.github.com
+    - If host is a GHES host -> https://{host}/api/v3
+  - Allow `--api-base` override for manual control.
+- Unsupported/edge features:
+  - File upload fields in issue forms are not supported in v1. We will surface a warning and provide instructions (paste public URL or attach later via web UI).
+- Implementation note:
+  - Commit implementing this flow: 2eda340 (reference in docs and release notes).
+
+## Consequences
+
+Good
+- User experience:
+  - Users can create issues from the command line with enforcement of template constraints, improving issue quality and reducing manual copy/paste.
+  - Preview + edit workflow gives users control over the final markdown before it is published.
+- Predictable behavior:
+  - Using the REST API produces a consistent and testable submission flow; `--dry-run` is simple to implement (show JSON instead of POST).
+- Compatibility:
+  - Works with GitHub Enterprise by deriving the API base from the repo remote.
+- Observability:
+  - Payload generation and `--dry-run` make it easy to debug and automate issue creation in scripts and CI.
+- Minimal external dependency:
+  - Core functionality does not require `gh`, but can use it as a convenience/fallback.
+
+Bad
+- Maintenance surface:
+  - Template parsing heuristics for free-form markdown templates (no front matter) may be brittle and require updates as template authors vary their formats.
+  - Some GitHub features (issue forms file uploads, advanced project linking) are not automatable via a simple issues endpoint; users will need to complete them in the web UI.
+- Auth complexity:
+  - Multiple auth strategies (env vars, `gh`, prompting for PAT) add code paths and potential user confusion. We must be careful with token handling to avoid leaking secrets.
+- Partial mapping:
+  - Not all form metadata (for example, complex project or field-level GitHub-only behaviors) can be mapped 1:1 to issue API fields. We will need to show warnings and possibly embed unresolved metadata into the body.
+
+Neutral
+- Dependence on $EDITOR and pager:
+  - The UX depends on environment configuration ($EDITOR, $PAGER). This is typical for CLI tools but requires users to have these configured for best experience. The command will provide sensible defaults (vim/nano/less) and fallback behavior.
+- Fallback to `gh`:
+  - Having `gh` as an optional fallback reduces friction for users who rely on it, but introduces two different code paths for submission. This is a trade-off between convenience and a single implementation surface. The default remains our REST-based behavior; `gh` is used only if explicitly requested or if some auth/probing indicates it's the easiest path for the user.
+
+Appendix / Implementation checklist (summary actions)
+- Implement parser for `.github/ISSUE_TEMPLATE/*.yml` -> field models.
+- Implement markdown template parser:
+  - YAML front matter extraction.
+  - header/section heuristics with comment markers for required fields.
+- Implement interactive prompt engine mapping field types to appropriate CLI widgets.
+- Implement markdown generation, preview (CommonMark renderer), and edit via $EDITOR.
+- Implement API client:
+  - Resolve API base from remote.
+  - Auth handling (env, gh probe, prompt for PAT).
+  - POST /repos/{owner}/{repo}/issues with appropriate payload mapping.
+- Implement `--dry-run` (print JSON + curl sample).
+- Implement `--local` (write draft to `.git/ISSUE_DRAFTS/`).
+- Emit clear warnings for unsupported template features (file uploads, projects) and provide guidance.
+- Add comprehensive unit and integration tests; test against a GHES instance where possible.
+
+Status: Accepted
+Commit: 2eda340
