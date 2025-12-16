@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-12-16
+
+### Added
+
+- **Standalone Binary Distribution** - Pre-built executables for all major platforms
+  - macOS ARM64 (M1/M2/M3) and Intel (x86_64)
+  - Linux x86_64
+  - Windows x86_64
+  - No Python installation required - download and run
+  - Fast startup time (<1 second) using PyInstaller onedir mode
+  - SHA256 checksums for all release assets
+  - Curl-pipe-bash installer script with platform auto-detection
+
+- **CI/CD for Binary Builds**
+  - GitHub Actions workflow for automated binary builds on release tags
+  - PR testing workflow for binary build validation
+  - Binary size tracking (150MB limit enforced)
+  - Smoke tests for all binary builds
+
+### Changed
+
+- Binary size target reduced from 200MB to 150MB (CI enforced)
+
 ## [0.1.7] - 2025-12-16
 
 ### Fixed
@@ -134,6 +157,7 @@ Initial release of git-adr - Architecture Decision Records management for git re
 - Supports frontmatter-based metadata in Markdown files
 - 95%+ test coverage with pytest
 
+[0.2.0]: https://github.com/zircote/git-adr/releases/tag/v0.2.0
 [0.1.7]: https://github.com/zircote/git-adr/releases/tag/v0.1.7
 [0.1.6]: https://github.com/zircote/git-adr/releases/tag/v0.1.6
 [0.1.5]: https://github.com/zircote/git-adr/releases/tag/v0.1.5
