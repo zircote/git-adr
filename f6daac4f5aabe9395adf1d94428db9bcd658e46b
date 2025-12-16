@@ -1,6 +1,8 @@
 ---
 date: '2025-12-16'
 id: 20251216-git-hooks-and-sdlc-integration
+linked_commits:
+- d9fc97c
 status: proposed
 title: Git Hooks and SDLC Integration
 ---
