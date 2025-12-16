@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2025-12-16
+
+### Fixed
+
+- Optional dependency install hints now display correctly in error messages
+  - Rich console was stripping `[ai]` and `[export]` as invalid markup tags
+  - Messages now properly show `pip install 'git-adr[ai]'` instead of `pip install git-adr`
+
 ## [0.1.3] - 2025-12-15
 
 ### Fixed
@@ -87,6 +95,7 @@ Initial release of git-adr - Architecture Decision Records management for git re
 - Supports frontmatter-based metadata in Markdown files
 - 95%+ test coverage with pytest
 
+[0.1.4]: https://github.com/zircote/git-adr/releases/tag/v0.1.4
 [0.1.3]: https://github.com/zircote/git-adr/releases/tag/v0.1.3
 [0.1.2]: https://github.com/zircote/git-adr/releases/tag/v0.1.2
 [0.1.1]: https://github.com/zircote/git-adr/releases/tag/v0.1.1
