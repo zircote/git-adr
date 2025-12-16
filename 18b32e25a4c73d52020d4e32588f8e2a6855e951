@@ -3,7 +3,12 @@ date: '2025-12-16'
 id: 20251216-drop-macos-intel-binary-builds
 linked_commits:
 - d578718
-status: proposed
+status: accepted
+tags:
+- ci-cd
+- deprecation
+- macos
+- platform
 title: Drop macOS Intel Binary Builds
 ---
 
