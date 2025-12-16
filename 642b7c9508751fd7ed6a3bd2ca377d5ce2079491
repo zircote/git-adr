@@ -1,0 +1,64 @@
+---
+date: '2025-12-16'
+deciders:
+- Claude
+- User
+id: 20251216-use-yamlsafe-load-for-template-parsing
+status: proposed
+title: Use yaml.safe_load() for template parsing
+---
+
+# Use yaml.safe_load() for template parsing
+
+## Context and Problem Statement
+
+The issue CLI parses YAML from two sources:
+1. YAML frontmatter in markdown templates
+2. Full YAML issue form templates
+
+YAML parsing can be a security risk if arbitrary code execution is allowed. We need a safe parsing approach.
+
+## Decision Drivers
+
+* Security: Prevent arbitrary code execution
+* Functionality: Support standard YAML features needed for templates
+* Compatibility: Work with existing GitHub issue template formats
+* Best practices: Follow Python security guidelines
+
+## Considered Options
+
+* Option 1: Use yaml.load() with default Loader (UNSAFE)
+* Option 2: Use yaml.safe_load() (CHOSEN)
+* Option 3: Use custom restricted YAML parser
+
+## Decision Outcome
+
+Chosen option: "Use yaml.safe_load()", because:
+- Prevents arbitrary code execution from malicious YAML
+- Supports all features needed for issue templates
+- Standard Python security best practice
+- Zero configuration required
+
+### Consequences
+
+* Good, because prevents YAML code execution vulnerabilities
+* Good, because standard Python security practice
+* Good, because sufficient for template use cases
+* Neutral, some advanced YAML features not available (not needed)
+
+## Implementation
+
+```python
+# issue_template.py:408
+try:
+    data = yaml.safe_load(text)
+except yaml.YAMLError as e:
+    raise ValueError(f"Invalid YAML: {e}") from e
+```
+
+## Validation
+
+Code review confirmed:
+- All YAML parsing uses safe_load()
+- No yaml.load() or unsafe loaders present
+- Proper error handling for malformed YAML
