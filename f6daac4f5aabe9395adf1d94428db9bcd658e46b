@@ -1,0 +1,147 @@
+---
+date: '2025-12-16'
+id: 20251216-git-hooks-and-sdlc-integration
+status: proposed
+title: Git Hooks and SDLC Integration
+---
+
+# Git Hooks and SDLC Integration
+
+## Context and Problem Statement
+
+We added a set of features in commit d9fc97c to integrate ADR management into developer workflows and CI/CD:
+
+- New CLI subcommands: `git hooks install`, `git hooks uninstall`, `git hooks status`.
+- CI workflow generation for GitHub Actions and GitLab CI (workflow files created under `.github/workflows/` and `.gitlab-ci.yml`).
+- PR template and issue template generation including ADR sections and checklists.
+- Pre-push hook that performs ADR validation (syntax, metadata, index inclusion) before allowing a push.
+- CI jobs that verify ADRs are in-sync with the repository (no uncommitted or missing ADRs), and enforce ADR naming/metadata rules.
+
+Problem:
+- ADRs drift or are omitted because there is no standardized enforcement across developer machines and CI.
+- ADRs are inconsistently formatted or missing required metadata (id, status, date, decision drivers, consequences).
+- Pull requests and issues often lack ADR references or required ADR sections; reviewers cannot easily discover related ADRs.
+- Manual enforcement is time-consuming and error-prone.
+
+We must decide how to integrate local (git hooks) and centralized (CI) validation and template standardization to reduce drift and improve ADR coverage without blocking developer productivity.
+
+## Decision Drivers
+
+- Enforceable validation: detect missing/invalid ADRs early (pre-push) and centrally (CI).
+- Cross-platform compatibility: hooks and generated CI workflows must work on macOS, Linux, Windows runners.
+- Low friction for developers: easy install/uninstall of hooks and clear guidance when validation fails.
+- Reproducible CI checks: GitHub Actions and GitLab CI must run the same validation logic used locally.
+- Auditability and traceability: failures must produce clear messages and link to ADR rules and documentation.
+- Ease of adoption: templates (PR/issue) must be easy to opt into; CLI commands must be discoverable.
+- Secure and minimal dependencies: avoid introducing credentials or heavy runtime dependencies.
+- Fail-fast but bypassable: allow emergency bypass (e.g., `--no-verify`) while discouraging routine bypassing.
+
+## Considered Options
+
+- Minimal: Do nothing automatic; provide only ADR documentation and a recommended checklist for PRs.
+- Hook-only: Ship `git hooks install/uninstall/status` to enforce validation locally via pre-push.
+- CI-only: Provide GitHub/GitLab CI templates that run ADR checks on push/PR, but no local hooks.
+- Templates-only: Generate standard PR/issue templates with ADR sections, but no automated validation.
+- Full integration (chosen): Provide git hook commands (install/uninstall/status), pre-push ADR validation, generated CI workflows for GitHub Actions and GitLab CI that run the same validation, and standardized PR/issue templates containing ADR checklists and links to related ADRs.
+- External service: Push ADR validation and storage into a hosted service (webhook + API) that enforces ADRs and comments on PRs.
+
+## Decision Outcome (Chosen option with justification)
+
+Chosen option:
+- Full integration: implement and ship the git hook management commands and pre-push hook validation, generate CI workflows for GitHub and GitLab that run ADR validation and synchronization checks, and generate standard PR/issue templates that include ADR sections and checkboxes.
+
+Justification:
+- Combined local + centralized enforcement provides the best balance: fast feedback to the developer (local pre-push) and authoritative verification in CI (catches cases where hooks were not installed or bypassed).
+- Templates reduce human error by prompting contributors to include ADRs and link them to PRs/issues.
+- Using generated CI workflows as the canonical enforcement mechanism avoids relying solely on developer machine setup.
+- Avoids introducing a networked external service and keeps validation deterministic and version-controlled with the repository.
+- The approach is adoptable incrementally: teams can begin by installing hooks, then enable CI workflows; both are reversible via `git hooks uninstall` and CI config removal.
+- Security: CI checks run in the runner context and do not require special secrets to validate ADR files; hooks are local and do not transmit data externally.
+
+Technical specifics implemented in commit d9fc97c (representative):
+- CLI commands:
+  - `git hooks install`:
+    - Installs hooks into `.githooks/` and runs `git config core.hooksPath .githooks` (preferred) on supported platforms.
+    - Creates a `pre-push` script that runs `./scripts/adr-validate --staged` (or the packaged validator).
+  - `git hooks uninstall`:
+    - Reverts `core.hooksPath` to previous value and deletes installed scripts when requested.
+  - `git hooks status`:
+    - Reports whether `.githooks` is installed, lists installed hook scripts, and verifies the hook file hashes against expected versions from commit d9fc97c.
+- Pre-push hook behavior:
+  - Runs ADR validation only against staged/changed ADR files:
+    - Syntax check (markdown frontmatter, required fields: id, title, status, date, author).
+    - Index sync check (ensures entries exist in ADR index file, e.g., `docs/adr/index.md`).
+    - Filename conventions: `NNN-descriptive-title.md`, unique numeric ID.
+    - Exit with non-zero status on failures; prints actionable errors and links to ADR style guide.
+  - Fast-path: if no ADR files staged, exits quickly (O(1) overhead).
+  - Hooks employ a small self-contained executable/script bundled in repo (no external network).
+- CI workflows:
+  - GitHub Actions: `.github/workflows/adr-check.yml`
+    - Triggers: push, pull_request, workflow_dispatch.
+    - Steps: checkout, install runtime, run `./scripts/adr-validate --diff origin/main...HEAD` and `./scripts/adr-sync-check`.
+    - Fail the job on any validation error; annotate PRs with failures via Actions annotations.
+  - GitLab CI: `.gitlab-ci.yml` job `adr:validate` with stages `test`:
+    - Runs on pushes and merge requests; checks same rules as GitHub Action.
+  - Jobs run on matrix of OS if necessary for platform-specific checks, but validation is designed to be cross-platform.
+- Templates:
+  - `.github/PULL_REQUEST_TEMPLATE/adr-pr-template.md` and `.github/ISSUE_TEMPLATE/adr-proposal.md`, containing:
+    - ADR checklist (Is an ADR required? Link to existing ADRs, proposed ADR ID if creating new).
+    - Required fields and checkboxes (Context, Decision, Consequences, Related PR/Issue).
+  - Equivalent templates generated/placed for GitLab (`.gitlab/issue_templates/`).
+- Validation tooling:
+  - Single authoritative validator script `scripts/adr-validate` referenced by both hooks and CI to avoid drift.
+  - Exit codes:
+    - 0 = all checks passed.
+    - 1 = validation failures.
+    - 2 = configuration errors (missing index, malformed config).
+- Commit reference: Changes were introduced in commit d9fc97c; the validator version/tag referenced in hooks points to that commit.
+
+## Consequences
+
+Good
+- Early detection:
+  - Developers get fast feedback locally (pre-push) avoiding broken pushes that leave ADRs inconsistent.
+  - CI enforces canonical state; prevents merged PRs that omit or malform ADRs.
+- Consistency:
+  - Standardized PR/issue templates increase ADR references and make it easier for reviewers to find ADRs.
+  - Single validation tool ensures consistency between local checks and CI checks.
+- Traceability & auditability:
+  - CI job logs and hook output provide clear evidence of why an ADR check failed.
+  - Index file enforcement makes it easier to enumerate all ADRs in a repo.
+- Incremental adoption:
+  - Teams can enable templates first, then hooks, then CI; or pick the subset that suits their workflow.
+- Low external dependencies:
+  - Validator and hooks are repository-contained scripts; no external service or secret management required.
+
+Bad
+- Developer friction:
+  - Hooks can be bypassed with `git push --no-verify` or by not installing hooks; CI must catch these cases.
+  - Initial setup requires developers to run `git hooks install` (or an onboarding script) or rely on repository documentation/automation.
+- False positives/negatives:
+  - Validator may flag legitimate edge-case ADR formats if rules are too strict; will require tuning and updates.
+- Maintenance overhead:
+  - The `scripts/adr-validate` and workflow templates must be maintained; changes to ADR schema require CI and hook updates.
+- Platform quirks:
+  - Windows line endings and execution permission issues can complicate hook installation; CI must test cross-platform.
+- Performance:
+  - Pre-push checks add time to each push when ADR files are changed; although designed to be fast, large staged diffs could slow down hooks if not scoped.
+
+Neutral
+- Bypass mechanisms:
+  - `git push --no-verify` and direct CI reruns mean emergency bypass exists; this is neutral since CI provides final guardrails.
+- Versioning:
+  - Validator code is versioned with the repository. When branches diverge (old branch with old validator vs new rules on main), CI will surface the mismatch; this requires clear upgrade documentation.
+- Partial adoption states:
+  - Until all teams adopt hooks, the CI will be the only enforcement point. This is acceptable but may cause more failures surfaced in CI instead of locally (improves eventual consistency).
+- Scalability:
+  - The approach scales per repository; multi-repo organizations should adopt a shared script or template generator library to avoid duplication (neutral operational tradeoff).
+
+Implementation notes / operational recommendations
+- Make `git hooks install` part of developer onboarding scripts and/or bootstrap tooling.
+- Ensure `scripts/adr-validate` is small, dependency-light, and executable on common CI runners.
+- Provide a documented escape hatch and a clear process (e.g., small PR to correct ADRs) when CI rejects merges.
+- Monitor CI failures related to ADR validation for the first few weeks and iterate the validator rules to reduce false positives.
+- Consider adopting `core.hooksPath` approach exclusively rather than writing into `.git/hooks` to avoid permission/merge issues.
+- Keep validator and templates in the same repository as ADRs so changes to rules are committed atomically with ADR style updates.
+
+Status: accepted (implementation started in commit d9fc97c).
