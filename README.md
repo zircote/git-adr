@@ -18,9 +18,31 @@ Architecture Decision Records (ADR) management for git repositories using git no
 
 ## Installation
 
-### Homebrew (macOS)
+### Standalone Binary (Fastest)
 
-The recommended installation method for macOS:
+Pre-built binaries are available for all platforms - no Python required:
+
+```bash
+# macOS/Linux (auto-detects platform)
+curl -sSL https://raw.githubusercontent.com/zircote/git-adr/main/script/install-binary.sh | bash
+
+# Or install to ~/.local/bin (no sudo)
+curl -sSL https://raw.githubusercontent.com/zircote/git-adr/main/script/install-binary.sh | bash -s -- --local
+
+# Specific version
+curl -sSL https://raw.githubusercontent.com/zircote/git-adr/main/script/install-binary.sh | bash -s -- v0.1.0
+```
+
+Or download manually from [GitHub Releases](https://github.com/zircote/git-adr/releases):
+
+| Platform | Download |
+|----------|----------|
+| macOS ARM64 (M1/M2/M3) | `git-adr-macos-arm64.tar.gz` |
+| macOS Intel | `git-adr-macos-x86_64.tar.gz` |
+| Linux x86_64 | `git-adr-linux-x86_64.tar.gz` |
+| Windows x86_64 | `git-adr-windows-x86_64.zip` |
+
+### Homebrew (macOS)
 
 ```bash
 brew tap zircote/git-adr
