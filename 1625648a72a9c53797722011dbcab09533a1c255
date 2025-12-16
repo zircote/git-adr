@@ -3,7 +3,12 @@ date: '2025-12-16'
 id: 20251216-pyinstaller-standalone-binary-distribution
 linked_commits:
 - 93cd798
-status: proposed
+status: accepted
+tags:
+- binary
+- ci-cd
+- distribution
+- pyinstaller
 title: PyInstaller Standalone Binary Distribution
 ---
 
