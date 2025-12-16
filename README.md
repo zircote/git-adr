@@ -395,6 +395,42 @@ src/git_adr/
 
 MIT License - see [LICENSE](LICENSE) for details.
 
+## Claude Code Skill
+
+A comprehensive Claude Code skill is included for AI-assisted ADR management:
+
+```bash
+# Install the skill (from git-adr repository)
+cp -r skills/git-adr ~/.claude/skills/
+
+# Or extract from package
+tar -xzf skills/git-adr.skill -C ~/.claude/skills/
+```
+
+The skill enables Claude to:
+- **Execute commands**: Run any git-adr command directly
+- **Generate content**: Create ADRs in any of the 6 supported formats
+- **Teach best practices**: Guide users on effective ADR writing
+- **Match project style**: Automatically detect and use your configured template
+
+Skill structure:
+```
+skills/git-adr/
+├── SKILL.md                    # Core instructions (258 lines)
+└── references/
+    ├── commands.md             # Full command reference
+    ├── configuration.md        # All adr.* config options
+    ├── best-practices.md       # ADR writing guidance
+    ├── workflows.md            # Common workflow patterns
+    └── formats/
+        ├── madr.md             # MADR 4.0 template
+        ├── nygard.md           # Original minimal format
+        ├── y-statement.md      # Single-sentence format
+        ├── alexandrian.md      # Pattern-language format
+        ├── business-case.md    # Business justification
+        └── planguage.md        # Quantified requirements
+```
+
 ## Acknowledgments
 
 - [MADR](https://adr.github.io/madr/) - Markdown ADR format
