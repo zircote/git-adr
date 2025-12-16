@@ -291,7 +291,11 @@ def parse_markdown_template_string(
     try:
         post = frontmatter.loads(text)
     except yaml.YAMLError as e:
-        raise ValueError(f"Invalid YAML frontmatter: {e}") from e
+        msg = f"Invalid YAML frontmatter"
+        if source_path:
+            msg += f" in '{source_path}'"
+        msg += f": {e}"
+        raise ValueError(msg) from e
 
     # Extract frontmatter metadata
     metadata = dict(post.metadata)
