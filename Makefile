@@ -266,13 +266,13 @@ test-quick:
 # ============================================================
 
 lint:
-	uv run ruff check src/ tests/
+	uv run ruff check .
 
 format:
-	uv run ruff format src/ tests/
+	uv run ruff format .
 
 format-check:
-	uv run ruff format --check src/ tests/
+	uv run ruff format --check .
 
 check: lint format-check
 	@echo "All quality checks passed!"
