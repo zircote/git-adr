@@ -260,9 +260,9 @@ class IssueBuilder:
             missing.append("title")
 
         # Check template fields
-        for field in self._template.promptable_fields:
-            field_id = self._get_field_id(field)
-            is_required = self._is_field_required(field)
+        for template_field in self._template.promptable_fields:
+            field_id = self._get_field_id(template_field)
+            is_required = self._is_field_required(template_field)
 
             if is_required and not self._values.get(field_id, "").strip():
                 missing.append(field_id)

@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 
 from git_adr.core.issue_template import (
+    TYPE_ALIASES,
     FormElement,
     FormElementType,
     IssueTemplate,
     TemplateManager,
     TemplateSection,
-    TYPE_ALIASES,
     parse_markdown_template_string,
     parse_yaml_form_string,
 )
