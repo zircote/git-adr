@@ -5,6 +5,10 @@ deciders:
 - User
 id: 20251216-use-yamlsafe-load-for-template-parsing
 status: accepted
+tags:
+- parsing
+- security
+- yaml
 title: Use yaml.safe_load() for template parsing
 ---
 
