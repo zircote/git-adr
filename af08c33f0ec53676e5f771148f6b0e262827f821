@@ -1,6 +1,8 @@
 ---
 date: '2025-12-16'
 id: 20251216-github-issue-creation-command
+linked_commits:
+- 2eda340
 status: proposed
 title: GitHub Issue Creation Command
 ---
