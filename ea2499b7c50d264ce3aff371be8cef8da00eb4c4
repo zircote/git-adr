@@ -5,6 +5,10 @@ deciders:
 - User
 id: 20251216-use-stdin-for-gh-cli-body-content
 status: accepted
+tags:
+- gh-cli
+- security
+- subprocess
 title: Use stdin for gh CLI body content
 ---
 
