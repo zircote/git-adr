@@ -399,7 +399,7 @@ def _slugify(text: str) -> str:
         Lowercase slug with hyphens.
     """
     # Remove title prefixes like [BUG], [FEATURE], etc.
-    text = re.sub(r"^\[[\w]+\]\s*", "", text)
+    text = re.sub(r"^\[[A-Z]+\]\s*", "", text)
 
     # Convert to lowercase
     slug = text.lower()
