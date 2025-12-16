@@ -1,0 +1,108 @@
+---
+date: '2025-12-16'
+id: 20251216-ci-gate-before-binary-builds
+status: proposed
+title: CI Gate Before Binary Builds
+---
+
+# CI Gate Before Binary Builds
+
+## Context and Problem Statement
+We observed wasted compute and intermittent broken binary releases caused by running binary build jobs (wheel, PyInstaller, Homebrew packaging, platform-specific artifacts) before basic quality checks completed. The CI pipeline historically ran build matrix jobs which would produce costly artifacts only to fail later on lint, formatting, type checking or unit tests. This increases cost, delays feedback to authors, and risks shipping bad binaries.
+
+Recent commits show the team adopted a mitigation:
+- 109cf5d fix: add CI gate before binary builds (introduces the change)
+- d578718 fix: remove macOS Intel binary build (runner retired) (platform matrix changes)
+- 93cd798 feat: add PyInstaller binary distribution (additional build outputs to protect)
+- 38f5afe / 8706f48 / 4203745 / 0670db1 and others: CI and lint/type/test alignment and robustness work (make ci mirrors GH workflow, mypy/ruff fixes, bandit nosec)
+These commits indicate ongoing CI hardening and a drive to avoid costly or incorrect builds.
+
+The problem to solve:
+- Ensure that binary build jobs only run when code meets basic quality gates (lint/format/type/tests).
+- Prevent wasted runner time and artifact churn.
+- Keep release/build semantics simple and deterministic across matrix entries and platforms.
+
+## Decision Drivers
+- Prevent wasted compute (builds are costlier than lint/tests).
+- Guarantee a minimum quality threshold before packaging and distributing binaries.
+- Preserve build matrix flexibility (multiple Python versions, platforms), while avoiding redundant gate runs.
+- Provide fast, clear feedback to contributors (fail fast on quality checks).
+- Maintain reproducibility and parity between CI gate checks and local `make ci` / developer flows.
+- Keep CI pipeline maintainable and easy to reason about (avoid excessive cross-job complexity).
+- Account for platform runner limitations (e.g., macOS Intel removal).
+- Minimize surface for flaky gate behavior blocking the whole build pipeline.
+- Support future extensions (e.g., gating additional checks like SCA, security scanning).
+
+## Considered Options
+- Add a single "ci-gate" job that runs lint, format, type checking, and tests; require all build jobs to depend on it (chosen).
+- Run quality checks inside each build matrix job (every build repeats lint/type/tests per matrix entry).
+- Run builds first and gate packaging by validating built artifacts afterward (post-build gate).
+- Gate only a subset of checks before builds (e.g., lint + format only; run tests during or after builds).
+- Use pre-commit hooks + branch protection (require developers to run checks locally and block merges via required status checks only).
+- Use parallelized specialized gates (separate gate jobs: lint-gate, test-gate, security-gate) with build jobs requiring all gate jobs.
+- Rely on caching+incremental builds to reduce wasted compute instead of gating.
+- Use a manual / scheduled "release" pipeline that only runs builds after a separate verification workflow succeeds.
+
+## Decision Outcome (Chosen option with justification)
+Chosen option
+- Implement a single, explicit ci-gate job that runs the canonical quality checks (lint, format validation, type checks, unit tests). Configure all binary/build jobs (matrixed wheel, PyInstaller, Homebrew, platform-specific builds) to declare a dependency on ci-gate (via needs: [ci-gate]) so they do not start until the gate succeeds.
+
+Justification
+- Cost and efficiency: Running the lightweight gate once avoids repeating the same checks in every build matrix job and prevents expensive builds when obvious quality failures exist.
+- Simplicity: A single gate job is straightforward to reason about, audit and maintain. It maps directly to the "fail fast" principle.
+- Clarity in CI status: PR pages will show a single failing gate status when quality checks fail, making it obvious what needs attention.
+- Matches recent work: Commit 109cf5d implements exactly this approach; it aligns pipeline changes already merged and avoids churn to revert or adopt more disruptive patterns.
+- Flexibility: The gate can be extended (e.g., add security scan steps) or split later into multiple gate jobs if the single-job approach becomes a bottleneck.
+- Compatibility with matrix builds: Jobs can still use strategy.matrix for platform/py-version builds while depending on ci-gate; GitHub Actions supports job-level needs with matrix strategy.
+
+Implementation notes
+- ci-gate should run the same checks as local developer commands (mirror `make ci` and the GitHub workflow so PRs reflect real failures; see commits 38f5afe and 8706f48).
+- Build jobs must declare needs: [ci-gate] (or multiple gate jobs if split later). Example (conceptual):
+  - jobs:
+    - ci-gate: runs ruff/black/mypy/pytest (on chosen canonical runner)
+    - build (strategy.matrix: python-version, os): needs: [ci-gate]; proceeds only if ci-gate completed successfully
+- Keep gate runner choice minimal and representative (e.g., linux + canonical Python version). If tests are platform-specific, either include platform checks in gate or accept that some platform-specific failures will occur during build.
+- Ensure strict exit-on-error behavior for gate steps; avoid masking failures with "continue-on-error".
+
+## Consequences
+
+Good
+- Saved compute and cost:
+  - Binary builds no longer consume CI runner time for PRs that fail lint/types/tests.
+- Faster developer feedback:
+  - Fail-fast behavior surfaces quality issues quickly (single gate failure item).
+- Cleaner artifact lifecycle:
+  - Fewer partial/failed artifacts, fewer uploads to artifact backends.
+- Simpler maintenance and observability:
+  - One place to update/instrument quality checks; easier to add metrics or gating logic later.
+- Consistency with recent commits:
+  - Aligns with 109cf5d change and the project's CI hardening trajectory.
+
+Bad
+- Single point of failure:
+  - If ci-gate flaps or becomes flaky, no builds will run; this could block otherwise valid releases.
+  - Mitigation: add retries for flaky steps, run short/fast smoke tests only in gate, or split heavy/less-critical checks into separate gates.
+- Potential delay to build start:
+  - Gate adds serial dependency; builds wait for the gate to finish before starting (could increase end-to-end pipeline time).
+  - Mitigation: optimize gate runtime (parallelize steps inside job, run minimal matrix in gate, cache deps aggressively).
+- Incomplete platform coverage:
+  - If the gate runs on a single OS (e.g., linux), platform-specific issues (macOS packaging quirks) may not be caught until build jobs run.
+  - Mitigation: add targeted platform checks when necessary or add a small platform-matrix to the gate for known platform-sensitive checks.
+- Maintenance burden to keep gate in sync:
+  - Gate must mirror local `make ci` and per-build expectations; divergence will reduce gate effectiveness.
+  - Mitigation: keep `make ci` and CI definitions aligned (commit history already reflects work to align these).
+
+Neutral
+- Local developer experience:
+  - Developers should still run local checks (pre-commit, make ci) but CI gate enforces the requirement server-side; introduction of the gate is neutral and can be used as a reminder to run checks locally.
+- Future CI evolution:
+  - The chosen pattern is extensible; it neither precludes nor requires moving to multi-stage or reusable workflow patterns later.
+
+Operational recommendations (practical follow-ups)
+- Instrument the ci-gate job with timing and failure telemetry; treat flakiness as a high-priority operational issue.
+- Keep the gate job minimal and fast: group linter steps that are cheap, run tests in parallel within the gate where possible, use dependency caches configured in CI (see recent actions bumps for cache tooling).
+- If certain tests are extremely slow or platform-specific, move them to a secondary gate or to the build jobs explicitly.
+- Update branch protection rules to require the ci-gate (or the workflow that includes it) as a required status check for merging.
+- Document the gate behavior in CONTRIBUTING.md / CI docs so contributors understand why builds may be blocked (commit history shows CI docs improvements; continue that practice).
+
+Decision recorded by: implemented in commit 109cf5d and accompanying workflow updates.
