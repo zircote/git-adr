@@ -49,7 +49,7 @@ Reduce Homebrew installation time to under 10 seconds by distributing pre-built 
 |--------|--------|-------------------|
 | Install time (macOS ARM64) | <30 seconds | Time `brew install git-adr` |
 | Install time (macOS Intel) | <30 seconds | Time `brew install git-adr` |
-| Binary size | <200 MB | Check release asset size |
+| Binary size | <150 MB | Check release asset size (CI enforced) |
 | Feature parity | 100% | Run test suite against binary |
 | Startup time | <1 second | Time `git adr --help` |
 
@@ -109,9 +109,9 @@ Reduce Homebrew installation time to under 10 seconds by distributing pre-built 
 
 ### Performance
 
-- Binary startup time: <3 seconds (first run may be slower)
+- Binary startup time: <1 second (first run on macOS may be slower due to Gatekeeper)
 - Homebrew install time: <10 seconds (excluding download)
-- Binary download size: <200 MB
+- Binary download size: <150 MB (CI enforced)
 
 ### Security
 

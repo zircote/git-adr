@@ -256,7 +256,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,  # Compress if UPX is available
+    upx=False,  # UPX causes issues on macOS
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,
@@ -274,7 +274,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,  # UPX causes issues on macOS
     upx_exclude=[],
     name="git-adr",
 )
