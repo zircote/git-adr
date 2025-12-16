@@ -1,0 +1,120 @@
+---
+name: Architecture Decision Proposal
+about: Propose a new architectural decision for discussion
+title: '[ADR] '
+labels: {{ labels | default('architecture, adr-proposal') }}
+assignees: {{ assignees | default('') }}
+---
+
+## Context
+
+<!--
+What is the context in which this decision is being made?
+What forces are at play? What constraints exist?
+-->
+
+## Problem Statement
+
+<!--
+What is the specific problem or question this ADR addresses?
+Be as concrete as possible about the pain points or needs.
+-->
+
+## Decision Drivers
+
+<!--
+What factors are important for making this decision?
+List the key requirements, constraints, or goals that influence the choice.
+-->
+
+- [ ] <!-- Driver 1: e.g., Performance requirements -->
+- [ ] <!-- Driver 2: e.g., Maintainability -->
+- [ ] <!-- Driver 3: e.g., Cost constraints -->
+- [ ] <!-- Driver 4: e.g., Team expertise -->
+
+## Proposed Options
+
+### Option 1: [Name]
+
+**Description**: <!-- Brief description -->
+
+**Pros**:
+-
+
+**Cons**:
+-
+
+**Estimated Effort**: <!-- Low/Medium/High -->
+
+### Option 2: [Name]
+
+**Description**: <!-- Brief description -->
+
+**Pros**:
+-
+
+**Cons**:
+-
+
+**Estimated Effort**: <!-- Low/Medium/High -->
+
+### Option 3: [Name] (Optional)
+
+**Description**: <!-- Brief description -->
+
+**Pros**:
+-
+
+**Cons**:
+-
+
+**Estimated Effort**: <!-- Low/Medium/High -->
+
+## Recommended Decision
+
+<!--
+Which option do you recommend and why?
+Reference the decision drivers above.
+-->
+
+**Recommendation**: Option [N]
+
+**Rationale**:
+
+## Consequences
+
+### If we proceed with the recommendation
+
+**Positive**:
+-
+
+**Negative**:
+-
+
+**Risks**:
+-
+
+### If we don't make this decision
+
+<!-- What happens if we delay or avoid this decision? -->
+
+## Additional Context
+
+<!--
+Any additional context, links to discussions, related issues, or prior art.
+-->
+
+{% if stakeholders %}
+## Stakeholders
+
+{{ stakeholders | join(', ') }}
+{% endif %}
+
+---
+
+<!--
+Once this proposal is approved, create the ADR with:
+git adr new "Title" --status proposed
+
+Link the ADR back to this issue for traceability.
+-->

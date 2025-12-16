@@ -1,0 +1,83 @@
+## Description
+
+<!-- Provide a brief description of the changes in this PR -->
+
+## Type of Change
+
+- [ ] Bug fix (non-breaking change that fixes an issue)
+- [ ] New feature (non-breaking change that adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to change)
+- [ ] Documentation update
+- [ ] Refactoring (no functional changes)
+- [ ] Infrastructure/CI changes
+
+## Architecture Impact
+
+<!--
+Does this PR introduce architectural changes? Check all that apply.
+If you check any box, consider creating an ADR to document the decision.
+-->
+
+### Architectural Scope
+
+- [ ] **No architectural impact** - Implementation details only
+- [ ] **Minor impact** - Localized changes within existing patterns
+- [ ] **Moderate impact** - Changes to component interfaces or data flow
+- [ ] **Significant impact** - New patterns, dependencies, or cross-cutting concerns
+
+### Architectural Concerns
+
+- [ ] Introduces a new external dependency
+- [ ] Changes API contracts (public endpoints, SDK interfaces)
+- [ ] Modifies data models or database schema
+- [ ] Affects security or authentication mechanisms
+- [ ] Changes deployment or infrastructure patterns
+- [ ] Impacts performance characteristics
+- [ ] Introduces new integration points
+
+### ADR Documentation
+
+{% if require_adr %}
+**Required**: Significant architectural changes must be documented in an ADR.
+{% endif %}
+
+- [ ] **ADR exists** - Reference: <!-- ADR ID or link -->
+- [ ] **ADR proposed** - Draft in progress: <!-- Branch or draft link -->
+- [ ] **ADR not needed** - Reason: <!-- Brief explanation -->
+{% if require_adr %}
+
+> If architectural impact is "Moderate" or higher, an ADR is required.
+> Create one with: `git adr new "{{ title_placeholder | default('Decision Title') }}"`
+{% endif %}
+
+## Related Issues
+
+<!-- Link related issues: Fixes #123, Relates to #456 -->
+
+## Testing
+
+### Test Coverage
+
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] Manual testing performed
+- [ ] No tests needed (explain below)
+
+### Test Notes
+
+<!-- Describe testing approach, edge cases covered, or why tests aren't needed -->
+
+## Checklist
+
+- [ ] My code follows the project's coding standards
+- [ ] I have performed a self-review of my code
+- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] I have made corresponding changes to the documentation
+- [ ] My changes generate no new warnings
+- [ ] Any dependent changes have been merged and published
+
+{% if reviewers %}
+## Reviewers
+
+/cc {{ reviewers | join(' ') }}
+{% endif %}

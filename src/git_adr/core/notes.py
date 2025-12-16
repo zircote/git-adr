@@ -473,12 +473,14 @@ class NotesManager:
         remote: str = "origin",
         *,
         force: bool = False,
+        timeout: int | None = None,
     ) -> None:
         """Push ADR notes to a remote.
 
         Args:
             remote: Remote name.
             force: If True, force push.
+            timeout: Optional timeout in seconds for the push operation.
         """
         # Push ADR notes (must exist)
         self._git.push_notes(remote, self.adr_ref, force=force)
