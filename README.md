@@ -119,8 +119,11 @@ make install-man  # Requires pandoc
 ## Quick Start
 
 ```bash
-# Initialize ADR tracking in your repository
+# Interactive setup (recommended) - prompts for template, hooks, and CI
 git adr init
+
+# Or non-interactive with specific options
+git adr init --template madr --install-hooks --setup-github-ci
 
 # Create a new ADR (opens editor)
 git adr new "Use PostgreSQL for primary database"
@@ -134,9 +137,21 @@ git adr show 20240115-use-postgresql
 # Search ADRs
 git adr search "database"
 
-# Sync with remote
+# ADRs sync automatically on push (if hooks installed)
+# Or sync manually:
 git adr sync push
 ```
+
+### Init Options
+
+| Option | Description |
+|--------|-------------|
+| `--template <format>` | Set ADR format (madr, nygard, y-statement, etc.) |
+| `--install-hooks` | Install pre-push hooks for automatic sync |
+| `--setup-github-ci` | Generate GitHub Actions workflows |
+| `--no-input` | Skip all interactive prompts |
+
+See [Hooks Guide](docs/HOOKS_GUIDE.md) for detailed hooks documentation.
 
 ## Commands
 
