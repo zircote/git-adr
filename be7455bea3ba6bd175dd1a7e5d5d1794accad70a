@@ -1,7 +1,14 @@
 ---
 date: '2025-12-16'
 id: 20251216-disable-upx-compression-for-pyinstaller-binaries
-status: proposed
+linked_commits:
+- f9d8313
+status: accepted
+tags:
+- compatibility
+- performance
+- pyinstaller
+- security
 title: Disable UPX Compression for PyInstaller Binaries
 ---
 
