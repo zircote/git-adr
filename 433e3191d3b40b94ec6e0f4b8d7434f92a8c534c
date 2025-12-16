@@ -1,0 +1,64 @@
+---
+date: '2025-12-16'
+deciders:
+- Claude
+- User
+id: 20251216-use-importlibresources-for-bundled-templates
+status: proposed
+title: Use importlib.resources for bundled templates
+---
+
+# Use importlib.resources for bundled templates
+
+## Context and Problem Statement
+
+The git-adr issue CLI needs to bundle default issue templates (bug_report.md, feature_request.md, documentation.md) as package resources for offline/air-gapped environments. We need a reliable way to load these bundled templates that works correctly after pip install and wheel distribution.
+
+## Decision Drivers
+
+* Portability: Must work after pip install
+* Python compatibility: Should use modern Python patterns
+* Reliability: Must work in wheel distributions
+* Simplicity: Avoid path manipulation complexity
+
+## Considered Options
+
+* Option 1: Use __file__-relative paths
+* Option 2: Use pkg_resources (older setuptools API)
+* Option 3: Use importlib.resources (CHOSEN)
+
+## Decision Outcome
+
+Chosen option: "Use importlib.resources", because:
+- Works correctly in wheel distributions
+- Modern Python 3.11+ standard library approach
+- No dependency on setuptools
+- Cleaner API than __file__-relative paths
+
+### Consequences
+
+* Good, because works correctly after pip install
+* Good, because uses modern Python standard library
+* Good, because no external dependencies
+* Bad, because requires Python 3.11+ (acceptable for this project)
+
+## Implementation
+
+```python
+# issue_template.py:530-549
+import importlib.resources as pkg_resources
+
+# Navigate to the templates/issues directory
+files = pkg_resources.files("git_adr") / "templates" / "issues"
+for item in files.iterdir():
+    if item.name.endswith((".md", ".yml", ".yaml")):
+        content = item.read_text()
+        # Parse template...
+```
+
+## Validation
+
+Code review confirmed:
+- Correctly uses importlib.resources.files()
+- Handles fallback for older Python versions
+- Package data properly configured in pyproject.toml
