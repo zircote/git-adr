@@ -29,10 +29,8 @@ jobs:
             runner: macos-14
             artifact: git-adr-macos-arm64
             binary_name: git-adr
-          - os: macos-x86_64
-            runner: macos-13
-            artifact: git-adr-macos-x86_64
-            binary_name: git-adr
+          # Note: macOS Intel (x86_64) builds removed - GitHub retired Intel runners
+          # Intel Mac users should use: brew install zircote/git-adr/git-adr
           - os: linux-x86_64
             runner: ubuntu-22.04
             artifact: git-adr-linux-x86_64
@@ -279,19 +277,16 @@ jobs:
             | Platform | Download | SHA256 |
             |----------|----------|--------|
             | macOS ARM64 (M1/M2/M3) | [git-adr-macos-arm64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/git-adr-macos-arm64.tar.gz) | See checksums.txt |
-            | macOS Intel | [git-adr-macos-x86_64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/git-adr-macos-x86_64.tar.gz) | See checksums.txt |
             | Linux x86_64 | [git-adr-linux-x86_64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/git-adr-linux-x86_64.tar.gz) | See checksums.txt |
             | Windows x86_64 | [git-adr-windows-x86_64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/git-adr-windows-x86_64.zip) | See checksums.txt |
+
+            > **macOS Intel users**: Use Homebrew: `brew install zircote/git-adr`
 
             ### Quick Install (Unix)
             ```bash
             # macOS ARM64
             curl -sL https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/git-adr-macos-arm64.tar.gz | tar xz
             sudo mv git-adr-macos-arm64/git-adr /usr/local/bin/
-
-            # macOS Intel
-            curl -sL https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/git-adr-macos-x86_64.tar.gz | tar xz
-            sudo mv git-adr-macos-x86_64/git-adr /usr/local/bin/
 
             # Linux
             curl -sL https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/git-adr-linux-x86_64.tar.gz | tar xz
