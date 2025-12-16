@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7] - 2025-12-16
+
+### Fixed
+
+- Fix wheel build duplicate file entries causing PyPI upload failure
+  - Removed redundant `force-include` in pyproject.toml that duplicated templates
+
 ## [0.1.6] - 2025-12-16
 
 ### Added
@@ -127,6 +134,7 @@ Initial release of git-adr - Architecture Decision Records management for git re
 - Supports frontmatter-based metadata in Markdown files
 - 95%+ test coverage with pytest
 
+[0.1.7]: https://github.com/zircote/git-adr/releases/tag/v0.1.7
 [0.1.6]: https://github.com/zircote/git-adr/releases/tag/v0.1.6
 [0.1.5]: https://github.com/zircote/git-adr/releases/tag/v0.1.5
 [0.1.4]: https://github.com/zircote/git-adr/releases/tag/v0.1.4
