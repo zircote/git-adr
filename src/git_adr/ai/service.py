@@ -6,6 +6,15 @@ Provides AI-powered features using various LLM providers.
 from __future__ import annotations
 
 import os
+import warnings
+
+# Suppress LangChain's Pydantic v1 deprecation warning on Python 3.14+
+warnings.filterwarnings(
+    "ignore",
+    message="Core Pydantic V1 functionality",
+    category=UserWarning,
+    module="langchain_core",
+)
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
 
