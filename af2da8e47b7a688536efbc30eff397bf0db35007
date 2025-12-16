@@ -1,0 +1,72 @@
+---
+date: '2025-12-16'
+deciders:
+- Claude
+- User
+id: 20251216-implement-lazy-loading-in-templatemanager
+status: proposed
+title: Implement lazy loading in TemplateManager
+---
+
+# Implement lazy loading in TemplateManager
+
+## Context and Problem Statement
+
+The TemplateManager needs to discover and load issue templates from both bundled resources and project directories. Template discovery involves file I/O operations that can be slow, especially in projects with many templates. We need to balance performance with usability.
+
+## Decision Drivers
+
+* Performance: Minimize startup overhead
+* User experience: Fast command execution
+* Resource efficiency: Don't load unused templates
+* Code simplicity: Avoid complex caching mechanisms
+
+## Considered Options
+
+* Option 1: Load all templates eagerly during initialization
+* Option 2: Lazy loading with cache (CHOSEN)
+* Option 3: No caching, load templates on every request
+
+## Decision Outcome
+
+Chosen option: "Lazy loading with cache", because:
+- Prevents unnecessary file I/O until templates are needed
+- Caches results for subsequent access
+- Simple implementation with _ensure_loaded() pattern
+- Optimal balance of performance and simplicity
+
+### Consequences
+
+* Good, because fast startup (no I/O until needed)
+* Good, because subsequent access is cached
+* Good, because simple implementation
+* Neutral, requires explicit reload() for template updates
+
+## Implementation
+
+```python
+# issue_template.py:500-519
+class TemplateManager:
+    def __init__(self, project_root: Path | None = None) -> None:
+        self._project_root = project_root or Path.cwd()
+        self._templates: dict[str, IssueTemplate] = {}
+        self._loaded = False  # Lazy loading flag
+
+    def _ensure_loaded(self) -> None:
+        """Ensure templates are loaded (lazy loading)."""
+        if not self._loaded:
+            self._templates = self.discover_templates()
+            self._loaded = True
+
+    def get_template(self, type_or_name: str) -> IssueTemplate | None:
+        self._ensure_loaded()  # Load on first access
+        resolved_name = TYPE_ALIASES.get(type_or_name.lower(), type_or_name.lower())
+        return self._templates.get(resolved_name)
+```
+
+## Validation
+
+Code review confirmed:
+- Lazy loading implemented correctly
+- All public methods call _ensure_loaded()
+- reload() method available for cache invalidation
