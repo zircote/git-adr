@@ -141,7 +141,9 @@ def run_issue(
     # Check for dry run
     if dry_run:
         console.print("\n[cyan]Dry run - no issue created[/cyan]")
-        console.print(Panel(builder.preview(), title="Issue Preview", border_style="cyan"))
+        console.print(
+            Panel(builder.preview(), title="Issue Preview", border_style="cyan")
+        )
         return
 
     # Build the issue
@@ -206,9 +208,14 @@ def _prompt_for_fields(
             field_id = field.id or ""
 
             # Use provided description for first text field
-            if not description_used and description and field.type in (
-                FormElementType.INPUT,
-                FormElementType.TEXTAREA,
+            if (
+                not description_used
+                and description
+                and field.type
+                in (
+                    FormElementType.INPUT,
+                    FormElementType.TEXTAREA,
+                )
             ):
                 builder.set_field(field_id, description)
                 description_used = True
@@ -251,7 +258,9 @@ def _prompt_for_fields(
                     for opt in options:
                         if Confirm.ask(f"  {opt}", default=False):
                             selected.append(opt)
-                    builder.set_field(field_id, "\n".join(f"- [x] {s}" for s in selected))
+                    builder.set_field(
+                        field_id, "\n".join(f"- [x] {s}" for s in selected)
+                    )
 
 
 def _prompt_multiline(prompt: str) -> str:
@@ -263,7 +272,9 @@ def _prompt_multiline(prompt: str) -> str:
     Returns:
         User input as string.
     """
-    console.print(f"[dim]({prompt}. Enter text, then press Enter twice to finish)[/dim]")
+    console.print(
+        f"[dim]({prompt}. Enter text, then press Enter twice to finish)[/dim]"
+    )
 
     lines: list[str] = []
     empty_count = 0
@@ -296,11 +307,13 @@ def _preview_and_confirm(builder: IssueBuilder, dry_run: bool) -> str:
         Action to take: "submit", "edit", or "cancel".
     """
     console.print("\n")
-    console.print(Panel(
-        Markdown(builder.preview()),
-        title="Issue Preview",
-        border_style="blue",
-    ))
+    console.print(
+        Panel(
+            Markdown(builder.preview()),
+            title="Issue Preview",
+            border_style="blue",
+        )
+    )
 
     if dry_run:
         return "submit"  # Will be handled as dry run later
@@ -351,7 +364,9 @@ def _edit_in_editor(builder: IssueBuilder) -> None:
 
         console.print("[green]Content updated from editor.[/green]")
     except subprocess.CalledProcessError:
-        console.print("[yellow]Editor closed without saving or error occurred.[/yellow]")
+        console.print(
+            "[yellow]Editor closed without saving or error occurred.[/yellow]"
+        )
     finally:
         # Clean up temp file
         Path(temp_path).unlink(missing_ok=True)
@@ -425,7 +440,9 @@ def _save_locally(issue: Issue) -> None:
     try:
         path = save_local_issue(issue)
         console.print(f"\n[green]Issue saved locally:[/green] {path}")
-        console.print("[dim]You can submit this later manually or copy the content to GitHub.[/dim]")
+        console.print(
+            "[dim]You can submit this later manually or copy the content to GitHub.[/dim]"
+        )
     except OSError as e:
         err_console.print(f"[red]Error saving file:[/red] {e}")
         raise typer.Exit(1)

@@ -211,17 +211,20 @@ class TestGitHubIssueClient:
         """Test extracting issue number from URL."""
         client = GitHubIssueClient()
 
-        assert client._extract_issue_number(
-            "https://github.com/owner/repo/issues/42"
-        ) == 42
+        assert (
+            client._extract_issue_number("https://github.com/owner/repo/issues/42")
+            == 42
+        )
 
-        assert client._extract_issue_number(
-            "https://github.com/owner/repo/issues/123/"
-        ) == 123
+        assert (
+            client._extract_issue_number("https://github.com/owner/repo/issues/123/")
+            == 123
+        )
 
-        assert client._extract_issue_number(
-            "https://github.com/owner/repo/pulls/42"
-        ) is None
+        assert (
+            client._extract_issue_number("https://github.com/owner/repo/pulls/42")
+            is None
+        )
 
         assert client._extract_issue_number("invalid-url") is None
 

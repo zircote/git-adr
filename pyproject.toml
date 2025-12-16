@@ -188,3 +188,8 @@ exclude_lines = [
 ]
 fail_under = 78  # 78%+ achieved. 95% requires deep mocking of editor/network/AI APIs
 show_missing = true
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.9",
+]

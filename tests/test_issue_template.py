@@ -395,8 +395,12 @@ Test
             template_dir = Path(tmpdir) / ".github" / "ISSUE_TEMPLATE"
             template_dir.mkdir(parents=True)
 
-            (template_dir / "bug_report.md").write_text("---\nname: Bug\n---\n## Test\n")
-            (template_dir / "feature.md").write_text("---\nname: Feature\n---\n## Test\n")
+            (template_dir / "bug_report.md").write_text(
+                "---\nname: Bug\n---\n## Test\n"
+            )
+            (template_dir / "feature.md").write_text(
+                "---\nname: Feature\n---\n## Test\n"
+            )
 
             manager = TemplateManager(Path(tmpdir))
             types = manager.get_available_types()

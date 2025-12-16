@@ -119,8 +119,12 @@ class TestIssueBuilder:
             labels=["bug"],
             sections=[
                 TemplateSection(header="Description", hint="Describe", required=True),
-                TemplateSection(header="Steps", hint="Steps to reproduce", required=True),
-                TemplateSection(header="Notes", hint="Additional notes", required=False),
+                TemplateSection(
+                    header="Steps", hint="Steps to reproduce", required=True
+                ),
+                TemplateSection(
+                    header="Notes", hint="Additional notes", required=False
+                ),
             ],
         )
 
