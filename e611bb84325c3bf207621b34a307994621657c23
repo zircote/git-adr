@@ -1,7 +1,7 @@
 ---
 date: '2025-12-15'
 id: 20251215-madr-format-review-codebase-regarding-madr-format
-status: proposed
+status: accepted
 title: 'MADR format
 
   Review codebase regarding MADR format and create teh ADR record'
