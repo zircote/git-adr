@@ -74,6 +74,9 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/git_adr"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/git_adr/templates" = "git_adr/templates"
+
 # Ruff Configuration
 [tool.ruff]
 target-version = "py311"
