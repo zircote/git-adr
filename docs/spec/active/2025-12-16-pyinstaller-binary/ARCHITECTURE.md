@@ -509,9 +509,9 @@ echo "Smoke tests passed!"
 
 | Metric | Target | Notes |
 |--------|--------|-------|
-| Binary size | 150-200 MB | Includes all native extensions |
-| First startup | 3-5 seconds | Decompression overhead |
-| Subsequent startup | 1-2 seconds | OS caches binary |
+| Binary size | <150 MB | Using onedir mode |
+| First startup | <1 second | macOS Gatekeeper may add delay on first run |
+| Subsequent startup | <0.2 seconds | OS caches binary (measured: 0.15s) |
 | Homebrew install | <10 seconds | Download + extract only |
 
 ### Optimization Options
@@ -519,7 +519,7 @@ echo "Smoke tests passed!"
 If size becomes an issue:
 1. Exclude AI extras from default binary
 2. Create separate `git-adr-full` with all extras
-3. Use `--onedir` mode (faster startup, more files)
+3. Use `--onefile` mode (single file, but slower startup due to extraction)
 
 ## Future Considerations
 
