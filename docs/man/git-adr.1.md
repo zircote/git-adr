@@ -236,7 +236,7 @@ git-adr supports multiple ADR template formats:
 **nygard** (Michael Nygard's original format)
 : Simple format with status, context, decision, and consequences.
 
-**y-statements**
+**y-statement**
 : Compact format using "In the context of... we decided..." structure.
 
 **custom**

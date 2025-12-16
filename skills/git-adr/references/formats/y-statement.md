@@ -57,7 +57,7 @@ Reference the Y-Statement in the full ADR's summary section.
 
 **Test completeness**: Can someone unfamiliar with the project understand the tradeoff?
 
-**One decision per statement**: Split compound decisions into separate Y-Statements.
+**One decision per statement**: Split compound decisions into separate y-statement.
 
 **Active voice**: "we decided to use X" not "X was chosen"
 
