@@ -345,14 +345,18 @@ class IssueBuilder:
                     value = self._values.get(element.id, "")
                     body_parts.append(f"## {element.label}")
                     body_parts.append("")
-                    body_parts.append(value if value else f"*[{element.label} not provided]*")
+                    body_parts.append(
+                        value if value else f"*[{element.label} not provided]*"
+                    )
                     body_parts.append("")
         else:
             for section in self._template.sections:
                 value = self._values.get(section.id, "")
                 body_parts.append(f"## {section.header}")
                 body_parts.append("")
-                body_parts.append(value if value else f"*[{section.header} not provided]*")
+                body_parts.append(
+                    value if value else f"*[{section.header} not provided]*"
+                )
                 body_parts.append("")
 
         return "\n".join(body_parts).strip()

@@ -389,9 +389,7 @@ def parse_yaml_form(path: Path) -> IssueTemplate:
     return parse_yaml_form_string(text, source_path=path)
 
 
-def parse_yaml_form_string(
-    text: str, source_path: Path | None = None
-) -> IssueTemplate:
+def parse_yaml_form_string(text: str, source_path: Path | None = None) -> IssueTemplate:
     """Parse a YAML issue form template from string content.
 
     Args:

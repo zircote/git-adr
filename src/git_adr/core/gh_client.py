@@ -173,7 +173,8 @@ class GitHubIssueClient:
 
             return IssueCreateResult(
                 success=False,
-                error=result.stderr.strip() or f"gh exited with code {result.returncode}",
+                error=result.stderr.strip()
+                or f"gh exited with code {result.returncode}",
             )
 
         except subprocess.TimeoutExpired:
@@ -214,7 +215,15 @@ class GitHubIssueClient:
         """
         try:
             result = subprocess.run(
-                ["gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"],
+                [
+                    "gh",
+                    "repo",
+                    "view",
+                    "--json",
+                    "nameWithOwner",
+                    "-q",
+                    ".nameWithOwner",
+                ],
                 capture_output=True,
                 text=True,
                 timeout=10,
