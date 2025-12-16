@@ -4,7 +4,7 @@ deciders:
 - Claude
 - User
 id: 20251216-implement-lazy-loading-in-templatemanager
-status: proposed
+status: accepted
 title: Implement lazy loading in TemplateManager
 ---
 
