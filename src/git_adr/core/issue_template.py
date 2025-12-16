@@ -219,11 +219,17 @@ class IssueTemplate:
         Returns:
             The matching field, or None if not found.
         """
-        for field in self.promptable_fields:
-            if isinstance(field, FormElement) and field.id == field_id:
-                return field
-            if isinstance(field, TemplateSection) and field.id == field_id:
-                return field
+        for template_field in self.promptable_fields:
+            if (
+                isinstance(template_field, FormElement)
+                and template_field.id == field_id
+            ):
+                return template_field
+            if (
+                isinstance(template_field, TemplateSection)
+                and template_field.id == field_id
+            ):
+                return template_field
         return None
 
     def to_dict(self) -> dict[str, Any]:
@@ -291,7 +297,7 @@ def parse_markdown_template_string(
     try:
         post = frontmatter.loads(text)
     except yaml.YAMLError as e:
-        msg = f"Invalid YAML frontmatter"
+        msg = "Invalid YAML frontmatter"
         if source_path:
             msg += f" in '{source_path}'"
         msg += f": {e}"
@@ -306,7 +312,7 @@ def parse_markdown_template_string(
     # Parse labels (can be string or list)
     labels_raw = metadata.get("labels", [])
     if isinstance(labels_raw, str):
-        labels = [l.strip() for l in labels_raw.split(",") if l.strip()]
+        labels = [lbl.strip() for lbl in labels_raw.split(",") if lbl.strip()]
     else:
         labels = list(labels_raw) if labels_raw else []
 
@@ -425,7 +431,7 @@ def parse_yaml_form_string(text: str, source_path: Path | None = None) -> IssueT
     # Parse labels (can be list or comma-separated string)
     labels_raw = data.get("labels", [])
     if isinstance(labels_raw, str):
-        labels = [l.strip() for l in labels_raw.split(",") if l.strip()]
+        labels = [lbl.strip() for lbl in labels_raw.split(",") if lbl.strip()]
     else:
         labels = list(labels_raw) if labels_raw else []
 

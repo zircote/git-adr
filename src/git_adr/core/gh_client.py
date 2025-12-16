@@ -61,6 +61,7 @@ class GitHubIssueClient:
         try:
             result = subprocess.run(
                 ["gh", "--version"],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -79,6 +80,7 @@ class GitHubIssueClient:
         try:
             result = subprocess.run(
                 ["gh", "auth", "status"],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -97,6 +99,7 @@ class GitHubIssueClient:
         try:
             result = subprocess.run(
                 ["gh", "auth", "status"],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -148,6 +151,7 @@ class GitHubIssueClient:
         try:
             result = subprocess.run(
                 cmd,
+                check=False,
                 input=issue.body,
                 capture_output=True,
                 text=True,
@@ -224,6 +228,7 @@ class GitHubIssueClient:
                     "-q",
                     ".nameWithOwner",
                 ],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=10,

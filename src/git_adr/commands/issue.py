@@ -184,7 +184,7 @@ def _prompt_for_fields(
     fields = template.promptable_fields
     description_used = False
 
-    for i, field in enumerate(fields):
+    for _i, field in enumerate(fields):
         if isinstance(field, TemplateSection):
             # For markdown templates, prompt for each section
             field_id = field.id
@@ -473,7 +473,7 @@ def _submit_or_save(issue: Issue, repo: str | None = None) -> None:
     result = client.create_issue(issue)
 
     if result.success:
-        console.print(f"\n[green]Issue created successfully![/green]")
+        console.print("\n[green]Issue created successfully![/green]")
         console.print(f"[link={result.url}]{result.url}[/link]")
     else:
         err_console.print(f"\n[red]Error:[/red] {result.error}")
