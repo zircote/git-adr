@@ -1,0 +1,114 @@
+---
+date: '2025-12-16'
+id: 20251216-homebrew-formula-bundles-all-extras
+status: proposed
+title: Homebrew Formula Bundles All Extras
+---
+
+# Title
+Homebrew Formula Bundles All Extras (Commit 259e616)
+
+Status: Accepted
+Deciders: Release Engineering, Packaging Team, Product Owner
+Date: 2025-12-16
+
+## 2. Context and Problem Statement
+We maintain a Homebrew formula for our CLI/python application. The package has three optional extras (Python package "extras") used by additional features:
+- ai — language-model integrations (langchain providers and related deps)
+- wiki — repository/wiki integrations (PyGithub, python-gitlab)
+- export — document export (python-docx)
+
+Historically the upstream Python package exposes these as optional extras and the Homebrew formula did not install them by default. Users who installed via Homebrew and then attempted to use AI, wiki, or export features had to manually install additional Python dependencies (pip install ...) or use a different install path. This caused:
+- broken out-of-the-box experience for common workflows (AI assistants, repo/wiki syncing, export to .docx)
+- increased support requests and confusion
+- fragmentation of user environments and instructions
+
+We must decide whether the Homebrew formula will:
+- continue leaving extras out by default (current behavior), or
+- bundle all optional extras (ai, wiki, export) into the formula by default, so users get a single, working install.
+
+Commit 259e616 implements the change to bundle all extras. This ADR records the decision and tradeoffs.
+
+## 3. Decision Drivers
+- Improve first-run experience: users should not need extra steps after brew install.
+- Reduce support overhead and troubleshooting caused by missing extras.
+- Provide consistent behavior across installation methods (Homebrew vs pip install with extras).
+- Keep packaging/release cadence manageable (bottles rather than source builds wherever possible).
+- Minimize surprising size/installation time increases for users.
+- Maintain security and license compliance for bundled dependencies.
+- Keep Homebrew formula maintainable (avoid complex options or deprecated Homebrew options).
+
+## 4. Considered Options
+- Bundle all extras by default in the Homebrew formula (chosen).
+- Keep extras optional: leave current behavior; require users to pip-install extras manually or use a different install method.
+- Add Homebrew build options or flags for selective extras (e.g., --with-ai). Note: Homebrew core has deprecated options for bottles; this complicates bottles and maintainability.
+- Provide separate Homebrew formulae/taps per variant (e.g., myapp-ai, myapp-wiki, myapp-export).
+- Implement a post-install helper that downloads/install extras on-demand when a feature is first used (lazy install).
+- Vendor only the most common providers (e.g., only OpenAI) instead of all langchain providers, and keep others optional.
+
+## 5. Decision Outcome (Chosen option with justification)
+Chosen option: Bundle all optional extras (ai, wiki, export) into the Homebrew formula by default. This includes packaging all langchain providers, PyGithub, python-gitlab, python-docx, and any transitive Python dependencies needed to enable the three extras out-of-the-box.
+
+Justification:
+- User experience: The primary driver is to eliminate the post-install manual steps that block common feature use. Most users expect a one-command install that "just works" for features advertised by the product.
+- Support cost: Bundling reduces repeated support tickets and documentation friction related to installing extras after Homebrew installation.
+- Maintenance: Using Homebrew's standard Python virtualenv helper (virtualenv_install_with_resources) and producing bottles allows us to ship prebuilt wheels, reducing per-user build cost and making upgrades straightforward.
+- Feasibility: The codebase and dependency graph are stable enough to manage the additional dependencies in the formula. Commit 259e616 updates the formula and resource pins accordingly.
+- Alternatives were rejected because:
+  - Homebrew build options are deprecated for bottles and increase maintenance burden.
+  - Separate formulae/taps fragment the ecosystem and increase release surface.
+  - Lazy-install hooks add runtime complexity and error surfaces; they are more fragile on systems without network access.
+  - Partial vendor strategies increase user confusion about which providers are available.
+
+Implementation notes (technical):
+- The formula uses virtualenv_install_with_resources to vendor pinned wheel files for:
+  - langchain and all official provider libraries required by our features (list pinned in formula resources per commit 259e616)
+  - PyGithub
+  - python-gitlab
+  - python-docx
+- Bottles are built and published so typical installs fetch prebuilt artifacts rather than build from source.
+- The commit 259e616 updates sha256 checksums and resource versions for all newly included dependencies and increments the formula revision to trigger bottle rebuilds.
+
+## 6. Consequences
+
+Good
+- Out-of-the-box functionality:
+  - AI, wiki, and export features work immediately after brew install without additional pip installs.
+  - Reduces user frustration and lowers the first-use time to value.
+- Reduced support load:
+  - Fewer tickets and fewer docs required for post-install dependency issues.
+- Deterministic installs:
+  - Bottled dependencies produce consistent environments for Homebrew users.
+- Offline friendliness:
+  - Users with limited connectivity benefit from bottles that already include dependencies.
+
+Bad
+- Increased install size and bandwidth:
+  - Bottles and installed Cellar footprint will be larger due to additional Python packages and their transitive dependencies.
+  - This can negatively affect users on metered or slow connections.
+- Longer bottle build and CI time:
+  - Homebrew bottles must be rebuilt/published when bundled dependencies change; release CI workload increases.
+- Expanded attack surface and maintenance overhead:
+  - More dependencies to track for CVEs, licensing changes, and version conflicts.
+  - Security patching cadence must be stricter; dependent packages must be monitored and possibly updated more often.
+- Potential for dependency conflicts:
+  - Although virtualenv isolation mitigates global conflicts, system-level Python variations and other formulae using shared libraries could reveal incompatibilities.
+- Licensing complexity:
+  - Adding many third-party libs requires review to ensure all licenses are compatible with distribution via Homebrew. This increases legal review work.
+
+Neutral
+- CLI behavior:
+  - No change to CLI flags or runtime behavior when features are invoked — only the availability of dependencies changes.
+- Uninstall semantics:
+  - brew uninstall still removes the formula and venv; no change in user workflow for uninstalling.
+- Future extensibility:
+  - This decision does not preclude creating a slim or alternative formula/tap later. It does create inertia because users may come to expect the bundled behavior.
+
+Mitigations / follow-ups
+- Monitor size and usage: instrument telemetry (as permitted by privacy policy) to track the percentage of users who actually use the added extras; reconsider splitting later if most users never use them.
+- Security process: add the bundled dependencies to our vulnerability monitoring pipeline and schedule regular dependency refreshes.
+- Documentation: clearly document what is bundled, and that brew install includes ai, wiki, and export features (including provider list).
+- Rollback plan: If negative effects (e.g., major license or security issue) are discovered, revert commit 259e616 and publish a transitional announcement and migration instructions (users can pip install extras into the Homebrew-created venv as a temporary workaround).
+- Consider a future "core-only" lightweight formula or an official tap for variant builds if install-size concerns become a primary user need.
+
+Commit implementing the decision: 259e616.
