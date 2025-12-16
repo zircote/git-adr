@@ -7,7 +7,7 @@ for custom credential management.
 
 from __future__ import annotations
 
-import subprocess
+import subprocess  # nosec B404 - subprocess required for gh CLI wrapper
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -59,7 +59,7 @@ class GitHubIssueClient:
             True if gh CLI is available.
         """
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 B607 - safe gh CLI call
                 ["gh", "--version"],
                 check=False,
                 capture_output=True,
@@ -78,7 +78,7 @@ class GitHubIssueClient:
             True if gh CLI is authenticated with GitHub.
         """
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 B607 - safe gh CLI call
                 ["gh", "auth", "status"],
                 check=False,
                 capture_output=True,
@@ -97,7 +97,7 @@ class GitHubIssueClient:
             Status message describing authentication state.
         """
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 B607 - safe gh CLI call
                 ["gh", "auth", "status"],
                 check=False,
                 capture_output=True,
@@ -149,7 +149,7 @@ class GitHubIssueClient:
             cmd.extend(["--assignee", assignee])
 
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - safe gh CLI call with trusted args
                 cmd,
                 check=False,
                 input=issue.body,
@@ -218,7 +218,7 @@ class GitHubIssueClient:
             Repository in owner/repo format, or None if not in a git repo.
         """
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 B607 - safe gh CLI call
                 [
                     "gh",
                     "repo",
