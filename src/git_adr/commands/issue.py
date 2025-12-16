@@ -87,7 +87,8 @@ def run_issue(
             default=available[0] if available else None,
         )
 
-    # Get template
+    # Get template - type_ is guaranteed to be str at this point
+    assert type_ is not None  # Ensured by Prompt.ask with choices
     template = manager.get_template(type_)
     if template is None:
         err_console.print(f"[red]Error:[/red] Unknown issue type: {type_}")
@@ -115,7 +116,7 @@ def run_issue(
             "Issue title",
             default=default_title if default_title else None,
         )
-        builder.set_title(prompted_title)
+        builder.set_title(prompted_title or "")
 
     # Add extra labels from flags
     if labels:
