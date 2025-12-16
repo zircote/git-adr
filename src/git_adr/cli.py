@@ -72,13 +72,13 @@ def init(
         ),
     ] = "adr",
     template: Annotated[
-        str,
+        str | None,
         typer.Option(
             "--template",
             "-t",
-            help="Default ADR format template.",
+            help="Default ADR format template. Prompts interactively if not specified.",
         ),
-    ] = "madr",
+    ] = None,
     force: Annotated[
         bool,
         typer.Option(
@@ -87,15 +87,53 @@ def init(
             help="Reinitialize even if already initialized.",
         ),
     ] = False,
+    no_input: Annotated[
+        bool,
+        typer.Option(
+            "--no-input",
+            help="Skip all interactive prompts and use defaults.",
+        ),
+    ] = False,
+    install_hooks: Annotated[
+        bool | None,
+        typer.Option(
+            "--install-hooks/--no-install-hooks",
+            help="Install pre-push hooks for automatic ADR sync.",
+        ),
+    ] = None,
+    setup_github_ci: Annotated[
+        bool | None,
+        typer.Option(
+            "--setup-github-ci/--no-setup-github-ci",
+            help="Generate GitHub Actions CI workflows.",
+        ),
+    ] = None,
 ) -> None:
     """Initialize ADR tracking in this repository.
 
     Sets up the git notes namespace, configures fetch/push for notes,
     and creates the initial ADR (ADR-0000: Use ADRs).
+
+    By default, prompts interactively for template selection, hooks
+    installation, and CI workflow generation when running in a terminal.
+    Use --no-input to skip all prompts and use defaults.
+
+    Examples:
+        git adr init                    # Interactive setup
+        git adr init --no-input         # Non-interactive with defaults
+        git adr init --install-hooks    # Install hooks without prompting
+        git adr init --template madr --install-hooks --setup-github-ci
     """
     from git_adr.commands.init import run_init
 
-    run_init(namespace=namespace, template=template, force=force)
+    run_init(
+        namespace=namespace,
+        template=template,
+        force=force,
+        no_input=no_input,
+        install_hooks=install_hooks,
+        setup_github_ci=setup_github_ci,
+    )
 
 
 @app.command("new")

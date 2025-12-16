@@ -95,6 +95,179 @@ class TestInitCommand:
         assert result.exit_code != 0
 
 
+@pytest.mark.integration
+class TestInitInteractiveFlags:
+    """Tests for init command interactive flags."""
+
+    def test_init_no_input_uses_defaults(
+        self, temp_git_repo_with_commit: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test --no-input flag uses default template without prompting."""
+        monkeypatch.chdir(temp_git_repo_with_commit)
+
+        result = runner.invoke(app, ["init", "--no-input", "--force"])
+        assert result.exit_code == 0, f"Init failed: {result.output}"
+
+        git = Git(cwd=temp_git_repo_with_commit)
+        assert git.config_get("adr.template") == "madr"
+
+    def test_init_explicit_template_bypasses_prompt(
+        self, temp_git_repo_with_commit: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test explicit --template flag bypasses interactive prompt."""
+        monkeypatch.chdir(temp_git_repo_with_commit)
+
+        result = runner.invoke(
+            app, ["init", "--template", "nygard", "--no-input", "--force"]
+        )
+        assert result.exit_code == 0, f"Init failed: {result.output}"
+
+        git = Git(cwd=temp_git_repo_with_commit)
+        assert git.config_get("adr.template") == "nygard"
+
+    def test_init_install_hooks_flag(
+        self, temp_git_repo_with_commit: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test --install-hooks flag installs hooks without prompting."""
+        monkeypatch.chdir(temp_git_repo_with_commit)
+
+        result = runner.invoke(
+            app, ["init", "--install-hooks", "--no-input", "--force"]
+        )
+        assert result.exit_code == 0, f"Init failed: {result.output}"
+        assert "hooks installed" in result.output.lower()
+
+        # Verify hook was actually installed
+        hooks_dir = temp_git_repo_with_commit / ".git" / "hooks"
+        pre_push = hooks_dir / "pre-push"
+        assert pre_push.exists(), "Pre-push hook should be installed"
+
+    def test_init_no_install_hooks_flag(
+        self, temp_git_repo_with_commit: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test --no-install-hooks flag skips hook installation."""
+        monkeypatch.chdir(temp_git_repo_with_commit)
+
+        result = runner.invoke(
+            app, ["init", "--no-install-hooks", "--no-input", "--force"]
+        )
+        assert result.exit_code == 0, f"Init failed: {result.output}"
+        assert "hooks installed" not in result.output.lower()
+
+    def test_init_setup_github_ci_flag(
+        self, temp_git_repo_with_commit: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test --setup-github-ci flag generates CI workflows."""
+        monkeypatch.chdir(temp_git_repo_with_commit)
+
+        result = runner.invoke(
+            app, ["init", "--setup-github-ci", "--no-input", "--force"]
+        )
+        assert result.exit_code == 0, f"Init failed: {result.output}"
+
+        # Verify workflows were created
+        workflows_dir = temp_git_repo_with_commit / ".github" / "workflows"
+        assert workflows_dir.exists(), "Workflows directory should be created"
+
+    def test_init_no_setup_github_ci_flag(
+        self, temp_git_repo_with_commit: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test --no-setup-github-ci flag skips CI generation."""
+        monkeypatch.chdir(temp_git_repo_with_commit)
+
+        result = runner.invoke(
+            app, ["init", "--no-setup-github-ci", "--no-input", "--force"]
+        )
+        assert result.exit_code == 0, f"Init failed: {result.output}"
+
+        # Verify workflows were NOT created
+        workflows_dir = temp_git_repo_with_commit / ".github" / "workflows"
+        assert not workflows_dir.exists(), "Workflows directory should not be created"
+
+    def test_init_combined_flags(
+        self, temp_git_repo_with_commit: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test combining --install-hooks and --setup-github-ci flags."""
+        monkeypatch.chdir(temp_git_repo_with_commit)
+
+        result = runner.invoke(
+            app,
+            [
+                "init",
+                "--template",
+                "business",
+                "--install-hooks",
+                "--setup-github-ci",
+                "--force",
+            ],
+        )
+        assert result.exit_code == 0, f"Init failed: {result.output}"
+
+        git = Git(cwd=temp_git_repo_with_commit)
+        assert git.config_get("adr.template") == "business"
+        assert "hooks installed" in result.output.lower()
+
+        # Verify both hooks and CI were set up
+        hooks_dir = temp_git_repo_with_commit / ".git" / "hooks"
+        pre_push = hooks_dir / "pre-push"
+        assert pre_push.exists(), "Pre-push hook should be installed"
+
+        workflows_dir = temp_git_repo_with_commit / ".github" / "workflows"
+        assert workflows_dir.exists(), "Workflows directory should be created"
+
+    def test_init_non_tty_skips_prompts(
+        self, temp_git_repo_with_commit: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that non-TTY environments skip prompts automatically.
+
+        CliRunner simulates non-TTY by default, so this verifies
+        the command completes without hanging for input.
+        """
+        monkeypatch.chdir(temp_git_repo_with_commit)
+
+        # Should not hang waiting for input
+        result = runner.invoke(app, ["init", "--force"])
+        assert result.exit_code == 0, f"Init failed: {result.output}"
+
+    def test_init_next_steps_show_uninstalled_features(
+        self, temp_git_repo_with_commit: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test next steps show hooks and CI commands when not installed."""
+        monkeypatch.chdir(temp_git_repo_with_commit)
+
+        result = runner.invoke(
+            app, ["init", "--no-install-hooks", "--no-setup-github-ci", "--force"]
+        )
+        assert result.exit_code == 0, f"Init failed: {result.output}"
+
+        # Should show hints for both hooks and CI
+        assert "git adr hooks install" in result.output
+        assert "git adr ci github" in result.output
+
+    def test_init_next_steps_hide_installed_features(
+        self, temp_git_repo_with_commit: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test next steps don't show hooks/CI commands when already installed."""
+        monkeypatch.chdir(temp_git_repo_with_commit)
+
+        result = runner.invoke(
+            app,
+            ["init", "--install-hooks", "--setup-github-ci", "--no-input", "--force"],
+        )
+        assert result.exit_code == 0, f"Init failed: {result.output}"
+
+        # Verify installations succeeded
+        assert "hooks installed" in result.output.lower(), (
+            f"Hooks should be installed. Output: {result.output}"
+        )
+
+        # After "Next steps:", the hints for hooks and CI shouldn't appear
+        # (since they were already installed)
+        output_after_next_steps = result.output.split("Next steps:")[-1]
+        assert "git adr hooks install" not in output_after_next_steps
+        assert "git adr ci github" not in output_after_next_steps
+
+
 # =============================================================================
 # New Command Tests
 # =============================================================================

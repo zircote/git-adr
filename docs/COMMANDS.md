@@ -7,8 +7,24 @@ the man pages: `git adr <command> --help` or read `docs/man/git-adr-*.1.md`.
 
 | Command | Description |
 |---------|-------------|
-| `git adr init` | Initialize ADR tracking in repository |
+| `git adr init` | Initialize ADR tracking (interactive prompts) |
+| `git adr init --no-input` | Initialize with defaults (non-interactive) |
+| `git adr init --install-hooks` | Initialize with pre-push hooks |
+| `git adr init --setup-github-ci` | Initialize with GitHub Actions |
 | `git adr onboard` | Interactive wizard for new team members |
+
+### Init Options
+
+| Option | Description |
+|--------|-------------|
+| `--template <format>` | Set ADR format (madr, nygard, y-statement, alexandrian, business, planguage) |
+| `--namespace <name>` | Custom notes namespace (default: adr) |
+| `--install-hooks` | Install pre-push hooks for automatic sync |
+| `--no-install-hooks` | Skip hooks installation |
+| `--setup-github-ci` | Generate GitHub Actions workflows |
+| `--no-setup-github-ci` | Skip CI workflow generation |
+| `--no-input` | Skip all interactive prompts |
+| `--force` | Reinitialize even if already initialized |
 
 ## Creating & Managing ADRs
 
@@ -51,6 +67,53 @@ the man pages: `git adr <command> --help` or read `docs/man/git-adr-*.1.md`.
 | `git adr sync` | Sync ADRs with remote (push + pull) |
 | `git adr sync push` | Push ADRs to remote |
 | `git adr sync pull` | Pull ADRs from remote |
+
+## Git Hooks
+
+Pre-push hooks for automatic ADR synchronization. See [Hooks Guide](./HOOKS_GUIDE.md) for details.
+
+| Command | Description |
+|---------|-------------|
+| `git adr hooks install` | Install pre-push hooks |
+| `git adr hooks install --force` | Force reinstall (backs up existing hooks) |
+| `git adr hooks install --manual` | Show manual integration instructions |
+| `git adr hooks uninstall` | Remove hooks and restore backups |
+| `git adr hooks status` | Check hook installation status |
+| `git adr hooks config --show` | View current hook configuration |
+| `git adr hooks config --block-on-failure` | Block push if sync fails |
+| `git adr hooks config --no-block-on-failure` | Allow push even if sync fails |
+
+### Skip Hooks
+
+```bash
+# Skip once
+GIT_ADR_SKIP=1 git push
+
+# Skip permanently
+git config adr.hooks.skip true
+```
+
+## CI/CD Integration
+
+Generate CI/CD workflow configurations. See [SDLC Integration Guide](./SDLC_INTEGRATION.md) for details.
+
+| Command | Description |
+|---------|-------------|
+| `git adr ci github` | Generate GitHub Actions (sync + validate) |
+| `git adr ci github --sync` | Generate sync workflow only |
+| `git adr ci github --validate` | Generate validation workflow only |
+| `git adr ci gitlab` | Generate GitLab CI pipeline |
+| `git adr ci list` | List available CI templates |
+
+### Governance Templates
+
+| Command | Description |
+|---------|-------------|
+| `git adr templates all` | Generate all governance templates |
+| `git adr templates pr` | Generate PR template with ADR checklist |
+| `git adr templates issue` | Generate issue template for ADR proposals |
+| `git adr templates codeowners` | Generate CODEOWNERS for ADR review |
+| `git adr templates list` | List available templates |
 
 ## Analytics & Reporting
 
@@ -100,9 +163,17 @@ Requires AI provider configuration. See `git adr config` for setup.
 ### Starting a New Project
 
 ```bash
+# Interactive setup (prompts for template, hooks, CI)
 git adr init
+
+# Or non-interactive with all features
+git adr init --no-input --install-hooks --setup-github-ci
+
+# Create your first decision
 git adr new "Use git-adr for architecture decisions"
-git adr sync push
+
+# Push to remote (automatic if hooks installed)
+git push
 ```
 
 ### Team Collaboration
