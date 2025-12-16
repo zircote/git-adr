@@ -1,0 +1,95 @@
+---
+date: '2025-12-16'
+id: 20251216-pyinstaller-standalone-binary-distribution
+status: proposed
+title: PyInstaller Standalone Binary Distribution
+---
+
+# PyInstaller Standalone Binary Distribution
+
+## Context and Problem Statement
+We need to distribute git-adr as native, zero-dependency CLI executables for end users on macOS (ARM64), Linux (x86_64) and Windows (x86_64). The goals driving this decision are: installers with no Python prerequisite, very fast startup (<1s), predictable cross-platform behaviour, automated CI build and release, and a hard artifact size constraint of ~150 MB per platform. Commit 93cd798 introduces the decision to build and publish standalone binaries produced by PyInstaller in onedir mode.
+
+Problems to solve:
+- Users should not have to install Python or manage virtual environments to run git-adr.
+- Startup time must be short enough for interactive use (<1s).
+- CI must produce platform-specific artifacts automatically and reliably.
+- Artifacts must remain under ~150 MB to fit hosting and download constraints.
+- The build/distribution process must be maintainable and debuggable by the team.
+
+## Decision Drivers
+- Zero-dependency install for end users (no system Python required).
+- Startup time strictly under ~1 second for common invocations.
+- Cross-platform support: macOS ARM64, Linux x86_64, Windows x86_64.
+- CI automation: reproducible builds integrated into CI (GitHub Actions/GitLab CI).
+- Artifact size limit: ~150 MB per platform.
+- Reasonable build and maintenance complexity for the team.
+- Clear path for platform-specific packaging details (code signing, notarization).
+
+## Considered Options
+- PyInstaller in onedir mode (chosen).
+- PyInstaller in onefile mode (single executable).
+- Nuitka (Python-to-native compilation).
+- cx_Freeze (alternate Python bundler).
+- Python-only distribution (pip package / source install).
+
+## Decision Outcome
+Chosen option: Use PyInstaller in onedir mode to produce platform-specific standalone distributions for macOS ARM64, Linux x86_64 and Windows x86_64.
+
+Justification:
+- Startup performance: onedir mode avoids the runtime unpack-to-temp-step that onefile mode uses, allowing the executable to start by directly loading included Python extension modules and .pyc files. This meets the <1s startup driver in realistic tests.
+- Zero-dependency: PyInstaller bundles the Python interpreter and all required extension modules and resources so users do not need Python installed.
+- Predictability and debugging: onedir produces a directory tree with explicit files (shared libs, Python bytecode, bootstrap executables). This makes post-build inspection, debugging, and incremental fixes much easier than the opaque single-file bootstrap used by onefile.
+- CI friendliness: onedir artifacts are straightforward to create in per-OS runners and to post-process (strip, prune, zip). They are easier to sign/code-sign and notarize because the contained files are accessible without runtime extraction.
+- Size control: onedir makes it easier to prune unnecessary files, strip symbols (strip on Linux/macOS, upx optionally), and examine what contributes to size. Achievable artifact sizes are reliably controlled under the 150 MB limit with the chosen pruning and compression steps.
+- Tooling maturity: PyInstaller is mature, widely used, and has established hooks for many third-party packages used by git-adr.
+- Simplicity vs alternatives: Nuitka offers potential size/performance benefits but introduces significant build complexity, longer compile times, and complex platform-specific toolchains (especially for macOS ARM64). cx_Freeze is an alternative bundler but is less battle-tested across our dependency set. Python-only would not satisfy the zero-dependency driver.
+
+Implementation notes/requirements:
+- Build pipeline: CI matrix with native builds per platform (GitHub Actions or self-hosted runners) that run PyInstaller (pinned version), run tests on the produced binaries, strip debug symbols, remove unneeded files, and produce a compressed artifact (zip/tar.xz) for release.
+- PyInstaller configuration: use a dedicated .spec file with --onedir, explicit excludes (tests, unused data), explicit hooks for third-party libs, disable UPX by default (or use signed/verified UPX cautiously), and build with bytecode optimization (-OO or -O as decided).
+- Platform specifics: build macOS ARM64 on an ARM macOS runner (or self-hosted macOS ARM), Linux on ubuntu-latest (x86_64) runner, Windows on windows-latest x86_64 runner. Implement code signing and macOS notarization steps as part of release workflows.
+- Pin build inputs: pin PyInstaller version and other build dependencies to maintain reproducibility; capture commit 93cd798 in release notes.
+
+## Consequences
+
+Good
+- Zero-dependency installation:
+  - Users can download and run git-adr without installing Python or pip.
+  - Reduces support overhead for user environment issues.
+- Fast startup:
+  - onedir avoids runtime extraction; typical cold startup times are under the <1s target for simple commands.
+- Easier debugging and inspection:
+  - The produced directory shows individual binaries, shared libraries and bytecode files, making it straightforward to investigate runtime failures and missing resources.
+- CI automation:
+  - Per-platform CI jobs produce artifacts that can be automatically tested and published to GitHub Releases or an internal artifact repository.
+- Controlled artifact size:
+  - With pruning and stripping, artifacts consistently stay under the 150 MB limit.
+- Less runtime fragility compared to onefile:
+  - No transient on-disk extraction step that can fail on constrained or read-only environments.
+
+Bad
+- Multiple artifacts to manage:
+  - Must build and publish separate artifacts per OS/arch (macOS ARM64, Linux x86_64, Windows x86_64).
+  - Increases release management complexity (three binaries per release vs one source distribution).
+- Artifact size still substantial:
+  - Even onedir builds include a full Python runtime and native libs; typical compressed artifacts may be tens to low hundreds of MB.
+- Build platform requirements:
+  - Native builds required for each target; cross-compilation for macOS ARM64 is not trivial. This requires using appropriate CI runners or self-hosted builders, increasing CI infrastructure needs.
+- Maintenance burden:
+  - Must maintain PyInstaller pinning and periodic updates, handle PyInstaller hooks for third-party dependencies, and react to changes in upstream native libraries.
+- Platform-specific compliance:
+  - Additional steps needed for macOS notarization and Windows code signing for a smooth user experience. These steps add complexity and require credentials and secure storage.
+
+Neutral
+- Security and antivirus behavior:
+  - onedir reduces some false positives compared to onefile but native executables can still trigger AV heuristics; this is a general distribution risk and requires monitoring.
+- Update strategy:
+  - The decision does not prescribe an updater; releases will be replaced via typical CI->release flow (GitHub Releases). Auto-update behavior or opt-in update checks is orthogonal.
+- Distrib packaging:
+  - onedir allows flexibility in packaging (zip, dmg, installer wrappers). Choice of final packaging format (e.g., .zip for Linux/Windows, .tar.xz, .dmg for macOS) will be decided on per-platform needs and signing/notarization constraints.
+- Future alternatives:
+  - If artifact size or startup constraints tighten, or if build-time overhead becomes prohibitive, we can re-evaluate Nuitka or a hybrid approach. The onedir layout keeps the codebase in standard Python form, easing future transitions.
+
+Summary
+- We will adopt PyInstaller onedir mode to produce and publish per-platform standalone binaries for git-adr (commit 93cd798). The approach satisfies the primary drivers (zero-dep install, <1s startup, cross-platform CI builds, and artifact size control) while keeping build/debug complexity manageable. Ongoing costs include maintaining build scripts, signing/notarization, and monitoring PyInstaller compatibility with our dependencies.
