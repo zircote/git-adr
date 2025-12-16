@@ -190,7 +190,11 @@ show_missing = true
 
 [dependency-groups]
 dev = [
+    "bandit>=1.9.2",
+    "mypy>=1.19.0",
+    "pip-audit>=2.10.0",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     "ruff>=0.14.9",
+    "types-pyyaml>=6.0.12.20250915",
 ]

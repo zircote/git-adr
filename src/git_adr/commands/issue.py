@@ -8,7 +8,7 @@ submission, and local file fallback when gh CLI is unavailable.
 from __future__ import annotations
 
 import os
-import subprocess
+import subprocess  # nosec B404 - subprocess needed to launch user's editor
 import tempfile
 from pathlib import Path
 
@@ -87,8 +87,10 @@ def run_issue(
             default=available[0] if available else None,
         )
 
-    # Get template - type_ is guaranteed to be str at this point
-    assert type_ is not None  # Ensured by Prompt.ask with choices
+    # Get template - type_ is guaranteed to be str at this point by Prompt.ask
+    if type_ is None:
+        err_console.print("[red]Error:[/red] No issue type selected")
+        raise typer.Exit(1)
     template = manager.get_template(type_)
     if template is None:
         err_console.print(f"[red]Error:[/red] Unknown issue type: {type_}")

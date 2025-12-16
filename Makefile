@@ -3,7 +3,7 @@
 
 .PHONY: all clean test test-unit test-integration test-coverage lint format check \
         build man-pages completions install install-bin install-man install-completions \
-        uninstall dist release help ci dev-install docs
+        uninstall dist release help ci dev-install docs typecheck security audit
 
 # ============================================================
 # Configuration (following gh CLI conventions)
@@ -71,8 +71,11 @@ help:
 	@echo "  make test-quick     Quick test run (no coverage)"
 	@echo "  make lint           Run linter"
 	@echo "  make format         Format code"
-	@echo "  make check          Run all quality checks"
-	@echo "  make ci             Full CI checks"
+	@echo "  make typecheck      Run mypy type checking"
+	@echo "  make security       Run bandit security scan"
+	@echo "  make audit          Run pip-audit dependency check"
+	@echo "  make check          Run lint + format check"
+	@echo "  make ci             Full CI checks (mirrors GitHub Actions)"
 	@echo ""
 	@echo "Release:"
 	@echo "  make release        Build release tarball with all artifacts"
@@ -274,7 +277,16 @@ format-check:
 check: lint format-check
 	@echo "All quality checks passed!"
 
-ci: clean check test
+typecheck:
+	uv run mypy .
+
+security:
+	uv run bandit -r src/
+
+audit:
+	uv run pip-audit
+
+ci: clean check typecheck security audit test
 	@echo "CI checks passed!"
 
 # ============================================================
