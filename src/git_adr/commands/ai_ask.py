@@ -127,7 +127,7 @@ def run_ai_ask(
         except ImportError:
             err_console.print(
                 "[red]Error:[/red] AI features require additional dependencies.\n"
-                "Install with: pip install git-adr[ai]"
+                "Install with: pip install 'git-adr\\[ai]'"
             )
             raise typer.Exit(1)
         except Exception as e:

@@ -778,6 +778,7 @@ class Git:
         refspec: str | None = None,
         *,
         force: bool = False,
+        timeout: float | None = None,
     ) -> None:
         """Push to a remote.
 
@@ -785,13 +786,14 @@ class Git:
             remote: Remote name.
             refspec: Specific refspec to push.
             force: If True, force push.
+            timeout: Optional timeout in seconds (default: 60.0).
         """
         args = ["push", remote]
         if refspec:
             args.append(refspec)
         if force:
             args.append("--force")
-        self.run(args, timeout=60.0)
+        self.run(args, timeout=timeout if timeout is not None else 60.0)
 
     def fetch_notes(
         self,
@@ -814,6 +816,7 @@ class Git:
         ref: str = "refs/notes/adr",
         *,
         force: bool = False,
+        timeout: float | None = None,
     ) -> None:
         """Push notes to a remote.
 
@@ -821,8 +824,9 @@ class Git:
             remote: Remote name.
             ref: Notes reference to push.
             force: If True, force push.
+            timeout: Optional timeout in seconds.
         """
-        self.push(remote, ref, force=force)
+        self.push(remote, ref, force=force, timeout=timeout)
 
 
 def get_git(cwd: Path | None = None) -> Git:

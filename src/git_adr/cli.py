@@ -1187,6 +1187,117 @@ def import_adrs(
 
 
 # =============================================================================
+# Issue Commands
+# =============================================================================
+
+
+@app.command()
+def issue(
+    type_: Annotated[
+        str | None,
+        typer.Option(
+            "--type",
+            "-t",
+            help="Issue type: bug, feat, docs, or template name.",
+        ),
+    ] = None,
+    title: Annotated[
+        str | None,
+        typer.Option(
+            "--title",
+            help="Issue title.",
+        ),
+    ] = None,
+    description: Annotated[
+        str | None,
+        typer.Option(
+            "--description",
+            "-d",
+            help="Issue description (used for first text field).",
+        ),
+    ] = None,
+    label: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--label",
+            "-l",
+            help="Additional labels (can be repeated).",
+        ),
+    ] = None,
+    assignee: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--assignee",
+            "-a",
+            help="Assignees (can be repeated).",
+        ),
+    ] = None,
+    repo: Annotated[
+        str | None,
+        typer.Option(
+            "--repo",
+            "-R",
+            help="Target repository (owner/repo).",
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(
+            "--dry-run",
+            "-n",
+            help="Show what would be created without submitting.",
+        ),
+    ] = False,
+    local_only: Annotated[
+        bool,
+        typer.Option(
+            "--local-only",
+            help="Save locally instead of submitting to GitHub.",
+        ),
+    ] = False,
+    no_edit: Annotated[
+        bool,
+        typer.Option(
+            "--no-edit",
+            help="Skip preview/edit step.",
+        ),
+    ] = False,
+) -> None:
+    """Create a GitHub issue from a template.
+
+    Uses issue templates from .github/ISSUE_TEMPLATE/ or bundled defaults.
+    Any field not provided via flags will be prompted interactively.
+
+    [bold]Examples:[/bold]
+
+        # Interactive bug report
+        git adr issue --type bug
+
+        # Feature request with flags
+        git adr issue --type feat --title "Add dark mode"
+
+        # Preview without submitting
+        git adr issue --type bug --dry-run
+
+        # Save locally without GitHub
+        git adr issue --type bug --local-only
+    """
+    from git_adr.commands.issue import run_issue
+
+    run_issue(
+        type_=type_,
+        title=title,
+        description=description,
+        labels=label,
+        assignees=assignee,
+        repo=repo,
+        dry_run=dry_run,
+        local_only=local_only,
+        no_edit=no_edit,
+    )
+
+
+# =============================================================================
 # Aliases for common operations
 # =============================================================================
 

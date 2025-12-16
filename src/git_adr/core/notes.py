@@ -482,13 +482,18 @@ class NotesManager:
             force: If True, force push.
             timeout: Optional timeout in seconds for the push operation.
         """
+        # Convert int timeout to float for git operations
+        timeout_float = float(timeout) if timeout is not None else None
+
         # Push ADR notes (must exist)
-        self._git.push_notes(remote, self.adr_ref, force=force)
+        self._git.push_notes(remote, self.adr_ref, force=force, timeout=timeout_float)
 
         # Only push artifacts ref if it exists locally
         try:
             self._git.run(["rev-parse", "--verify", self.artifacts_ref], check=True)
-            self._git.push_notes(remote, self.artifacts_ref, force=force)
+            self._git.push_notes(
+                remote, self.artifacts_ref, force=force, timeout=timeout_float
+            )
         except GitError:
             # Artifacts ref doesn't exist yet - nothing to push
             pass

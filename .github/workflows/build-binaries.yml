@@ -1,0 +1,323 @@
+name: Build Binaries
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., 0.1.1)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # Gate: Run CI tests before building binaries
+  ci-gate:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Format check
+        run: uv run ruff format --check .
+
+      - name: Type check
+        run: uv run mypy src/
+
+      - name: Run tests
+        run: uv run pytest tests/ -v --tb=short
+
+  build:
+    name: Build (${{ matrix.os }})
+    needs: ci-gate  # Only build after CI passes
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-arm64
+            runner: macos-14
+            artifact: git-adr-macos-arm64
+            binary_name: git-adr
+          # Note: macOS Intel (x86_64) builds removed - GitHub retired Intel runners
+          # Intel Mac users should use: brew install zircote/git-adr/git-adr
+          - os: linux-x86_64
+            runner: ubuntu-22.04
+            artifact: git-adr-linux-x86_64
+            binary_name: git-adr
+          - os: windows-x86_64
+            runner: windows-2022
+            artifact: git-adr-windows-x86_64
+            binary_name: git-adr.exe
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Get version
+        id: version
+        shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION="${REF_NAME#v}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Building version: ${VERSION}"
+
+      # Rust installation (required for tiktoken)
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      # Python setup
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        env:
+          PYTHON_VERSION: ${{ env.PYTHON_VERSION }}
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      # Platform-specific system dependencies
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install libsodium libyaml
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsodium-dev libyaml-dev
+
+      # Windows: libsodium installed via pip (PyNaCl bundles it)
+
+      # Install git-adr with all extras
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      # Install PyInstaller
+      - name: Install PyInstaller
+        run: uv pip install pyinstaller
+
+      # Update version in source
+      - name: Update version
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # Use -i.bak for portability (works on both BSD sed and GNU sed)
+          sed -i.bak "s/__version__ = .*/__version__ = \"${VERSION}\"/" src/git_adr/__init__.py
+          rm -f src/git_adr/__init__.py.bak
+
+      # Build binary
+      - name: Build binary (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          uv run pyinstaller --clean --noconfirm pyinstaller/git-adr.spec
+          ls -la dist/git-adr/
+
+      - name: Build binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          uv run pyinstaller --clean --noconfirm pyinstaller/git-adr.spec
+          Get-ChildItem dist/git-adr/
+
+      # Binary size tracking
+      - name: Check binary size (Unix)
+        if: runner.os != 'Windows'
+        env:
+          ARTIFACT: ${{ matrix.artifact }}
+          MAX_SIZE_MB: 150
+        run: |
+          SIZE_BYTES=$(du -sb dist/git-adr | cut -f1)
+          SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
+          echo "::notice title=Binary Size (${{ matrix.os }})::${SIZE_MB} MB"
+          echo "Binary size: ${SIZE_MB} MB (limit: ${MAX_SIZE_MB} MB)"
+          if [ "$SIZE_MB" -gt "$MAX_SIZE_MB" ]; then
+            echo "::error::Binary size ${SIZE_MB} MB exceeds limit of ${MAX_SIZE_MB} MB"
+            exit 1
+          fi
+
+      - name: Check binary size (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          MAX_SIZE_MB: 150
+        run: |
+          $sizeBytes = (Get-ChildItem dist/git-adr -Recurse | Measure-Object -Property Length -Sum).Sum
+          $sizeMB = [math]::Round($sizeBytes / 1MB, 2)
+          Write-Host "::notice title=Binary Size (${{ matrix.os }})::$sizeMB MB"
+          Write-Host "Binary size: $sizeMB MB (limit: $env:MAX_SIZE_MB MB)"
+          if ($sizeMB -gt $env:MAX_SIZE_MB) {
+            Write-Host "::error::Binary size $sizeMB MB exceeds limit of $env:MAX_SIZE_MB MB"
+            exit 1
+          }
+
+      # Run smoke tests
+      - name: Run smoke tests (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x scripts/smoke-test.sh
+          ./scripts/smoke-test.sh dist/git-adr/git-adr
+
+      - name: Run smoke tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Basic smoke test for Windows
+          $binary = "dist/git-adr/git-adr.exe"
+          Write-Host "Testing: $binary"
+
+          # Version check
+          & $binary --version
+          if ($LASTEXITCODE -ne 0) { throw "Version check failed" }
+          Write-Host "[PASS] --version"
+
+          # Help check
+          & $binary --help
+          if ($LASTEXITCODE -ne 0) { throw "Help check failed" }
+          Write-Host "[PASS] --help"
+
+          Write-Host "Smoke tests passed!"
+
+      # Package artifacts
+      - name: Package artifact (Unix)
+        if: runner.os != 'Windows'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          ARTIFACT: ${{ matrix.artifact }}
+        run: |
+          cd dist
+          mv git-adr "${ARTIFACT}"
+          tar -czvf "${ARTIFACT}.tar.gz" "${ARTIFACT}"
+          shasum -a 256 "${ARTIFACT}.tar.gz" > "${ARTIFACT}.tar.gz.sha256"
+          cat "${ARTIFACT}.tar.gz.sha256"
+
+      - name: Package artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          ARTIFACT: ${{ matrix.artifact }}
+        run: |
+          cd dist
+          Rename-Item git-adr $env:ARTIFACT
+          Compress-Archive -Path $env:ARTIFACT -DestinationPath "$env:ARTIFACT.zip"
+          $hash = Get-FileHash "$env:ARTIFACT.zip" -Algorithm SHA256
+          "$($hash.Hash)  $env:ARTIFACT.zip" | Out-File -Encoding utf8 "$env:ARTIFACT.zip.sha256"
+          Get-Content "$env:ARTIFACT.zip.sha256"
+
+      # Upload artifacts
+      - name: Upload artifact (Unix)
+        if: runner.os != 'Windows'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            dist/${{ matrix.artifact }}.tar.gz
+            dist/${{ matrix.artifact }}.tar.gz.sha256
+
+      - name: Upload artifact (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            dist/${{ matrix.artifact }}.zip
+            dist/${{ matrix.artifact }}.zip.sha256
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Get version
+        id: version
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${REF_NAME#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${REF_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: artifacts/
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+          # Move all platform artifacts to release directory
+          find artifacts -name "*.tar.gz" -exec mv {} release/ \;
+          find artifacts -name "*.zip" -exec mv {} release/ \;
+          find artifacts -name "*.sha256" -exec mv {} release/ \;
+
+          # Create combined checksums file
+          cd release
+          cat *.sha256 > checksums.txt
+          echo "Release assets:"
+          ls -la
+          echo ""
+          echo "Checksums:"
+          cat checksums.txt
+
+      - name: Create Release with Binaries
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          files: release/*
+          append_body: true
+          body: |
+
+            ## Standalone Binaries
+
+            Pre-built binaries are available for immediate download - no Python required!
+
+            | Platform | Download | SHA256 |
+            |----------|----------|--------|
+            | macOS ARM64 (M1/M2/M3) | [git-adr-macos-arm64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/git-adr-macos-arm64.tar.gz) | See checksums.txt |
+            | Linux x86_64 | [git-adr-linux-x86_64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/git-adr-linux-x86_64.tar.gz) | See checksums.txt |
+            | Windows x86_64 | [git-adr-windows-x86_64.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/git-adr-windows-x86_64.zip) | See checksums.txt |
+
+            > **macOS Intel users**: Use Homebrew: `brew install zircote/git-adr`
+
+            ### Quick Install (Unix)
+            ```bash
+            # macOS ARM64
+            curl -sL https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/git-adr-macos-arm64.tar.gz | tar xz
+            sudo mv git-adr-macos-arm64/git-adr /usr/local/bin/
+
+            # Linux
+            curl -sL https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/git-adr-linux-x86_64.tar.gz | tar xz
+            sudo mv git-adr-linux-x86_64/git-adr /usr/local/bin/
+            ```

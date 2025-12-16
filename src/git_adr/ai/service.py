@@ -6,11 +6,21 @@ Provides AI-powered features using various LLM providers.
 from __future__ import annotations
 
 import os
+import warnings
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from git_adr.core import ADR, Config
+
+# Suppress LangChain's Pydantic v1 deprecation warning on Python 3.14+
+# Must be called before langchain imports in _get_llm()
+warnings.filterwarnings(
+    "ignore",
+    message="Core Pydantic V1 functionality",
+    category=UserWarning,
+    module="langchain_core",
+)
 
 
 class AIServiceError(Exception):
@@ -127,7 +137,7 @@ class AIService:
         except ImportError as e:
             raise AIServiceError(
                 f"AI provider '{self.provider}' requires additional dependencies. "
-                f"Install with: pip install git-adr[ai]\n"
+                f"Install with: pip install 'git-adr\\[ai]'\n"
                 f"Error: {e}"
             )
 

@@ -93,6 +93,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Total ADRs | $(git adr list --format json | grep -c '"id":' || echo 0) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Proposed | $(git adr list --status proposed --format json | grep -c '"id":' || echo 0) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Accepted | $(git adr list --status accepted --format json | grep -c '"id":' || echo 0) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total ADRs | $(git adr list --format json 2>/dev/null | jq '. | length' || echo 0) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Proposed | $(git adr list --status proposed --format json 2>/dev/null | jq '. | length' || echo 0) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Accepted | $(git adr list --status accepted --format json 2>/dev/null | jq '. | length' || echo 0) |" >> $GITHUB_STEP_SUMMARY

@@ -19,7 +19,7 @@ remote fetch/push refspecs for ADR synchronization.
 `--namespace` TEXT
 : Custom git notes namespace (default: `refs/notes/adr`).
 
-`--template` [madr|nygard|y-statements]
+`--template` [madr|nygard|y-statement]
 : Default template format for new ADRs (default: madr).
 
 `-h`, `--help`

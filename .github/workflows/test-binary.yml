@@ -1,0 +1,149 @@
+name: Test Binary Build
+
+on:
+  pull_request:
+    paths:
+      - 'pyinstaller/**'
+      - 'scripts/build-binary.sh'
+      - 'scripts/smoke-test.sh'
+      - 'src/**'
+      - 'pyproject.toml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  test-build:
+    name: Test Build (${{ matrix.os }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Test on one platform per OS family for PRs
+          - os: macos-arm64
+            runner: macos-14
+          - os: linux-x86_64
+            runner: ubuntu-22.04
+          - os: windows-x86_64
+            runner: windows-2022
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # Rust installation (required for tiktoken)
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      # Python setup
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      # Platform-specific system dependencies
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install libsodium libyaml
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsodium-dev libyaml-dev
+
+      # Install dependencies
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Install PyInstaller
+        run: uv pip install pyinstaller
+
+      # Build binary
+      - name: Build binary (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          uv run pyinstaller --clean --noconfirm pyinstaller/git-adr.spec
+          echo "=== Build artifacts ==="
+          ls -la dist/git-adr/
+
+      - name: Build binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          uv run pyinstaller --clean --noconfirm pyinstaller/git-adr.spec
+          Write-Host "=== Build artifacts ==="
+          Get-ChildItem dist/git-adr/
+
+      # Size check
+      - name: Check binary size (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          SIZE_BYTES=$(du -sb dist/git-adr | cut -f1)
+          SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
+          echo "Binary size: ${SIZE_MB} MB"
+          if [ "$SIZE_MB" -gt 150 ]; then
+            echo "::warning::Binary size ${SIZE_MB} MB may be too large"
+          fi
+
+      - name: Check binary size (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $sizeBytes = (Get-ChildItem dist/git-adr -Recurse | Measure-Object -Property Length -Sum).Sum
+          $sizeMB = [math]::Round($sizeBytes / 1MB, 2)
+          Write-Host "Binary size: $sizeMB MB"
+          if ($sizeMB -gt 150) {
+            Write-Host "::warning::Binary size $sizeMB MB may be too large"
+          }
+
+      # Run smoke tests
+      - name: Run smoke tests (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x scripts/smoke-test.sh
+          ./scripts/smoke-test.sh dist/git-adr/git-adr
+
+      - name: Run smoke tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $binary = "dist/git-adr/git-adr.exe"
+          Write-Host "Testing: $binary"
+
+          # Version check
+          & $binary --version
+          if ($LASTEXITCODE -ne 0) { throw "Version check failed" }
+          Write-Host "[PASS] --version"
+
+          # Help check
+          & $binary --help
+          if ($LASTEXITCODE -ne 0) { throw "Help check failed" }
+          Write-Host "[PASS] --help"
+
+          Write-Host "Smoke tests passed!"
+
+      # Startup time test
+      - name: Measure startup time (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          echo "=== Startup Time Test ==="
+          # Warm up (first run may be slower due to OS caching)
+          ./dist/git-adr/git-adr --version > /dev/null 2>&1
+
+          # Measure 5 runs
+          for i in 1 2 3 4 5; do
+            START=$(python3 -c "import time; print(time.time())")
+            ./dist/git-adr/git-adr --version > /dev/null 2>&1
+            END=$(python3 -c "import time; print(time.time())")
+            DURATION=$(echo "$END - $START" | bc)
+            printf "Run %d: %.3fs\n" "$i" "$DURATION"
+          done

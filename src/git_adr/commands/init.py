@@ -33,6 +33,9 @@ from git_adr.core.templates import TEMPLATE_DESCRIPTIONS, render_initial_adr
 if TYPE_CHECKING:
     pass
 
+# Default template format for ADRs
+DEFAULT_TEMPLATE = "madr"
+
 console = Console()
 err_console = Console(stderr=True)
 
@@ -53,20 +56,20 @@ def _prompt_for_template() -> str:
     either a number (1-6) or template name as input.
 
     Returns:
-        Selected template name (defaults to 'madr' if invalid input).
+        Selected template name (defaults to DEFAULT_TEMPLATE if invalid input).
     """
     console.print()
     console.print("[bold]Available ADR Templates:[/bold]")
 
     template_names = list(TEMPLATE_DESCRIPTIONS.keys())
     for i, (name, desc) in enumerate(TEMPLATE_DESCRIPTIONS.items(), 1):
-        marker = " [dim](default)[/dim]" if name == "madr" else ""
+        marker = " [dim](default)[/dim]" if name == DEFAULT_TEMPLATE else ""
         console.print(f"  {i}. [cyan]{name}[/cyan] - {desc}{marker}")
 
     console.print()
     choice = typer.prompt(
         "Select template format (number or name)",
-        default="madr",
+        default=DEFAULT_TEMPLATE,
         show_default=True,
     )
 
@@ -75,14 +78,16 @@ def _prompt_for_template() -> str:
         idx = int(choice) - 1
         if 0 <= idx < len(template_names):
             return template_names[idx]
-        console.print("[yellow]Invalid selection, using 'madr'[/yellow]")
-        return "madr"
+        console.print(f"[yellow]Invalid selection, using '{DEFAULT_TEMPLATE}'[/yellow]")
+        return DEFAULT_TEMPLATE
 
     if choice in template_names:
         return choice
 
-    console.print(f"[yellow]Unknown template '{choice}', using 'madr'[/yellow]")
-    return "madr"
+    console.print(
+        f"[yellow]Unknown template '{choice}', using '{DEFAULT_TEMPLATE}'[/yellow]"
+    )
+    return DEFAULT_TEMPLATE
 
 
 def run_init(
@@ -132,7 +137,7 @@ def run_init(
 
         # Determine template (interactive or default)
         if template is None:
-            template = _prompt_for_template() if interactive else "madr"
+            template = _prompt_for_template() if interactive else DEFAULT_TEMPLATE
 
         # Set configuration
         config_manager.set("namespace", namespace)

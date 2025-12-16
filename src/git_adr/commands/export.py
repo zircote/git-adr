@@ -94,7 +94,7 @@ def run_export(
             _export_html(all_adrs, output_path, notes_manager)
         elif format_ == "docx":
             console.print("[yellow]DOCX export coming soon[/yellow]")
-            console.print("[dim]Install: pip install git-adr[export][/dim]")
+            console.print("[dim]Install: pip install 'git-adr\\[export]'[/dim]")
             return
         else:
             _export_markdown(all_adrs, output_path, notes_manager)

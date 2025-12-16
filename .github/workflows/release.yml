@@ -322,13 +322,73 @@ jobs:
           MISTUNE_INFO=$(get_pypi_info "mistune")
           PYYAML_INFO=$(get_pypi_info "pyyaml")
 
-          # Transitive dependencies
+          # Core transitive dependencies
           CLICK_INFO=$(get_pypi_info "click")
           TYPING_EXT_INFO=$(get_pypi_info "typing-extensions")
           SHELLINGHAM_INFO=$(get_pypi_info "shellingham")
           MARKDOWN_IT_INFO=$(get_pypi_info "markdown-it-py")
           MDURL_INFO=$(get_pypi_info "mdurl")
           PYGMENTS_INFO=$(get_pypi_info "pygments")
+
+          # AI extras (langchain ecosystem)
+          LANGCHAIN_CORE_INFO=$(get_pypi_info "langchain-core")
+          LANGCHAIN_OPENAI_INFO=$(get_pypi_info "langchain-openai")
+          LANGCHAIN_ANTHROPIC_INFO=$(get_pypi_info "langchain-anthropic")
+          LANGCHAIN_GOOGLE_INFO=$(get_pypi_info "langchain-google-genai")
+          LANGCHAIN_OLLAMA_INFO=$(get_pypi_info "langchain-ollama")
+
+          # AI transitive deps
+          OPENAI_INFO=$(get_pypi_info "openai")
+          ANTHROPIC_INFO=$(get_pypi_info "anthropic")
+          GOOGLE_GENAI_INFO=$(get_pypi_info "google-generativeai")
+          TIKTOKEN_INFO=$(get_pypi_info "tiktoken")
+          HTTPX_INFO=$(get_pypi_info "httpx")
+          HTTPCORE_INFO=$(get_pypi_info "httpcore")
+          ANYIO_INFO=$(get_pypi_info "anyio")
+          SNIFFIO_INFO=$(get_pypi_info "sniffio")
+          CERTIFI_INFO=$(get_pypi_info "certifi")
+          IDNA_INFO=$(get_pypi_info "idna")
+          H11_INFO=$(get_pypi_info "h11")
+          DISTRO_INFO=$(get_pypi_info "distro")
+          JITER_INFO=$(get_pypi_info "jiter")
+          PYDANTIC_INFO=$(get_pypi_info "pydantic")
+          PYDANTIC_CORE_INFO=$(get_pypi_info "pydantic-core")
+          ANNOTATED_TYPES_INFO=$(get_pypi_info "annotated-types")
+          LANGSMITH_INFO=$(get_pypi_info "langsmith")
+          ORJSON_INFO=$(get_pypi_info "orjson")
+          REQUESTS_TOOLBELT_INFO=$(get_pypi_info "requests-toolbelt")
+          REQUESTS_INFO=$(get_pypi_info "requests")
+          URLLIB3_INFO=$(get_pypi_info "urllib3")
+          CHARSET_INFO=$(get_pypi_info "charset-normalizer")
+          TENACITY_INFO=$(get_pypi_info "tenacity")
+          JSONPATCH_INFO=$(get_pypi_info "jsonpatch")
+          JSONPOINTER_INFO=$(get_pypi_info "jsonpointer")
+          PACKAGING_INFO=$(get_pypi_info "packaging")
+          REGEX_INFO=$(get_pypi_info "regex")
+          TQDM_INFO=$(get_pypi_info "tqdm")
+          PROTO_PLUS_INFO=$(get_pypi_info "proto-plus")
+          PROTOBUF_INFO=$(get_pypi_info "protobuf")
+          GOOGLE_API_CORE_INFO=$(get_pypi_info "google-api-core")
+          GOOGLE_AUTH_INFO=$(get_pypi_info "google-auth")
+          GOOGLEAPIS_COMMON_INFO=$(get_pypi_info "googleapis-common-protos")
+          CACHETOOLS_INFO=$(get_pypi_info "cachetools")
+          PYASN1_INFO=$(get_pypi_info "pyasn1")
+          PYASN1_MODULES_INFO=$(get_pypi_info "pyasn1-modules")
+          RSA_INFO=$(get_pypi_info "rsa")
+          GRPCIO_INFO=$(get_pypi_info "grpcio")
+          GRPCIO_STATUS_INFO=$(get_pypi_info "grpcio-status")
+
+          # Wiki extras
+          PYGITHUB_INFO=$(get_pypi_info "PyGithub")
+          PYTHON_GITLAB_INFO=$(get_pypi_info "python-gitlab")
+          PYNACL_INFO=$(get_pypi_info "PyNaCl")
+          PYJWT_INFO=$(get_pypi_info "PyJWT")
+          DEPRECATED_INFO=$(get_pypi_info "Deprecated")
+          WRAPT_INFO=$(get_pypi_info "wrapt")
+
+          # Export extras
+          PYTHON_DOCX_INFO=$(get_pypi_info "python-docx")
+          LXML_INFO=$(get_pypi_info "lxml")
 
           # Generate formula with proper indentation
           {
@@ -361,6 +421,7 @@ jobs:
             } >> Formula/git-adr.rb
           }
 
+          # Core deps
           add_resource "click" "$CLICK_INFO"
           add_resource "markdown-it-py" "$MARKDOWN_IT_INFO"
           add_resource "mdurl" "$MDURL_INFO"
@@ -372,6 +433,66 @@ jobs:
           add_resource "shellingham" "$SHELLINGHAM_INFO"
           add_resource "typer" "$TYPER_INFO"
           add_resource "typing-extensions" "$TYPING_EXT_INFO"
+
+          # AI extras
+          add_resource "langchain-core" "$LANGCHAIN_CORE_INFO"
+          add_resource "langchain-openai" "$LANGCHAIN_OPENAI_INFO"
+          add_resource "langchain-anthropic" "$LANGCHAIN_ANTHROPIC_INFO"
+          add_resource "langchain-google-genai" "$LANGCHAIN_GOOGLE_INFO"
+          add_resource "langchain-ollama" "$LANGCHAIN_OLLAMA_INFO"
+
+          # AI transitive deps
+          add_resource "openai" "$OPENAI_INFO"
+          add_resource "anthropic" "$ANTHROPIC_INFO"
+          add_resource "google-generativeai" "$GOOGLE_GENAI_INFO"
+          add_resource "tiktoken" "$TIKTOKEN_INFO"
+          add_resource "httpx" "$HTTPX_INFO"
+          add_resource "httpcore" "$HTTPCORE_INFO"
+          add_resource "anyio" "$ANYIO_INFO"
+          add_resource "sniffio" "$SNIFFIO_INFO"
+          add_resource "certifi" "$CERTIFI_INFO"
+          add_resource "idna" "$IDNA_INFO"
+          add_resource "h11" "$H11_INFO"
+          add_resource "distro" "$DISTRO_INFO"
+          add_resource "jiter" "$JITER_INFO"
+          add_resource "pydantic" "$PYDANTIC_INFO"
+          add_resource "pydantic-core" "$PYDANTIC_CORE_INFO"
+          add_resource "annotated-types" "$ANNOTATED_TYPES_INFO"
+          add_resource "langsmith" "$LANGSMITH_INFO"
+          add_resource "orjson" "$ORJSON_INFO"
+          add_resource "requests-toolbelt" "$REQUESTS_TOOLBELT_INFO"
+          add_resource "requests" "$REQUESTS_INFO"
+          add_resource "urllib3" "$URLLIB3_INFO"
+          add_resource "charset-normalizer" "$CHARSET_INFO"
+          add_resource "tenacity" "$TENACITY_INFO"
+          add_resource "jsonpatch" "$JSONPATCH_INFO"
+          add_resource "jsonpointer" "$JSONPOINTER_INFO"
+          add_resource "packaging" "$PACKAGING_INFO"
+          add_resource "regex" "$REGEX_INFO"
+          add_resource "tqdm" "$TQDM_INFO"
+          add_resource "proto-plus" "$PROTO_PLUS_INFO"
+          add_resource "protobuf" "$PROTOBUF_INFO"
+          add_resource "google-api-core" "$GOOGLE_API_CORE_INFO"
+          add_resource "google-auth" "$GOOGLE_AUTH_INFO"
+          add_resource "googleapis-common-protos" "$GOOGLEAPIS_COMMON_INFO"
+          add_resource "cachetools" "$CACHETOOLS_INFO"
+          add_resource "pyasn1" "$PYASN1_INFO"
+          add_resource "pyasn1-modules" "$PYASN1_MODULES_INFO"
+          add_resource "rsa" "$RSA_INFO"
+          add_resource "grpcio" "$GRPCIO_INFO"
+          add_resource "grpcio-status" "$GRPCIO_STATUS_INFO"
+
+          # Wiki extras
+          add_resource "PyGithub" "$PYGITHUB_INFO"
+          add_resource "python-gitlab" "$PYTHON_GITLAB_INFO"
+          add_resource "PyNaCl" "$PYNACL_INFO"
+          add_resource "PyJWT" "$PYJWT_INFO"
+          add_resource "Deprecated" "$DEPRECATED_INFO"
+          add_resource "wrapt" "$WRAPT_INFO"
+
+          # Export extras
+          add_resource "python-docx" "$PYTHON_DOCX_INFO"
+          add_resource "lxml" "$LXML_INFO"
 
           {
             echo '  def install'

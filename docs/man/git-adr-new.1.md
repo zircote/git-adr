@@ -27,7 +27,7 @@ is stored in git notes after editing.
 `--link` TEXT
 : Commit SHA to link to this ADR.
 
-`--template` [madr|nygard|y-statements]
+`--template` [madr|nygard|y-statement]
 : Template format to use (overrides default).
 
 `--file`, `-f` PATH
@@ -80,7 +80,7 @@ The template includes standard sections based on the format:
 - Decision
 - Consequences
 
-**Y-Statements**:
+**y-statement**:
 - In the context of...
 - facing...
 - we decided...
