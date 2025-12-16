@@ -4,7 +4,7 @@ deciders:
 - Claude
 - User
 id: 20251216-use-stdin-for-gh-cli-body-content
-status: proposed
+status: accepted
 title: Use stdin for gh CLI body content
 ---
 
