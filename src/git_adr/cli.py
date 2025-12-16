@@ -1160,6 +1160,464 @@ app.command("e", hidden=True)(edit)
 
 
 # =============================================================================
+# CI Commands (P3)
+# =============================================================================
+
+ci_app = typer.Typer(
+    name="ci",
+    help="Generate CI/CD workflow configurations.",
+    no_args_is_help=True,
+)
+app.add_typer(ci_app, name="ci")
+
+
+@ci_app.command("github")
+def ci_github(
+    sync: Annotated[
+        bool,
+        typer.Option(
+            "--sync",
+            "-s",
+            help="Generate sync workflow (push ADRs on merge).",
+        ),
+    ] = False,
+    validate: Annotated[
+        bool,
+        typer.Option(
+            "--validate",
+            "-v",
+            help="Generate validation workflow (check ADRs on PR).",
+        ),
+    ] = False,
+    output: Annotated[
+        str | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Output directory (default: .github/workflows).",
+        ),
+    ] = None,
+    main_branch: Annotated[
+        str,
+        typer.Option(
+            "--main-branch",
+            help="Main branch name for triggers.",
+        ),
+    ] = "main",
+    wiki_sync: Annotated[
+        bool,
+        typer.Option(
+            "--wiki-sync",
+            help="Enable wiki synchronization.",
+        ),
+    ] = False,
+    export_format: Annotated[
+        str | None,
+        typer.Option(
+            "--export-format",
+            help="Export format (markdown, json, html).",
+        ),
+    ] = None,
+) -> None:
+    """Generate GitHub Actions workflows for ADR operations.
+
+    Creates workflow files for synchronizing and validating ADRs.
+    By default, generates both sync and validate workflows.
+
+    [bold]Examples:[/bold]
+
+        # Generate both workflows (default)
+        git adr ci github
+
+        # Generate only sync workflow
+        git adr ci github --sync
+
+        # Generate with wiki sync enabled
+        git adr ci github --wiki-sync
+    """
+    from git_adr.commands.ci import run_ci_github
+
+    run_ci_github(
+        sync=sync,
+        validate=validate,
+        output=output,
+        main_branch=main_branch,
+        wiki_sync=wiki_sync,
+        export_format=export_format,
+    )
+
+
+@ci_app.command("gitlab")
+def ci_gitlab(
+    sync: Annotated[
+        bool,
+        typer.Option(
+            "--sync",
+            "-s",
+            help="Generate sync stage (push ADRs on merge).",
+        ),
+    ] = False,
+    validate: Annotated[
+        bool,
+        typer.Option(
+            "--validate",
+            "-v",
+            help="Generate validation stage (check ADRs on MR).",
+        ),
+    ] = False,
+    output: Annotated[
+        str | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Output file (default: .gitlab-ci.yml or gitlab-ci-adr.yml).",
+        ),
+    ] = None,
+    main_branch: Annotated[
+        str,
+        typer.Option(
+            "--main-branch",
+            help="Main branch name for triggers.",
+        ),
+    ] = "main",
+    wiki_sync: Annotated[
+        bool,
+        typer.Option(
+            "--wiki-sync",
+            help="Enable wiki synchronization.",
+        ),
+    ] = False,
+    export_format: Annotated[
+        str | None,
+        typer.Option(
+            "--export-format",
+            help="Export format (markdown, json, html).",
+        ),
+    ] = None,
+) -> None:
+    """Generate GitLab CI pipeline for ADR operations.
+
+    Creates pipeline configuration for synchronizing and validating ADRs.
+
+    [bold]Examples:[/bold]
+
+        # Generate full pipeline
+        git adr ci gitlab
+
+        # Generate separate file for inclusion
+        git adr ci gitlab --output gitlab-ci-adr.yml
+    """
+    from git_adr.commands.ci import run_ci_gitlab
+
+    run_ci_gitlab(
+        sync=sync,
+        validate=validate,
+        output=output,
+        main_branch=main_branch,
+        wiki_sync=wiki_sync,
+        export_format=export_format,
+    )
+
+
+@ci_app.command("list")
+def ci_list() -> None:
+    """List available CI/CD templates."""
+    from git_adr.commands.ci import run_ci_list
+
+    run_ci_list()
+
+
+# =============================================================================
+# Templates Commands (P3)
+# =============================================================================
+
+templates_app = typer.Typer(
+    name="templates",
+    help="Generate governance templates.",
+    no_args_is_help=True,
+)
+app.add_typer(templates_app, name="templates")
+
+
+@templates_app.command("pr")
+def templates_pr(
+    output: Annotated[
+        str | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Output path (default: .github/PULL_REQUEST_TEMPLATE.md).",
+        ),
+    ] = None,
+    require_adr: Annotated[
+        bool,
+        typer.Option(
+            "--require-adr",
+            help="Require ADR for architectural changes.",
+        ),
+    ] = False,
+    reviewers: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--reviewer",
+            "-r",
+            help="Default reviewers to cc (can be repeated).",
+        ),
+    ] = None,
+) -> None:
+    """Generate a pull request template with ADR checklist.
+
+    Creates a PR template that prompts contributors to consider
+    architectural impact and document decisions in ADRs.
+
+    [bold]Example:[/bold]
+
+        git adr templates pr --require-adr --reviewer @architecture-team
+    """
+    from git_adr.commands.templates_cli import run_templates_pr
+
+    run_templates_pr(output=output, require_adr=require_adr, reviewers=reviewers)
+
+
+@templates_app.command("issue")
+def templates_issue(
+    output: Annotated[
+        str | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Output path (default: .github/ISSUE_TEMPLATE/adr-proposal.md).",
+        ),
+    ] = None,
+    labels: Annotated[
+        str,
+        typer.Option(
+            "--labels",
+            "-l",
+            help="Comma-separated labels to apply.",
+        ),
+    ] = "architecture, adr-proposal",
+) -> None:
+    """Generate an issue template for ADR proposals.
+
+    Creates an issue template that guides contributors through
+    proposing new architectural decisions.
+    """
+    from git_adr.commands.templates_cli import run_templates_issue
+
+    run_templates_issue(output=output, labels=labels)
+
+
+@templates_app.command("codeowners")
+def templates_codeowners(
+    output: Annotated[
+        str | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Output path (default: stdout for manual integration).",
+        ),
+    ] = None,
+    team: Annotated[
+        str,
+        typer.Option(
+            "--team",
+            "-t",
+            help="GitHub team or user handle for reviews.",
+        ),
+    ] = "@architecture-team",
+) -> None:
+    """Generate CODEOWNERS patterns for ADR governance.
+
+    Creates CODEOWNERS entries that require architecture team
+    review for changes to protected paths.
+
+    [bold]Example:[/bold]
+
+        git adr templates codeowners --team @my-team --output CODEOWNERS
+    """
+    from git_adr.commands.templates_cli import run_templates_codeowners
+
+    run_templates_codeowners(output=output, team=team)
+
+
+@templates_app.command("all")
+def templates_all(
+    output_dir: Annotated[
+        str | None,
+        typer.Option(
+            "--output-dir",
+            "-o",
+            help="Base output directory.",
+        ),
+    ] = None,
+    team: Annotated[
+        str,
+        typer.Option(
+            "--team",
+            "-t",
+            help="GitHub team or user handle for reviews.",
+        ),
+    ] = "@architecture-team",
+) -> None:
+    """Generate all governance templates at once.
+
+    Creates PR template, issue template, and CODEOWNERS patterns.
+    """
+    from git_adr.commands.templates_cli import run_templates_all
+
+    run_templates_all(output_dir=output_dir, team=team)
+
+
+@templates_app.command("list")
+def templates_list() -> None:
+    """List available governance templates."""
+    from git_adr.commands.templates_cli import run_templates_list
+
+    run_templates_list()
+
+
+# =============================================================================
+# Hooks Commands (P3)
+# =============================================================================
+
+hooks_app = typer.Typer(
+    name="hooks",
+    help="Manage git hooks for automatic ADR synchronization.",
+    no_args_is_help=True,
+)
+app.add_typer(hooks_app, name="hooks")
+
+
+@hooks_app.command("install")
+def hooks_install(
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force",
+            "-f",
+            help="Overwrite existing hooks (backs up first).",
+        ),
+    ] = False,
+    manual: Annotated[
+        bool,
+        typer.Option(
+            "--manual",
+            "-m",
+            help="Show manual integration instructions instead of installing.",
+        ),
+    ] = False,
+) -> None:
+    """Install git-adr hooks for automatic notes synchronization.
+
+    Installs a pre-push hook that automatically syncs ADR notes
+    when you push to a remote repository.
+
+    [bold]Examples:[/bold]
+
+        # Install hooks
+        git adr hooks install
+
+        # Force reinstall (backs up existing hooks)
+        git adr hooks install --force
+
+        # Show manual integration instructions
+        git adr hooks install --manual
+    """
+    from git_adr.commands.hooks_cli import run_hooks_install
+
+    run_hooks_install(force=force, manual=manual)
+
+
+@hooks_app.command("uninstall")
+def hooks_uninstall() -> None:
+    """Uninstall git-adr hooks.
+
+    Removes hooks installed by git-adr and restores any
+    previously backed-up hooks.
+    """
+    from git_adr.commands.hooks_cli import run_hooks_uninstall
+
+    run_hooks_uninstall()
+
+
+@hooks_app.command("status")
+def hooks_status() -> None:
+    """Show hook installation status.
+
+    Displays the current state of all git-adr managed hooks
+    and their configuration.
+    """
+    from git_adr.commands.hooks_cli import run_hooks_status
+
+    run_hooks_status()
+
+
+@hooks_app.command("config")
+def hooks_config(
+    block_on_failure: Annotated[
+        bool,
+        typer.Option(
+            "--block-on-failure",
+            help="Block push if notes sync fails.",
+        ),
+    ] = False,
+    no_block_on_failure: Annotated[
+        bool,
+        typer.Option(
+            "--no-block-on-failure",
+            help="Allow push even if notes sync fails (default).",
+        ),
+    ] = False,
+    show: Annotated[
+        bool,
+        typer.Option(
+            "--show",
+            "-s",
+            help="Show current configuration.",
+        ),
+    ] = False,
+) -> None:
+    """Configure hook behavior.
+
+    [bold]Options:[/bold]
+
+        --block-on-failure    Push fails if notes sync fails
+        --no-block-on-failure Push continues even if sync fails (default)
+
+    [bold]Examples:[/bold]
+
+        # View current config
+        git adr hooks config --show
+
+        # Enable blocking mode
+        git adr hooks config --block-on-failure
+    """
+    from git_adr.commands.hooks_cli import run_hooks_config
+
+    run_hooks_config(
+        block_on_failure=block_on_failure if block_on_failure else None,
+        no_block_on_failure=no_block_on_failure,
+        show=show,
+    )
+
+
+# Internal hook command (called by git hook scripts)
+@app.command("hook", hidden=True)
+def hook_command(
+    hook_type: Annotated[str, typer.Argument(help="Hook type (e.g., pre-push).")],
+    args: Annotated[
+        list[str] | None,
+        typer.Argument(help="Additional hook arguments."),
+    ] = None,
+) -> None:
+    """Internal: Execute hook logic (called by git hook scripts)."""
+    from git_adr.commands.hook import run_hook
+
+    run_hook(hook_type, *(args or []))
+
+
+# =============================================================================
 # Shell Completion
 # =============================================================================
 

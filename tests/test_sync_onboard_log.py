@@ -130,8 +130,12 @@ class TestSyncCommand:
             # Just verify the option is accepted
             assert "invalid" not in result.output.lower()
 
-    def test_sync_not_initialized(self, temp_git_repo_with_commit: Path) -> None:
+    def test_sync_not_initialized(
+        self, temp_git_repo_with_commit: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test sync in non-initialized repo without remote."""
+        # Change to the temp repo so CLI detects non-initialized state
+        monkeypatch.chdir(temp_git_repo_with_commit)
         result = runner.invoke(app, ["sync"])
         assert result.exit_code != 0
         # May report "not initialized" or "remote not found"

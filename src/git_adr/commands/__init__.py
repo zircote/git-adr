@@ -18,12 +18,26 @@ from git_adr.commands.artifacts import run_artifacts
 
 # Artifact commands
 from git_adr.commands.attach import run_attach
+
+# CI/CD commands
+from git_adr.commands.ci import run_ci_github, run_ci_gitlab, run_ci_list
 from git_adr.commands.config import run_config
 
 # Format commands
 from git_adr.commands.convert import run_convert
 from git_adr.commands.edit import run_edit
 from git_adr.commands.export import run_export
+
+# Hook commands (internal, called by git hook scripts)
+from git_adr.commands.hook import run_hook
+
+# Hook management commands (user-facing)
+from git_adr.commands.hooks_cli import (
+    run_hooks_config,
+    run_hooks_install,
+    run_hooks_status,
+    run_hooks_uninstall,
+)
 from git_adr.commands.import_ import run_import
 
 # Core commands
@@ -45,6 +59,15 @@ from git_adr.commands.show import run_show
 from git_adr.commands.stats import run_stats
 from git_adr.commands.supersede import run_supersede
 from git_adr.commands.sync import run_sync
+
+# Templates (governance) commands
+from git_adr.commands.templates_cli import (
+    run_templates_all,
+    run_templates_codeowners,
+    run_templates_issue,
+    run_templates_list,
+    run_templates_pr,
+)
 
 # Wiki commands
 from git_adr.commands.wiki_init import run_wiki_init
@@ -87,4 +110,21 @@ __all__ = [
     "run_onboard",
     "run_export",
     "run_import",
+    # Hook (internal)
+    "run_hook",
+    # Hook management (user-facing)
+    "run_hooks_install",
+    "run_hooks_uninstall",
+    "run_hooks_status",
+    "run_hooks_config",
+    # CI/CD
+    "run_ci_github",
+    "run_ci_gitlab",
+    "run_ci_list",
+    # Templates (governance)
+    "run_templates_pr",
+    "run_templates_issue",
+    "run_templates_codeowners",
+    "run_templates_all",
+    "run_templates_list",
 ]
