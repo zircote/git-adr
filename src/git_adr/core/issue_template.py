@@ -405,7 +405,10 @@ def parse_yaml_form_string(text: str, source_path: Path | None = None) -> IssueT
     try:
         data = yaml.safe_load(text)
     except yaml.YAMLError as e:
-        raise ValueError(f"Invalid YAML: {e}") from e
+        if source_path:
+            raise ValueError(f"Invalid YAML in {source_path}: {e}") from e
+        else:
+            raise ValueError(f"Invalid YAML: {e}") from e
 
     if not isinstance(data, dict):
         raise ValueError("YAML template must be a mapping")
