@@ -127,7 +127,7 @@ class AIService:
         except ImportError as e:
             raise AIServiceError(
                 f"AI provider '{self.provider}' requires additional dependencies. "
-                f"Install with: pip install git-adr[ai]\n"
+                f"Install with: pip install 'git-adr\\[ai]'\n"
                 f"Error: {e}"
             )
 
