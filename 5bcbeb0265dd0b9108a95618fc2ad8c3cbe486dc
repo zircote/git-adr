@@ -3,7 +3,12 @@ date: '2025-12-16'
 id: 20251216-homebrew-formula-bundles-all-extras
 linked_commits:
 - 259e616
-status: proposed
+status: accepted
+tags:
+- dependencies
+- distribution
+- homebrew
+- packaging
 title: Homebrew Formula Bundles All Extras
 ---
 
