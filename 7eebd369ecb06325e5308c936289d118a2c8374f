@@ -1,0 +1,108 @@
+---
+date: '2025-12-16'
+id: 20251216-enforce-read-only-configuration-by-default
+status: proposed
+title: Enforce Read-Only Configuration by Default
+---
+
+# Enforce Read-Only Configuration by Default
+
+Context and Problem Statement
+- The git-adr Claude Skill can read and write git-adr configuration to help users set up AI providers, templates, defaults, etc.
+- Modifying a user's configuration without explicit permission can:
+  - Corrupt or misconfigure a user's environment.
+  - Break CI, automation, or multi-user workflows.
+  - Erode user trust and violate principle of least privilege.
+- We must balance helpful automation with safety, transparency, and auditability.
+- Goal: prevent accidental or unauthorized changes while still allowing the assistant to assist in configuration tasks when the user explicitly permits it.
+
+Decision Drivers
+- Prevent accidental corruption of user configuration files.
+- Principle of least privilege: default to minimal privileges and escalate only with explicit consent.
+- User trust and transparency: users must understand and approve changes.
+- Auditability and recoverability: changes must be logged and reversible.
+- Usability: minimize friction while keeping the system safe.
+- Technical feasibility: enforceable in the skill implementation and compatible with git-adr architecture.
+- Security and compliance: safe behavior in multi-user, CI, and remote environments.
+
+Considered Options
+- Make all configuration access READ-ONLY by default; require explicit user permission (phrased in conversation) to permit writes (Chosen).
+- Allow the skill to modify configuration automatically when it has local filesystem access (default WRITE).
+- Prompt for permission but default to allowing a single write unless the user sets a "safe mode".
+- Create a separate sandboxed config workspace the skill can write to; leave user config untouched (sandbox-only).
+- Require out-of-band confirmation (e.g., CLI flag, button, or OS-level permission grant) before any write.
+- Support a capabilities/consent token model where an explicit token is required to enable writes for the session.
+
+Decision Outcome (Chosen option with justification)
+- Chosen option
+  - Enforce READ-ONLY access to all git-adr configuration by default. Any configuration change requires explicit, scoped user permission stated in the conversation.
+- Justification
+  - Security-first: Default read-only reduces the risk of accidental or malicious modifications.
+  - Usability with safety: The assistant can still help prepare, preview, and validate configuration changes; the user retains control over applying them.
+  - Transparency and auditability: Explicit in-conversation permission makes intent clear and auditable.
+  - Low operational risk: Implementation is straightforward (deny write APIs until consent) and integrates well with existing CLI and file-system tooling.
+- Implementation specifics (technical)
+  - Default runtime behavior
+    - The skill launches with a session flag config_write_allowed = false.
+    - All file operations on git-adr config paths are performed with read-only semantics (open/parse only).
+    - The skill never calls file-write or filesystem-level modification APIs for config files unless config_write_allowed == true.
+  - Permission grant flow (conversation-driven)
+    - To propose a change:
+      - Skill constructs the desired config modifications and presents a clear, human-readable summary and an exact diff/patch.
+      - Skill includes the precise target(s): path(s) (e.g., .git-adr/config or ~/.config/git-adr/config), keys to change, and the intended values.
+    - To request permission:
+      - Skill prompts the user with a request that the user must explicitly grant in text (e.g., "I will update .git-adr/config to set provider X; type 'Apply change to .git-adr/config' to allow this.").
+      - The assistant recognizes only explicit grants that:
+        - Mention the target file(s)/scope, and
+        - Use an affirmative phrase matching an allowed grammar (e.g., "Apply change to <path>", "Yes, update <path>", or a click/confirm UI action if front-end supports it).
+      - Generic confirmations ("yes", "okay") are insufficient unless paired with a UI-level confirmation that shows the diff and target.
+    - Upon receiving valid explicit permission:
+      - Temporarily set config_write_allowed = true but scoped:
+        - Scope includes target path(s) and validity window (e.g., single transaction / until the proposed changes are applied).
+        - The skill records the permission context (who granted, exact text, timestamp).
+      - Perform safety checks before writing:
+        - Create a timestamped backup copy of any file to be modified (e.g., config.yaml.20251217T123000.bak).
+        - Validate the resulting config against schemas and run git-adr config verification checks.
+        - Write atomically: write to tmp file and rename (atomic replace) to avoid partial writes.
+        - If the environment is in a git repository, do not push or alter remote state without additional explicit consent.
+      - Log the completed change to an audit trail (local logfile or user-visible history).
+      - Revoke config_write_allowed for that specific scope immediately after the change.
+  - Alternative write triggers
+    - If a front-end offers a UI button/consent prompt, the same permission semantics apply; the UI action must include the same scope and present the same diff.
+    - CLI mode: optionally require a CLI flag (e.g., --allow-config-write) plus the explicit conversational permission for non-interactive/automated invocations.
+  - Safety, edge cases and hardening
+    - Enforce path normalization and canonicalization to avoid grant-scoped path traversal or symlink attacks.
+    - For multi-repo or multi-user environments, require the user to confirm the repository or user context (e.g., "Apply change to repo <name> at path <abs-path>").
+    - In CI environments where interactive permission is not possible, default to read-only and present a machine-readable suggested patch file that CI can apply via approved mechanisms.
+    - Telemetry/analytics must never transmit config contents without explicit opt-in and consent.
+    - The skill must provide a "preview-only" toggle and a clear explanation of what will change.
+  - Audit and rollback
+    - Maintain local audit entries for each requested and performed change: who, when, exact permission text, diffs, backups created.
+    - Provide a "restore" helper that can roll back to the backup copy if validation fails or the user requests undo.
+  - Tests and validation
+    - Unit and integration tests that assert no write attempt is made while config_write_allowed == false.
+    - Tests for permission parsing and scope enforcement, and for atomic write semantics and backup creation.
+
+Consequences
+
+Good
+- Minimizes risk of accidental or unauthorized configuration changes.
+- Aligns with principle of least privilege and secure-by-default design.
+- Builds user trust by making modification intent explicit and auditable.
+- Easier to reason about safety in multi-user, CI, and production environments.
+- Provides a clear flow for review: preview -> explicit permission -> atomic apply -> audit & backup.
+- Enables rollback and validation before commits, lowering risk of breaking user workflows.
+
+Bad
+- Introduces additional user friction for common tasks that require configuration updates.
+- Requires robust natural-language intent detection or UI affordances to correctly capture explicit permission; false negatives may frustrate users.
+- Implementation complexity: temporary permission scoping, audit trail, backup management, edge-case hardening (symlinks, repo contexts).
+- Potential for mistaken approval if permission phrasing is ambiguous; requires careful wording and UX design.
+- Some automation scenarios (fully unattended scripts) will need extra plumbing (CLI flags or token-based consent), increasing integration complexity.
+
+Neutral
+- No change to read operations or the assistant's ability to suggest and validate configuration changes.
+- Performance impact should be negligible in typical flows; extra I/O for backups and validation only when writes are explicitly approved.
+- Documentation, onboarding, and examples must be updated to teach users the permission flow; this is an expected maintenance cost but not a runtime consequence.
+
+Tags: claude-skill, git-adr, security, configuration
