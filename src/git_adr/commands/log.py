@@ -5,16 +5,11 @@ Shows git log with ADR annotations inline.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 from rich.console import Console
 
-from git_adr.core import (
-    ConfigManager,
-    GitError,
-    get_git,
-)
+from git_adr.commands._shared import setup_command_context
+from git_adr.core import GitError
 
 console = Console()
 err_console = Console(stderr=True)
@@ -34,25 +29,13 @@ def run_log(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
+        # Initialize command context
+        ctx = setup_command_context()
 
         # Build git log command
         args = [
             "log",
-            f"--show-notes={config.notes_ref}",
+            f"--show-notes={ctx.config.notes_ref}",
             "--format=format:%C(yellow)%h%C(reset) %C(cyan)%ad%C(reset) %s%n%C(dim)%an%C(reset)%n%N",
             "--date=short",
         ]
@@ -60,7 +43,7 @@ def run_log(
         if not all_:
             args.append(f"-{n}")
 
-        result = git.run(args, check=False)
+        result = ctx.git.run(args, check=False)
 
         if result.success:
             # Parse and format the output
