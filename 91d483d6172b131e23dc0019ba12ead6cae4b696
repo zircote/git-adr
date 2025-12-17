@@ -1,7 +1,7 @@
 ---
 date: '2025-12-16'
 id: 20251216-use-shell-subprocess-for-git-adr-cli-integration
-status: proposed
+status: accepted
 title: Use Shell Subprocess for git-adr CLI Integration
 ---
 
