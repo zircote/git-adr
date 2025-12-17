@@ -108,9 +108,9 @@ def run_supersede(
         )
 
         # Open editor for new ADR
-        from git_adr.commands.new import _open_editor
+        from git_adr.commands._editor import open_editor
 
-        final_content = _open_editor(content, config)
+        final_content = open_editor(content, config)
 
         if final_content is None:
             console.print("[yellow]Aborted[/yellow]")

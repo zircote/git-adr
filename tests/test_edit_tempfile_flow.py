@@ -72,7 +72,9 @@ Edited consequences.
                 mock_temp_file.write = MagicMock()
 
                 with patch("tempfile.NamedTemporaryFile", return_value=mock_temp_file):
-                    with patch("git_adr.commands.new._find_editor", return_value="cat"):
+                    with patch(
+                        "git_adr.commands._editor.find_editor", return_value="cat"
+                    ):
                         result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
                         # Should process the edited content
                         assert result.exit_code in [0, 1]
@@ -102,7 +104,7 @@ class TestEditDirectFunction:
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0)
 
-            with patch("git_adr.commands.new._find_editor", return_value="cat"):
+            with patch("git_adr.commands._editor.find_editor", return_value="cat"):
                 try:
                     _full_edit(notes, adr, config)
                 except SystemExit:

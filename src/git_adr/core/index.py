@@ -112,6 +112,7 @@ class IndexManager:
         """
         self._notes = notes_manager
         self._entries: dict[str, IndexEntry] = {}
+        self._adr_cache: dict[str, ADR] = {}  # Cache full ADRs for search
         self._loaded = False
 
     def _ensure_loaded(self) -> None:
@@ -120,14 +121,30 @@ class IndexManager:
             return
 
         self._entries.clear()
+        self._adr_cache.clear()
 
-        # Load all ADRs and build index
+        # Load all ADRs and build index + cache
         adrs = self._notes.list_all()
         for adr in adrs:
             entry = IndexEntry.from_adr(adr)
             self._entries[entry.id] = entry
+            self._adr_cache[adr.id] = adr  # Cache full ADR for search
 
         self._loaded = True
+
+    def get_cached_adr(self, adr_id: str) -> ADR | None:
+        """Get a cached ADR by ID.
+
+        This avoids re-fetching ADRs that were already loaded during index build.
+
+        Args:
+            adr_id: ADR ID to retrieve.
+
+        Returns:
+            Cached ADR instance, or None if not found.
+        """
+        self._ensure_loaded()
+        return self._adr_cache.get(adr_id)
 
     def invalidate(self) -> None:
         """Invalidate the index cache.
@@ -136,6 +153,7 @@ class IndexManager:
         """
         self._loaded = False
         self._entries.clear()
+        self._adr_cache.clear()
 
     def rebuild(self) -> int:
         """Force rebuild of the index.
@@ -303,8 +321,8 @@ class IndexManager:
             pattern = re.compile(re.escape(query), flags)
 
         for entry in entries:
-            # Get full ADR content for searching
-            adr = self._notes.get(entry.id)
+            # Get full ADR content from cache (avoids re-fetching)
+            adr = self._adr_cache.get(entry.id)
             if adr is None:
                 continue
 

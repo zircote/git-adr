@@ -12,6 +12,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
+from git_adr.commands._shared import get_status_style
 from git_adr.core import (
     ADRStatus,
     ConfigManager,
@@ -110,7 +111,7 @@ def _display_match(match, query: str, case_sensitive: bool) -> None:
     entry = match.entry
 
     # Header
-    status_style = _get_status_style(entry.status)
+    status_style = get_status_style(entry.status)
     header = Text()
     header.append(entry.id, style="cyan bold")
     header.append(" ")
@@ -164,23 +165,3 @@ def _highlight_snippet(snippet: str, query: str, case_sensitive: bool) -> Text:
     text.append(snippet[last_end:])
 
     return text
-
-
-def _get_status_style(status: ADRStatus) -> str:
-    """Get style for status.
-
-    Args:
-        status: ADR status.
-
-    Returns:
-        Rich style name.
-    """
-    styles = {
-        ADRStatus.DRAFT: "dim",
-        ADRStatus.PROPOSED: "yellow",
-        ADRStatus.ACCEPTED: "green",
-        ADRStatus.REJECTED: "red",
-        ADRStatus.DEPRECATED: "dim red",
-        ADRStatus.SUPERSEDED: "dim",
-    }
-    return styles.get(status, "default")

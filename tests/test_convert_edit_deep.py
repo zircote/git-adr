@@ -200,7 +200,7 @@ class TestEditCommand:
 class TestEditFullWorkflow:
     """Tests for full editor workflow."""
 
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_edit_no_editor(
         self, mock_find_editor: MagicMock, adr_repo_with_data: Path
     ) -> None:
@@ -212,7 +212,7 @@ class TestEditFullWorkflow:
         assert "editor" in result.output.lower()
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_edit_editor_error(
         self,
         mock_find_editor: MagicMock,
@@ -228,7 +228,7 @@ class TestEditFullWorkflow:
         assert result.exit_code in [0, 1]
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     @patch("pathlib.Path.read_text")
     def test_edit_no_changes(
         self,
@@ -247,7 +247,7 @@ class TestEditFullWorkflow:
         assert result.exit_code in [0, 1]
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_edit_full_success(
         self,
         mock_find_editor: MagicMock,
@@ -342,7 +342,7 @@ class TestFullEditFunction:
     """Tests for _full_edit function."""
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_invalid_adr_format(
         self,
         mock_find_editor: MagicMock,

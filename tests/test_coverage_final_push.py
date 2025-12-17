@@ -428,7 +428,7 @@ Updated consequences.
 
             mock_run.side_effect = side_effect
 
-            with patch("git_adr.commands.new._find_editor", return_value="vim"):
+            with patch("git_adr.commands._editor.find_editor", return_value="vim"):
                 result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
                 # May succeed or fail depending on parsing
                 # The important thing is the code path is exercised
@@ -448,7 +448,7 @@ Updated consequences.
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=1)
 
-            with patch("git_adr.commands.new._find_editor", return_value="vim"):
+            with patch("git_adr.commands._editor.find_editor", return_value="vim"):
                 result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
                 # Should warn but continue
                 assert result.exit_code in [0, 1]
@@ -467,7 +467,7 @@ Updated consequences.
 
             mock_run.side_effect = side_effect
 
-            with patch("git_adr.commands.new._find_editor", return_value="vim"):
+            with patch("git_adr.commands._editor.find_editor", return_value="vim"):
                 result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
                 # May fail with parse error or succeed with default parsing
                 assert result.exit_code in [0, 1]
