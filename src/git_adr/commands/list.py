@@ -13,6 +13,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from git_adr.commands._shared import get_status_style
 from git_adr.core import (
     ADRStatus,
     ConfigManager,
@@ -153,7 +154,7 @@ def _output_table(entries: list) -> None:
 
     for entry in entries:
         # Color status
-        status_style = _get_status_style(entry.status)
+        status_style = get_status_style(entry.status)
         status_text = f"[{status_style}]{entry.status.value}[/{status_style}]"
 
         table.add_row(
@@ -165,26 +166,6 @@ def _output_table(entries: list) -> None:
         )
 
     console.print(table)
-
-
-def _get_status_style(status: ADRStatus) -> str:
-    """Get rich style for a status.
-
-    Args:
-        status: ADR status.
-
-    Returns:
-        Rich style name.
-    """
-    styles = {
-        ADRStatus.DRAFT: "dim",
-        ADRStatus.PROPOSED: "yellow",
-        ADRStatus.ACCEPTED: "green",
-        ADRStatus.REJECTED: "red",
-        ADRStatus.DEPRECATED: "dim red",
-        ADRStatus.SUPERSEDED: "dim",
-    }
-    return styles.get(status, "default")
 
 
 def _output_json(entries: list) -> None:

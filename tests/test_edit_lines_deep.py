@@ -20,7 +20,7 @@ class TestFullEditWorkflowLines187To233:
     """Tests targeting lines 187-233 in edit.py."""
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_original_content_preserved(
         self,
         mock_find_editor: MagicMock,
@@ -37,7 +37,7 @@ class TestFullEditWorkflowLines187To233:
 
     @patch("tempfile.NamedTemporaryFile")
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_temp_file_creation(
         self,
         mock_find_editor: MagicMock,
@@ -60,7 +60,7 @@ class TestFullEditWorkflowLines187To233:
         assert result.exit_code in [0, 1]
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_editor_command_built(
         self,
         mock_find_editor: MagicMock,
@@ -76,7 +76,7 @@ class TestFullEditWorkflowLines187To233:
         assert result.exit_code in [0, 1]
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_editor_nonzero_exit_warning(
         self,
         mock_find_editor: MagicMock,
@@ -96,7 +96,7 @@ class TestFullEditWorkflowLines187To233:
 
     @patch("pathlib.Path.read_text")
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_content_unchanged_no_changes(
         self,
         mock_find_editor: MagicMock,
@@ -115,7 +115,7 @@ class TestFullEditWorkflowLines187To233:
 
     @patch("pathlib.Path.read_text")
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_invalid_adr_format_error(
         self,
         mock_find_editor: MagicMock,
@@ -136,7 +136,7 @@ class TestFullEditWorkflowLines187To233:
         assert result.exit_code in [0, 1]
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_save_changes_success(
         self,
         mock_find_editor: MagicMock,
@@ -152,7 +152,7 @@ class TestFullEditWorkflowLines187To233:
 
     @patch("pathlib.Path.unlink")
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_cleanup_temp_file(
         self,
         mock_find_editor: MagicMock,
@@ -174,7 +174,7 @@ class TestEditWithModifiedContent:
 
     @patch("pathlib.Path.read_text")
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_parse_valid_updated_content(
         self,
         mock_find_editor: MagicMock,
@@ -223,7 +223,7 @@ class TestEditPreserveOriginalId:
 
     @patch("pathlib.Path.read_text")
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_preserves_id_on_update(
         self,
         mock_find_editor: MagicMock,
@@ -261,11 +261,11 @@ class TestEditorSpecificBehaviors:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test building VS Code command with --wait."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
         mock_which.return_value = "/usr/local/bin/code"
 
-        cmd = _build_editor_command("code", "/path/to/file.md")
+        cmd = build_editor_command("code", "/path/to/file.md")
         assert "code" in cmd[0]
         assert "--wait" in cmd
         assert "/path/to/file.md" in cmd
@@ -275,9 +275,9 @@ class TestEditorSpecificBehaviors:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test building Sublime command with --wait."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("subl", "/path/to/file.md")
+        cmd = build_editor_command("subl", "/path/to/file.md")
         assert "subl" in cmd[0]
         assert "--wait" in cmd
 
@@ -286,9 +286,9 @@ class TestEditorSpecificBehaviors:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test building Atom command with --wait."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("atom", "/path/to/file.md")
+        cmd = build_editor_command("atom", "/path/to/file.md")
         assert "atom" in cmd[0]
         assert "--wait" in cmd
 
@@ -297,9 +297,9 @@ class TestEditorSpecificBehaviors:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test that terminal editors don't get --wait."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("vim", "/path/to/file.md")
+        cmd = build_editor_command("vim", "/path/to/file.md")
         assert "vim" in cmd[0]
         assert "--wait" not in cmd
 
@@ -308,9 +308,9 @@ class TestEditorSpecificBehaviors:
         self, mock_which: MagicMock, adr_repo_with_data: Path
     ) -> None:
         """Test editor command with existing arguments."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("code --new-window", "/path/to/file.md")
+        cmd = build_editor_command("code --new-window", "/path/to/file.md")
         assert "code" in cmd[0]
         assert "--new-window" in cmd
         assert "--wait" in cmd
@@ -327,7 +327,7 @@ class TestFindEditorFallbacks:
         """Test _find_editor uses config.editor first."""
         import os
 
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         # Clear environment variables
         for var in ["EDITOR", "VISUAL"]:
@@ -337,7 +337,7 @@ class TestFindEditorFallbacks:
         mock_which.side_effect = lambda x: x if x in ["nvim", "vim"] else None
 
         config = Config(editor="nvim")
-        editor = _find_editor(config)
+        editor = find_editor(config)
         assert editor == "nvim"
 
     @patch("shutil.which")
@@ -347,7 +347,7 @@ class TestFindEditorFallbacks:
         """Test _find_editor fallback to vim."""
         import os
 
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         # Clear env vars
         old_editor = os.environ.pop("EDITOR", None)
@@ -358,7 +358,7 @@ class TestFindEditorFallbacks:
             mock_which.side_effect = lambda x: x if x == "vim" else None
 
             config = Config()
-            editor = _find_editor(config)
+            editor = find_editor(config)
             assert editor == "vim"
         finally:
             if old_editor:
@@ -373,7 +373,7 @@ class TestFindEditorFallbacks:
         """Test _find_editor fallback to nano."""
         import os
 
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         old_editor = os.environ.pop("EDITOR", None)
         old_visual = os.environ.pop("VISUAL", None)
@@ -383,7 +383,7 @@ class TestFindEditorFallbacks:
             mock_which.side_effect = lambda x: x if x == "nano" else None
 
             config = Config()
-            editor = _find_editor(config)
+            editor = find_editor(config)
             assert editor == "nano"
         finally:
             if old_editor:
@@ -398,7 +398,7 @@ class TestFindEditorFallbacks:
         """Test _find_editor fallback to vi."""
         import os
 
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         old_editor = os.environ.pop("EDITOR", None)
         old_visual = os.environ.pop("VISUAL", None)
@@ -408,7 +408,7 @@ class TestFindEditorFallbacks:
             mock_which.side_effect = lambda x: x if x == "vi" else None
 
             config = Config()
-            editor = _find_editor(config)
+            editor = find_editor(config)
             assert editor == "vi"
         finally:
             if old_editor:
@@ -423,7 +423,7 @@ class TestFindEditorFallbacks:
         """Test _find_editor returns None when no editor found (line 399)."""
         import os
 
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         old_editor = os.environ.pop("EDITOR", None)
         old_visual = os.environ.pop("VISUAL", None)
@@ -433,7 +433,7 @@ class TestFindEditorFallbacks:
             mock_which.return_value = None
 
             config = Config()
-            editor = _find_editor(config)
+            editor = find_editor(config)
             assert editor is None
         finally:
             if old_editor:

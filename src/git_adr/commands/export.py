@@ -5,6 +5,7 @@ Exports ADRs to various formats and locations.
 
 from __future__ import annotations
 
+import html
 import json
 from collections.abc import Callable
 from pathlib import Path
@@ -174,8 +175,8 @@ def _export_html(
         filename = f"{adr.metadata.id}.html"
         file_path = output_path / filename
 
-        html = _format_adr_html(adr, md)
-        file_path.write_text(html)
+        html_content = _format_adr_html(adr, md)
+        file_path.write_text(html_content)
 
     # Create index
     index_html = [
@@ -188,8 +189,10 @@ def _export_html(
     ]
 
     for adr in sorted(adrs, key=lambda a: a.metadata.id):
+        safe_id = html.escape(adr.metadata.id)
+        safe_title = html.escape(adr.metadata.title)
         index_html.append(
-            f'<li><a href="{adr.metadata.id}.html">{adr.metadata.id}</a>: {adr.metadata.title}</li>'
+            f'<li><a href="{safe_id}.html">{safe_id}</a>: {safe_title}</li>'
         )
 
     index_html.extend(["</ul>", "</body></html>"])
@@ -213,12 +216,24 @@ def _format_adr_markdown(adr: ADR) -> str:
 
 
 def _format_adr_html(adr: ADR, md_converter) -> str:
-    """Format ADR as HTML."""
+    """Format ADR as HTML.
+
+    All user-controlled values are HTML-escaped to prevent XSS attacks.
+    """
+    # Escape all user-controlled values
+    safe_id = html.escape(adr.metadata.id)
+    safe_title = html.escape(adr.metadata.title)
+    safe_status = html.escape(adr.metadata.status.value)
+    safe_author = html.escape(_get_author(adr))
+    safe_date = html.escape(str(adr.metadata.date))
+
+    # Convert markdown content to HTML (mistune handles its own escaping)
     content_html = md_converter(adr.content)
+
     return f"""<!DOCTYPE html>
 <html>
 <head>
-<title>{adr.metadata.id}: {adr.metadata.title}</title>
+<title>{safe_id}: {safe_title}</title>
 <style>
 body {{ font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }}
 .meta {{ background: #f5f5f5; padding: 10px; border-radius: 4px; margin-bottom: 20px; }}
@@ -226,11 +241,11 @@ body {{ font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; pa
 </style>
 </head>
 <body>
-<h1>{adr.metadata.id}: {adr.metadata.title}</h1>
+<h1>{safe_id}: {safe_title}</h1>
 <dl class="meta">
-<dt>Status</dt><dd>{adr.metadata.status.value}</dd>
-<dt>Decider</dt><dd>{_get_author(adr)}</dd>
-<dt>Date</dt><dd>{adr.metadata.date}</dd>
+<dt>Status</dt><dd>{safe_status}</dd>
+<dt>Decider</dt><dd>{safe_author}</dd>
+<dt>Date</dt><dd>{safe_date}</dd>
 </dl>
 {content_html}
 </body>

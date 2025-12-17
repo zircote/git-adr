@@ -380,7 +380,7 @@ Changed consequences.
                 return MagicMock(returncode=0)
 
             with patch("subprocess.run", side_effect=write_content):
-                with patch("git_adr.commands.new._find_editor", return_value="cat"):
+                with patch("git_adr.commands._editor.find_editor", return_value="cat"):
                     result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
                     # Should succeed with changes
                     assert result.exit_code in [0, 1]
