@@ -173,10 +173,10 @@ def _full_edit(notes_manager: NotesManager, adr: ADR, config) -> None:
     import subprocess  # nosec B404 - subprocess needed to launch user's editor
     import tempfile
 
-    from git_adr.commands.new import _build_editor_command, _find_editor
+    from git_adr.commands._editor import build_editor_command, find_editor
 
     # Find editor
-    editor_cmd = _find_editor(config)
+    editor_cmd = find_editor(config)
     if editor_cmd is None:
         err_console.print(
             "[red]Error:[/red] No editor found. Set $EDITOR or use quick edit options."
@@ -197,7 +197,7 @@ def _full_edit(notes_manager: NotesManager, adr: ADR, config) -> None:
 
     try:
         # Open editor
-        cmd = _build_editor_command(editor_cmd, temp_path)
+        cmd = build_editor_command(editor_cmd, temp_path)
         console.print(f"[dim]Opening editor: {editor_cmd}[/dim]")
 
         # cmd is built from user's $EDITOR (trusted) + temp file path we control

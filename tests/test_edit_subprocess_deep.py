@@ -22,7 +22,7 @@ class TestEditFullEditorFlowDirect:
 
     def test_full_edit_no_editor(self, adr_repo_with_data: Path) -> None:
         """Test _full_edit when no editor is found."""
-        with patch("git_adr.commands.new._find_editor", return_value=None):
+        with patch("git_adr.commands._editor.find_editor", return_value=None):
             result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
             assert result.exit_code == 1
             assert (
@@ -70,7 +70,7 @@ Updated consequences from editor test.
                     Path(temp_file_path).write_text(changed_content)
             return MagicMock(returncode=0)
 
-        with patch("git_adr.commands.new._find_editor", return_value="cat"):
+        with patch("git_adr.commands._editor.find_editor", return_value="cat"):
             with patch("subprocess.run", side_effect=capture_and_write):
                 result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
                 # The flow should complete - either success or handled error
@@ -78,7 +78,7 @@ Updated consequences from editor test.
 
     def test_full_edit_subprocess_error(self, adr_repo_with_data: Path) -> None:
         """Test editor flow when subprocess returns error."""
-        with patch("git_adr.commands.new._find_editor", return_value="vim"):
+        with patch("git_adr.commands._editor.find_editor", return_value="vim"):
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=127)  # Command not found
                 result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
@@ -91,7 +91,7 @@ class TestEditModuleInternal:
 
     def test_edit_calls_subprocess_run(self, adr_repo_with_data: Path) -> None:
         """Verify subprocess.run is called during edit."""
-        with patch("git_adr.commands.new._find_editor", return_value="nano"):
+        with patch("git_adr.commands._editor.find_editor", return_value="nano"):
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0)
                 result = runner.invoke(app, ["edit", "20250110-use-postgresql"])

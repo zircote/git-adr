@@ -573,7 +573,7 @@ class TestEditFullWorkflowDeep:
     """Deep tests for full edit workflow."""
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     @patch("pathlib.Path.read_text")
     def test_full_edit_modified(
         self,

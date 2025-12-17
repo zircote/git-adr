@@ -266,7 +266,7 @@ class TestNewEditorContent:
     """Tests for editor content handling."""
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_new_editor_empty_content(
         self,
         mock_find_editor: MagicMock,
@@ -283,7 +283,7 @@ class TestNewEditorContent:
             assert result.exit_code in [0, 1]
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_new_editor_no_changes(
         self,
         mock_find_editor: MagicMock,
@@ -309,7 +309,7 @@ class TestFindEditorAdvanced:
         """Test _find_editor with config.editor containing spaces (line 385)."""
         import os
 
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         old_editor = os.environ.pop("EDITOR", None)
         old_visual = os.environ.pop("VISUAL", None)
@@ -319,7 +319,7 @@ class TestFindEditorAdvanced:
             mock_which.side_effect = lambda x: x if x == "code" else None
 
             config = Config(editor="code --wait")
-            editor = _find_editor(config)
+            editor = find_editor(config)
             assert editor == "code --wait"
         finally:
             if old_editor:
@@ -334,7 +334,7 @@ class TestFindEditorAdvanced:
         """Test _find_editor uses VISUAL environment variable."""
         import os
 
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         old_editor = os.environ.pop("EDITOR", None)
         old_visual = os.environ.pop("VISUAL", None)
@@ -344,7 +344,7 @@ class TestFindEditorAdvanced:
             mock_which.side_effect = lambda x: x if x in ["emacs", "vim"] else None
 
             config = Config()
-            editor = _find_editor(config)
+            editor = find_editor(config)
             assert editor == "emacs"
         finally:
             if old_editor:
@@ -359,7 +359,7 @@ class TestFindEditorAdvanced:
         """Test _find_editor when EDITOR is set but not found (lines 391-392)."""
         import os
 
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         old_editor = os.environ.pop("EDITOR", None)
         old_visual = os.environ.pop("VISUAL", None)
@@ -369,7 +369,7 @@ class TestFindEditorAdvanced:
             mock_which.side_effect = lambda x: x if x == "vim" else None
 
             config = Config()
-            editor = _find_editor(config)
+            editor = find_editor(config)
             # Should fall back to vim
             assert editor == "vim"
         finally:
@@ -384,51 +384,51 @@ class TestBuildEditorCommand:
 
     def test_build_editor_command_vscode(self) -> None:
         """Test _build_editor_command with VS Code."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("code", "/path/to/file.md")
+        cmd = build_editor_command("code", "/path/to/file.md")
         assert cmd[0] == "code"
         assert "--wait" in cmd
         assert "/path/to/file.md" in cmd
 
     def test_build_editor_command_sublime(self) -> None:
         """Test _build_editor_command with Sublime Text."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("subl", "/path/to/file.md")
+        cmd = build_editor_command("subl", "/path/to/file.md")
         assert cmd[0] == "subl"
         assert "--wait" in cmd
 
     def test_build_editor_command_zed(self) -> None:
         """Test _build_editor_command with Zed."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("zed", "/path/to/file.md")
+        cmd = build_editor_command("zed", "/path/to/file.md")
         assert cmd[0] == "zed"
         assert "--wait" in cmd
 
     def test_build_editor_command_textmate(self) -> None:
         """Test _build_editor_command with TextMate (not in GUI_EDITORS)."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("mate", "/path/to/file.md")
+        cmd = build_editor_command("mate", "/path/to/file.md")
         assert cmd[0] == "mate"
         # mate is not in GUI_EDITORS, so no --wait
         assert "/path/to/file.md" in cmd
 
     def test_build_editor_command_already_has_wait(self) -> None:
         """Test _build_editor_command doesn't double --wait (line 422-423)."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("code --wait", "/path/to/file.md")
+        cmd = build_editor_command("code --wait", "/path/to/file.md")
         # Should only have one --wait
         assert cmd.count("--wait") == 1
 
     def test_build_editor_command_terminal_editor(self) -> None:
         """Test _build_editor_command with terminal editor (no --wait)."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("nano", "/path/to/file.md")
+        cmd = build_editor_command("nano", "/path/to/file.md")
         assert cmd[0] == "nano"
         assert "--wait" not in cmd
 

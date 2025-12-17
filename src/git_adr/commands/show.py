@@ -15,7 +15,9 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 
+from git_adr.commands._shared import get_status_style
 from git_adr.core import (
+    ADRStatus,
     ConfigManager,
     GitError,
     NotesManager,
@@ -170,7 +172,7 @@ def _output_json(adr, metadata_only: bool) -> None:
     console.print(json.dumps(data, indent=2))
 
 
-def _format_status(status) -> str:
+def _format_status(status: ADRStatus) -> str:
     """Format status with color.
 
     Args:
@@ -179,17 +181,7 @@ def _format_status(status) -> str:
     Returns:
         Formatted status string.
     """
-    from git_adr.core import ADRStatus
-
-    styles = {
-        ADRStatus.DRAFT: "dim",
-        ADRStatus.PROPOSED: "yellow",
-        ADRStatus.ACCEPTED: "green",
-        ADRStatus.REJECTED: "red",
-        ADRStatus.DEPRECATED: "dim red",
-        ADRStatus.SUPERSEDED: "dim",
-    }
-    style = styles.get(status, "default")
+    style = get_status_style(status)
     return f"[{style}]{status.value}[/{style}]"
 
 

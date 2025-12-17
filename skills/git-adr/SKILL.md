@@ -14,6 +14,31 @@ description: >
 
 Comprehensive skill for managing Architecture Decision Records using the git-adr CLI tool.
 
+## Auto-Context Loading
+
+**At session start**, if in a git-adr repository, automatically load ADR summary:
+
+```bash
+# Silent detection and load
+git notes --ref=adr list &>/dev/null && git adr list --format oneline 2>/dev/null
+```
+
+This provides awareness of existing decisions without consuming excessive context.
+See [workflows/session-start.md](workflows/session-start.md) for full behavior.
+
+## On-Demand Hydration
+
+Use **progressive loading** for token efficiency:
+
+| Trigger | Action |
+|---------|--------|
+| "Show me ADR {id}" | `git adr show {id}` → full content |
+| "What did we decide about X" | `git adr search "X"` → snippets |
+| "Record this decision" | Guided creation workflow |
+
+See [workflows/decision-recall.md](workflows/decision-recall.md) for recall patterns.
+See [workflows/decision-capture.md](workflows/decision-capture.md) for creation flow.
+
 ## CRITICAL RULES
 
 **NEVER modify user configuration without explicit permission.**
@@ -229,6 +254,9 @@ Load reference files based on user intent:
 | "Configure git-adr" | `references/configuration.md` |
 | "What is an ADR?" | `references/best-practices.md` |
 | "Set up for my team" | `references/workflows.md` |
+| "Find decisions about X" | `references/search-patterns.md` |
+| "Record this decision" | `workflows/decision-capture.md` |
+| "What did we decide" | `workflows/decision-recall.md` |
 
 ## ADR Content Generation
 
@@ -260,9 +288,13 @@ Before creating an ADR, ensure:
 | `references/configuration.md` | All config options |
 | `references/best-practices.md` | ADR writing guidance |
 | `references/workflows.md` | Common workflow patterns |
+| `references/search-patterns.md` | Natural language → search mapping |
 | `references/formats/madr.md` | MADR template |
 | `references/formats/nygard.md` | Nygard template |
 | `references/formats/y-statement.md` | Y-Statement template |
 | `references/formats/alexandrian.md` | Alexandrian template |
 | `references/formats/business-case.md` | Business Case template |
 | `references/formats/planguage.md` | Planguage template |
+| `workflows/session-start.md` | Auto-context loading behavior |
+| `workflows/decision-capture.md` | Guided ADR creation workflow |
+| `workflows/decision-recall.md` | Find past decisions workflow |

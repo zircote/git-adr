@@ -9,17 +9,14 @@ Creates a new Architecture Decision Record with multiple input modes:
 
 from __future__ import annotations
 
-import os
-import shutil
-import subprocess  # nosec B404 - subprocess needed to launch user's editor
 import sys
-import tempfile
 from pathlib import Path
 
 import typer
 from rich.console import Console
 from rich.markdown import Markdown
 
+from git_adr.commands._editor import open_editor
 from git_adr.core import (
     ADR,
     ADRMetadata,
@@ -37,22 +34,6 @@ from git_adr.core.templates import TemplateEngine
 
 console = Console()
 err_console = Console(stderr=True)
-
-# Editor fallback chain
-EDITOR_FALLBACKS = ["vim", "nano", "vi"]
-
-# GUI editors that need --wait flag
-GUI_EDITORS = {
-    "code": "--wait",
-    "subl": "--wait",
-    "sublime_text": "--wait",
-    "atom": "--wait",
-    "zed": "--wait",
-    "cursor": "--wait",
-    "idea": "--wait",
-    "pycharm": "--wait",
-    "webstorm": "--wait",
-}
 
 
 def run_new(
@@ -331,130 +312,4 @@ def _get_content(
         raise typer.Exit(1)
 
     # Open editor
-    return _open_editor(template_content, config)
-
-
-def _open_editor(content: str, config: Config) -> str | None:
-    """Open the user's editor with content.
-
-    Args:
-        content: Initial content.
-        config: Configuration.
-
-    Returns:
-        Edited content, or None if aborted.
-    """
-
-    # Find editor
-    editor_cmd = _find_editor(config)
-    if editor_cmd is None:
-        err_console.print(
-            "[red]Error:[/red] No editor found. Set $EDITOR or use --file"
-        )
-        raise typer.Exit(1)
-
-    # Create temp file
-    with tempfile.NamedTemporaryFile(
-        mode="w",
-        suffix=".md",
-        prefix="git-adr-",
-        delete=False,
-    ) as f:
-        f.write(content)
-        temp_path = f.name
-
-    try:
-        # Build editor command
-        cmd = _build_editor_command(editor_cmd, temp_path)
-
-        console.print(f"[dim]Opening editor: {editor_cmd}[/dim]")
-
-        # Run editor - cmd is built from user's $EDITOR (trusted) + temp file path we control
-        result = subprocess.run(cmd, check=False)  # nosec B603
-
-        if result.returncode != 0:
-            err_console.print(
-                f"[yellow]Warning:[/yellow] Editor exited with code {result.returncode}"
-            )
-
-        # Read edited content
-        edited_content = Path(temp_path).read_text()
-
-        # Check if content was changed
-        if edited_content.strip() == content.strip():
-            console.print("[dim]No changes made[/dim]")
-            return None
-
-        # Check for empty content
-        if not edited_content.strip():
-            console.print("[dim]Empty content[/dim]")
-            return None
-
-        return edited_content
-
-    finally:
-        # Clean up temp file
-        Path(temp_path).unlink(missing_ok=True)
-
-
-def _find_editor(config: Config) -> str | None:
-    """Find the editor to use.
-
-    Fallback chain:
-    1. adr.editor config
-    2. $EDITOR
-    3. $VISUAL
-    4. vim
-    5. nano
-    6. vi
-
-    Args:
-        config: Configuration.
-
-    Returns:
-        Editor command, or None if not found.
-    """
-
-    # Check config
-    if config.editor:
-        if shutil.which(config.editor.split()[0]):
-            return config.editor
-
-    # Check environment
-    for env_var in ["EDITOR", "VISUAL"]:
-        editor = os.environ.get(env_var)
-        if editor and shutil.which(editor.split()[0]):
-            return editor
-
-    # Check fallbacks
-    for editor in EDITOR_FALLBACKS:
-        if shutil.which(editor):
-            return editor
-
-    return None
-
-
-def _build_editor_command(editor: str, file_path: str) -> list[str]:
-    """Build the editor command with appropriate flags.
-
-    Adds --wait flag for GUI editors that need it.
-
-    Args:
-        editor: Editor command.
-        file_path: Path to file to edit.
-
-    Returns:
-        Command list for subprocess.
-    """
-    parts = editor.split()
-    cmd = parts[0]
-    args = parts[1:]
-
-    # Check if this is a GUI editor that needs --wait
-    cmd_name = Path(cmd).stem.lower()
-    if cmd_name in GUI_EDITORS:
-        wait_flag = GUI_EDITORS[cmd_name]
-        if wait_flag not in args:
-            args.append(wait_flag)
-
-    return [cmd, *args, file_path]
+    return open_editor(template_content, config)

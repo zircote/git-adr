@@ -21,7 +21,7 @@ class TestFullEditWorkflow:
     """Tests for _full_edit function (lines 187-233)."""
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_editor_exits_success(
         self,
         mock_find_editor: MagicMock,
@@ -37,7 +37,7 @@ class TestFullEditWorkflow:
         assert result.exit_code in [0, 1]
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_editor_exits_error(
         self,
         mock_find_editor: MagicMock,
@@ -59,7 +59,7 @@ class TestFullEditWithContent:
     """Tests for edit with modified content."""
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_content_unchanged(
         self,
         mock_find_editor: MagicMock,
@@ -75,7 +75,7 @@ class TestFullEditWithContent:
 
     @patch("pathlib.Path.read_text")
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_invalid_format_after_edit(
         self,
         mock_find_editor: MagicMock,
@@ -166,7 +166,7 @@ class TestEditorCommand:
         """Test _find_editor uses environment variable."""
         import os
 
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         # Mock shutil.which to return the editor we set
         mock_which.side_effect = lambda x: x if x in ["code", "vim"] else None
@@ -178,7 +178,7 @@ class TestEditorCommand:
             if "VISUAL" in os.environ:
                 del os.environ["VISUAL"]
             config = Config()
-            editor = _find_editor(config)
+            editor = find_editor(config)
             assert editor == "code"
         finally:
             if old_editor:
@@ -195,7 +195,7 @@ class TestEditorCommand:
         """Test _find_editor uses config."""
         import os
 
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         # Mock shutil.which to return nvim
         mock_which.side_effect = lambda x: x if x in ["nvim", "vim"] else None
@@ -208,7 +208,7 @@ class TestEditorCommand:
             if "VISUAL" in os.environ:
                 del os.environ["VISUAL"]
             config = Config(editor="nvim")
-            editor = _find_editor(config)
+            editor = find_editor(config)
             assert editor == "nvim"
         finally:
             if old_editor:
@@ -218,16 +218,16 @@ class TestEditorCommand:
 
     def test_build_editor_command(self) -> None:
         """Test _build_editor_command."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("vim", "/path/to/file.md")
+        cmd = build_editor_command("vim", "/path/to/file.md")
         assert cmd == ["vim", "/path/to/file.md"]
 
     def test_build_editor_command_code(self) -> None:
         """Test _build_editor_command with VS Code."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("code", "/path/to/file.md")
+        cmd = build_editor_command("code", "/path/to/file.md")
         assert "code" in cmd[0]
         assert "--wait" in cmd
 

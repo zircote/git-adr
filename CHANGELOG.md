@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-12-17
+
+### Changed
+
+- Enhanced GitHub ecosystem documentation and instructions
+  - Added CODEOWNERS file for repository maintenance
+  - Updated Copilot instructions with accurate architecture details
+  - Improved code-surgeon instructions for Python 3.11+ and Typer CLI
+- Archived PyInstaller binary specification to completed directory with retrospective
+
 ## [0.2.0] - 2025-12-16
 
 ### Added
@@ -157,6 +167,7 @@ Initial release of git-adr - Architecture Decision Records management for git re
 - Supports frontmatter-based metadata in Markdown files
 - 95%+ test coverage with pytest
 
+[0.2.1]: https://github.com/zircote/git-adr/releases/tag/v0.2.1
 [0.2.0]: https://github.com/zircote/git-adr/releases/tag/v0.2.0
 [0.1.7]: https://github.com/zircote/git-adr/releases/tag/v0.1.7
 [0.1.6]: https://github.com/zircote/git-adr/releases/tag/v0.1.6
