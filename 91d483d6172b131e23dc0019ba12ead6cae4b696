@@ -1,0 +1,127 @@
+---
+date: '2025-12-16'
+id: 20251216-use-shell-subprocess-for-git-adr-cli-integration
+status: proposed
+title: Use Shell Subprocess for git-adr CLI Integration
+---
+
+# Use Shell Subprocess for git-adr CLI Integration
+
+Status: Accepted
+
+Date: 2025-12-17
+
+Tags: claude-skill, git-adr, integration, shell
+
+## Context and Problem Statement
+
+The Claude Skill for managing Architecture Decision Records (git-adr Claude Skill) must interact with the existing git-adr tooling so it can create, list, edit, and query ADRs in a user's git repository. The skill runs inside the Claude Code execution environment and must:
+
+- Execute git-adr functionality programmatically from the skill.
+- Work reliably across user environments and repo layouts.
+- Be testable locally and in CI, and be easy to debug by developers and users.
+- Minimize coupling to git-adr internal implementation details (APIs that may change).
+- Respect security and sandboxing constraints of the execution environment.
+
+We evaluated three integration approaches:
+1. Invoke git-adr via shell subprocess calls (CLI invocation).
+2. Import git-adr as a Python module and call its internal functions/classes.
+3. Run a dedicated MCP/server wrapper around git-adr and call it via network.
+
+This ADR records the decision to use direct shell subprocess invocations of git-adr CLI commands.
+
+## Decision Drivers
+
+- Compatibility with Claude Code runtime and current capability set.
+- Avoidance of dependency on git-adr internal (potentially unstable) Python API.
+- Minimal operational complexity: no long-running service or network endpoints to deploy.
+- Testability (unit tests, integration tests with reference repos).
+- Debuggability and transparency: users and developers should see familiar commands and outputs.
+- Security: minimize attack surface and surface area for API breakage.
+- Maintainability: low ongoing maintenance cost.
+- Performance/latency acceptable for short-lived CLI invocations.
+
+## Considered Options
+
+- Shell subprocess calls to git-adr commands
+  - Start subprocesses to run the installed git-adr CLI (e.g., `git adr ...` or `git-adr ...`), capture stdout/stderr, and handle exit status.
+- Python import of git-adr modules
+  - Add git-adr as a Python dependency and call its internal functions/classes directly in-process.
+- MCP server wrapping git-adr
+  - Run a separate microservice (MCP) that exposes a stable RPC/HTTP interface. The service would itself call git-adr (either via import or subprocess) and the Claude Skill would call this service.
+
+## Decision Outcome (Chosen option with justification)
+
+Chosen option: Shell subprocess calls to git-adr CLI commands.
+
+Justification (technical and practical):
+
+- Works with Claude Code's current capabilities:
+  - The Code execution environment supports executing subprocesses; this leverages those existing, stable capabilities without requiring additional language-level imports or long-lived services.
+- No dependency on internal git-adr APIs:
+  - Using the public CLI surface minimizes coupling to internal Python APIs that may change between git-adr versions.
+- Easy to test and debug:
+  - Unit tests can mock subprocess invocation; integration tests can create temporary git repositories and call the real CLI. Developers and users can reproduce behavior locally by running the same commands in a shell.
+- Familiar and transparent for users:
+  - Users and maintainers can see the same commands and outputs they would execute manually; command strings are understandable and can be logged for troubleshooting.
+- Lower operational/maintenance overhead than a service:
+  - No need to deploy, manage, or secure an additional MCP server instance.
+- Security and sandboxing are simpler:
+  - Fewer cross-process privileges and network exposures than a wrapper service. The subprocess approach keeps the surface area limited to the execution context and installed binaries.
+
+Implementation details to enforce the above justification:
+- Prefer invoking the git subcommand when available: `git adr <subcommand>`; if not installed as a git subcommand, fall back to an explicit `git-adr` binary. Allow the binary/command path to be configurable.
+- Always invoke subprocesses with argv lists (no shell=True) to prevent shell injection:
+  - Example pattern: subprocess.run([cmd, "adr", "new", "--title", title], cwd=repo_path, capture_output=True, text=True, timeout=30)
+- Provide sane timeouts, capture stdout/stderr, and map exit codes to structured errors that the skill understands.
+- Validate and sanitize user-supplied inputs (titles, file names) before passing them as args.
+- Detect availability/version of git-adr at skill startup (or lazily) and provide actionable error messages if missing or incompatible.
+- Add integration test suite that uses a disposable repo and the real CLI for end-to-end verification; use mocking for unit tests.
+
+## Consequences
+
+Good
+
+- Compatibility and low friction
+  - Works with the current runtime without adding language-level dependency management or deployment of services.
+- Decoupled from internal APIs
+  - The skill depends only on the publicly-exposed CLI behavior rather than private Python functions, reducing breakage surface.
+- Testability and reproducibility
+  - Unit tests can mock subprocess calls; integration tests can exercise real CLI against test repos. Developers can replicate flows locally using the same commands.
+- Transparency and debuggability
+  - Commands and outputs are visible and familiar to end users, aiding troubleshooting and support.
+- Low operational cost
+  - No extra infrastructure, service discovery, or service lifecycle management required.
+
+Bad
+
+- External dependency on installed binary and PATH
+  - The environment(s) running the skill must have git-adr installed (and available as `git adr` or `git-adr`). The skill must detect and report missing binaries.
+- CLI output parsing brittleness
+  - Parsing human-oriented CLI output is more fragile than using a stable programmatic API. Changes in CLI text/format across versions may require parser updates.
+- Process overhead and latency
+  - Each operation spawns a new process which adds overhead vs in-process calls. For typical ADR operations this is acceptable, but it is slower than direct imports.
+- Limited control compared to in-process API
+  - Less opportunity for fine-grained error handling and internal state manipulation than direct Python imports. Some operations may require additional I/O (e.g., writing files then invoking CLI).
+
+Neutral
+
+- Security profile depends on implementation
+  - Subprocess calls reduce network attack surface but still require careful input sanitization. Using argv lists avoids shell injection; reading/writing repository files still requires appropriate permission handling.
+- Requires environment capability checks
+  - The skill must include readiness checks (e.g., `git adr --version` or `git-adr --version`) and expose clear diagnostics. This is an expected operational step, neither strictly good nor bad.
+- Version compatibility strategy required
+  - We need a plan for detecting and handling incompatible git-adr versions (e.g., feature gating or upgrade notes). This is a maintenance task to be handled in the skill's compatibility tests.
+
+Actionable next steps (implementation checklist)
+
+- Implement a small adapter layer that:
+  - Resolves the command to run (`git adr` vs `git-adr`) and exposes a single call function (args list, cwd, timeout).
+  - Runs subprocesses without shell=True, captures stdout/stderr, and normalizes exit codes to skill exceptions.
+  - Logs executed commands and outputs for debugging (avoid leaking sensitive data).
+  - Validates and sanitizes all user input passed to the command.
+- Add startup/lazy checks for git-adr availability and version; surface errors with remediation steps.
+- Create unit tests that mock the adapter and integration tests that run real CLI commands against disposable git repos.
+- Document environment requirements (git-adr binary name(s), minimum versions) in the skill README and telemetry/diagnostic messages.
+
+Decision recorded by: Architecture team for git-adr Claude Skill.
