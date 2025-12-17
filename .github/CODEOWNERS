@@ -1,0 +1,26 @@
+# CODEOWNERS for git-adr
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for all files
+* @zircote
+
+# Core library
+/src/git_adr/core/ @zircote
+/src/git_adr/cli.py @zircote
+
+# AI integration
+/src/git_adr/ai/ @zircote
+
+# CI/CD and GitHub configuration
+/.github/ @zircote
+
+# Documentation
+/docs/ @zircote
+*.md @zircote
+
+# Tests
+/tests/ @zircote
+
+# Package configuration
+pyproject.toml @zircote
+uv.lock @zircote
