@@ -1,0 +1,83 @@
+---
+date: '2025-12-16'
+id: 20251216-use-structured-yaml-format-for-adr-summaries
+status: proposed
+title: Use Structured YAML Format for ADR Summaries
+---
+
+# Title
+Use Structured YAML Format for ADR Summaries
+
+## Context and Problem Statement
+- The Claude Skill's machine memory auto-loads ADR summaries from a git-adr repository to provide context to the model. That memory has strict token budget constraints and must be filled with many ADR summaries.
+- Requirements:
+  - Minimize token usage per ADR so more ADRs can fit into machine memory.
+  - Be reliably parseable by Claude (deterministic key/value layout, predictable tokens).
+  - Preserve enough context for the model to make decisions and answer questions (who, what, when, why).
+  - Remain human-readable for maintainers and compatible with existing tooling (git-adr).
+- Constraint: target ADR-summary payload ≈ 50–80 tokens per ADR when loaded into memory.
+- Existing git-adr provides a "--format=yaml" output; the chosen approach should align with that to minimize tooling changes.
+
+## Decision Drivers
+- Minimize per-ADR token footprint to maximize number of ADRs in memory.
+- Predictable, deterministic structure that a language model can reliably parse.
+- Compatibility with git-adr's existing YAML output to avoid custom exporters.
+- Human readability for quick manual inspection and edits.
+- Simplicity for automated extraction and validation (scripts, CI).
+- Robustness to special characters, multiline content, and non-ASCII text.
+- Ability to include useful metadata (status, date, tags) without inflating token counts.
+
+## Considered Options
+- Structured YAML-like single-line key/value summary (chosen).
+- Title-only entry (key: title) — smallest size but insufficient context and ambiguous.
+- One-line natural-language summary (single sentence) — compact but hard to parse reliably.
+- Mini-markdown (short bullets in markdown) — human-readable but higher token cost and inconsistent parsing.
+- Full ADR content (full markdown body) — most informative but prohibitive in token cost.
+- Compact JSON or binary serialization — parsable and compact but less human-friendly and less aligned with git-adr tooling.
+
+## Decision Outcome (Chosen option with justification)
+Chosen option:
+- Use a structured YAML-like single-level summary format per ADR with a fixed set of short keys that maps to git-adr --format=yaml output. This format will be the canonical auto-loaded summary for machine memory.
+
+Key points of the chosen format:
+- Fixed fields (all single-line scalar values; prefer single-line, no block scalars):
+  - id (short numeric or slug)
+  - title (short)
+  - status (e.g., accepted, superseded, proposed)
+  - date (ISO 8601)
+  - tags (comma-separated or YAML sequence of short tags)
+  - summary (concise 1–2 sentences, enforced limit to target 50–80 tokens)
+  - rationale (optional very short phrase or omitted)
+  - related (optional short refs)
+- Enforce single-line values (replace internal newlines with visible delimiter or escape) to keep tokenization predictable.
+- Apply strict length caps (token/character) on the summary field to meet the 50–80 token target.
+- Keep field order consistent to aid simple parser implementations and model tokenization patterns.
+- Use UTF-8 safe encoding; escape problematic characters minimally (e.g., pipes, leading dashes) to remain valid YAML-like text and compatible with git-adr --format=yaml.
+
+Justification:
+- Matches git-adr's existing YAML output expectations, minimizing integration work.
+- Deterministic key/value layout is easy for Claude to parse and map to knowledge.
+- Single-line scalars and length caps greatly reduce token variance and average token cost.
+- Retains essential metadata for human and programmatic use while keeping summaries compact.
+
+## Consequences
+
+Good
+- Predictable, low token footprint per ADR (meets ~50–80 token target for summaries).
+- Simple parsing by Claude and by standard YAML parsers; easy to implement loader.
+- Compatible with git-adr --format=yaml; minimal changes to existing ADR tooling.
+- Human-readable and editable; maintainers can quickly scan metadata and summaries.
+- Deterministic ordering and fields make automated validation and CI checks straightforward.
+
+Bad
+- Loss of full ADR detail in the auto-loaded memory; only a concise summary is available to the model.
+- Authors must write concise summaries and adhere to caps — added authoring discipline and possible friction.
+- Single-line enforcement can make representing nuance harder (no multiline examples, no long quotes).
+- Minor complexity for escaping/normalizing newlines and special characters to keep single-line scalars.
+
+Neutral
+- Slight increase in tooling to enforce and generate the summary format (linting, CI gates, export scripts).
+- The repository will contain both full ADR markdown files and compact summary YAML lines; storage overhead is negligible but introduces two representations to keep synchronized.
+- Future needs for richer context may require supplemental on-demand loading of full ADR bodies (not auto-loaded).
+
+Tags: claude-skill, git-adr, data-format, token-efficiency
