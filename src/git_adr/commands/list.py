@@ -7,21 +7,13 @@ from __future__ import annotations
 
 import json
 from datetime import date
-from pathlib import Path
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from git_adr.commands._shared import get_status_style
-from git_adr.core import (
-    ADRStatus,
-    ConfigManager,
-    GitError,
-    IndexManager,
-    NotesManager,
-    get_git,
-)
+from git_adr.commands._shared import get_status_style, setup_command_context
+from git_adr.core import ADRStatus, GitError
 
 console = Console()
 err_console = Console(stderr=True)
@@ -49,26 +41,8 @@ def run_list(
         typer.Exit: On error.
     """
     try:
-        # Get git and config
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        # Check if initialized
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
-
-        # Create notes and index managers
-        notes_manager = NotesManager(git, config)
-        index_manager = IndexManager(notes_manager)
+        # Initialize command context with index manager
+        ctx = setup_command_context(require_index=True)
 
         # Parse filters
         parsed_status = None
@@ -85,7 +59,7 @@ def run_list(
         until_date = _parse_date(until) if until else None
 
         # Query index
-        result = index_manager.query(
+        result = ctx.index_manager.query(
             status=parsed_status,
             tag=tag,
             since=since_date,
