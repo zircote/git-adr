@@ -1,0 +1,141 @@
+---
+date: '2025-12-16'
+id: 20251216-implement-progressive-loading-architecture-for
+status: proposed
+title: Implement Progressive Loading Architecture for Skill
+---
+
+# Title
+Implement Progressive Loading Architecture for Claude Skill
+
+Status: Accepted
+Date: 2025-12-17
+Deciders: Platform Architecture, Claude Skill Engineers, Owner of git-adr Claude Skill
+Tags: claude-skill, architecture, token-efficiency, progressive-loading
+
+## Context and Problem Statement
+- Claude skills (and similar LLM-integrated features) can include large amounts of documentation: README-like SKILL.md, multiple reference files (API specs, design docs, examples), and ADRs.
+- Loading the entire skill corpus into the model context on initialization wastes tokens, increases latency, and drives cost (especially for higher-temperature or long-session use).
+- Users usually need a small, intent-relevant subset of the documentation. Initial interactions should be fast and token-efficient; heavy or rarely used content (full ADRs, large reference specs) should be included only when explicitly needed.
+- We want a reproducible, maintainable, and predictable pattern that is compatible with standard Claude skill practices and that minimizes token usage without sacrificing relevance of responses.
+
+Problem statement:
+- How should the skill load and present its documentation and reference files to the model at runtime so that initial load is fast, token usage is minimized, and required content can still be reliably made available on demand?
+
+## Decision Drivers
+- Token efficiency: minimize initial tokens consumed by skill context.
+- Initial response latency: deliver a fast first response to users.
+- Relevance: ensure the model has the right context for answering user requests.
+- Cost: reduce per-session token/call cost.
+- Predictability and determinism: reproducible behavior for routing and retrieval.
+- Compatibility with Claude skill conventions and existing tooling.
+- Maintainability: manageable engineering complexity and clear content ownership.
+- Security & privacy: ensure on-demand retrieval does not leak or expose restricted content.
+- Robustness to partial retrieval failures and offline scenarios.
+- Observability: ability to measure token counts, latency, retrieval hits/misses.
+
+## Considered Options
+- Load everything on initialization (eager/full-load)
+  - Load SKILL.md, all reference files, and ADRs into the model context at skill start.
+  - Pros: no subsequent fetches; model has full context.
+  - Cons: high token usage, slow initial response, high cost.
+- Progressive loading (chosen)
+  - Load SKILL.md as a navigation skeleton, load reference files on-demand driven by user intent, and hydrate ADRs only when explicitly requested.
+  - Pros: token-efficient, fast initial load, predictable on-demand retrieval.
+  - Cons: added engineering for manifest/index and retrieval/hydration paths.
+- Fetch on every query (stateless fetch)
+  - For every user query, analyze intent and pull matching files in real time; do not cache.
+  - Pros: simple conceptual model; always fresh.
+  - Cons: potentially high latency and redundant fetching; increased backend load and cost.
+- Pre-fetch hot documents + progressive for the rest (hybrid)
+  - Pre-load a small subset of frequently-used docs (e.g., FAQ, quickstart) and progressively load the rest.
+  - Pros: reduces latency for common queries.
+  - Cons: needs heuristics or telemetry to decide what to prefetch; still increases initial tokens somewhat.
+- Indexed retrieval via embeddings + streaming summaries
+  - Maintain embeddings/Vector DB for all docs. Use nearest-neighbor to pick relevant chunks; optionally stream chunk summaries to the model and hydrate full docs if user asks.
+  - Pros: very targeted retrieval and good relevance; scalable for many files.
+  - Cons: additional infra (embedding pipeline, vector DB); complexity.
+- Rule-based intent routing
+  - Use a lightweight classifier or pattern matching on user intent to map to file paths listed in SKILL.md.
+  - Pros: low infra, predictable.
+  - Cons: brittle with diverse user language; harder to scale.
+- Client-side rendering + server-side document storage
+  - Minimal server context; client fetches full docs and only sends short summaries to backend.
+  - Pros: offloads token and bandwidth to client.
+  - Cons: trust/security concerns, inconsistent user experiences across clients.
+
+## Decision Outcome (Chosen option with justification)
+Chosen option:
+- Implement a Progressive Loading Architecture (hydration pattern) for the git-adr Claude Skill:
+  1. SKILL.md acts as the canonical navigation skeleton and is loaded at skill initialization. SKILL.md contains:
+     - a navigation table (TOC) listing document IDs/paths, short summaries, sizes (tokens/bytes), tags, and access level.
+     - lightweight routing metadata (intent hints, embedding IDs or keywords).
+  2. Reference files (design docs, API specs, examples) are loaded on-demand:
+     - On user input, run a lightweight intent-routing step (embedding similarity OR intent classifier).
+     - Select N most relevant reference files or chunks (configurable, e.g., top 3) and fetch them from the repo/store.
+     - Optionally summarize/shorten large files before inserting into the context (chunk + summarize).
+  3. ADR content (full ADR files) is treated as heavy-weight: they are hydrated only when the user explicitly requests ADR content (e.g., "Show ADR for progressive loading", "Explain the ADR that explains ...").
+- Implementation details and justifications:
+  - SKILL.md as the initial, small context keeps initial token usage minimal and provides fast responses and explicit navigation for the model.
+  - Intent routing uses embeddings (preferred) for flexible, natural-language matching; fallback to rule-based matching for startup or offline cases.
+  - A manifest/index file (machine-readable derived artifact generated at build) mirrors SKILL.md with fields: id, path, token_estimate, embedding_vector_id, tags, summary, access_control.
+  - Hydration endpoint: an authenticated service endpoint that, given selected doc IDs, retrieves the files, runs optional chunking and summarization, and returns a hydrated payload to the model.
+  - Caching: use short-lived caches for hydrated content to reduce repeated fetch latency; invalidate on doc updates.
+  - Safety & privacy: access control enforced at the hydration endpoint; do not include secret/private docs unless the session is authorized.
+  - Telemetry: instrument initial tokens, hydrated tokens, fetch latency, retrieval success, and user-initiated hydration events to tune thresholds and N.
+- Why chosen:
+  - Best trade-off between token-efficiency, latency, and relevance.
+  - Aligns with "standard pattern in well-designed Claude skills" and is compatible with other platform tooling.
+  - Allows incremental engineering investment: start with rule-based routing and add embeddings/Vector DB later.
+  - Minimizes ongoing cost by only sending necessary tokens into the model context.
+
+## Consequences
+
+Good
+- Token and cost efficiency:
+  - Initial sessions send only SKILL.md + minimal system prompt; dramatically reduces tokens consumed per session.
+  - Hydration only pulls necessary content, reducing average tokens per user request.
+- Faster initial response:
+  - Small initial context reduces model init time and faster first-turn replies.
+- Better relevance:
+  - Intent-driven fetching increases likelihood the model has the exact docs it needs.
+- Scalable document base:
+  - Can support a large repository of docs without bloating the model context.
+- Operational flexibility:
+  - Allows progressive improvements (add embedding index, more sophisticated summarization) without changing the user-visible behavior.
+- Security posture:
+  - Explicit hydration endpoint enables enforcement of access control and auditing for heavy documents.
+
+Bad
+- Increased implementation complexity:
+  - Need to build and maintain the manifest/manifest-generation pipeline, routing logic, hydration endpoints, caching, and telemetry.
+- Potential on-demand latency:
+  - First time a particular doc is requested, user may experience additional latency while the system fetches and processes the file.
+  - Mitigation: async prefetch heuristics, streaming hydration, or optimistic prefetching for high-probability docs.
+- Retrieval failure risk:
+  - If the hydration endpoint or storage is unavailable, the model may lack needed context and produce incomplete answers.
+  - Mitigation: graceful fallback (summarize from SKILL.md, ask clarifying question, or surface "I need to fetch X — may I?").
+- Maintenance overhead:
+  - Teams must keep SKILL.md and manifest synchronized with the repo; build tooling needed to keep metadata accurate.
+- Complexity in token accounting:
+  - Accurate token estimation per doc/chunk is required to avoid exceeding token limits; may require frequent tuning.
+
+Neutral
+- Predictable developer workflow:
+  - Developers must follow content conventions (add entries to SKILL.md or metadata) — this standardizes contributions but requires discipline.
+- Observability requirements:
+  - Telemetry needs to be defined and instrumented; this is neutral but necessary for tuning.
+- Gradual rollout:
+  - The architecture supports gradual rollout from simple rule-based routing to embeddings + Vector DB; this incremental path is neutral but should be planned.
+
+Appendix: Implementation checklist (practical next steps)
+- Add manifest generator that produces machine-readable index from repository (id, path, summary, token_estimate, tags, embedding_id).
+- Update SKILL.md template to require navigation entries and intent hints.
+- Implement a lightweight intent-routing service (start with keyword/rule-based; plan to add embeddings).
+- Implement hydration service endpoints with:
+  - fetch, chunk, summarize, tokenize estimation, access control, and caching.
+- Instrument telemetry: initial_tokens, hydrated_tokens, fetch_latency, retrieval_hit_rate, user-hydration-rate.
+- Add fallback UX prompts and error cases (e.g., “I need to fetch additional docs to answer — may I fetch X?”).
+- Define prefetch heuristics and TTL policies for cache invalidation.
+
+This ADR adopts the progressive/hydration pattern as the standard loading architecture for the git-adr Claude Skill to achieve predictable token-efficiency, faster initial responses, and high relevance while keeping extensibility and security under control.
