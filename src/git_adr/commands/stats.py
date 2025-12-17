@@ -63,7 +63,7 @@ def run_stats(
                 author_counts["unknown"] += 1
 
             # Count artifacts
-            artifacts = notes_manager.list_artifacts(adr.metadata.id)
+            artifacts = ctx.notes_manager.list_artifacts(adr.metadata.id)
             total_artifacts += len(artifacts)
 
             # Count linked ADRs
