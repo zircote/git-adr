@@ -1,0 +1,114 @@
+---
+date: '2025-12-16'
+id: 20251216-curated-command-subset-for-claude-skill
+status: proposed
+title: Curated Command Subset for Claude Skill
+---
+
+# Curated Command Subset for Claude Skill
+
+Status: Accepted
+
+## Context and Problem Statement
+
+git-adr provides 30+ commands to operate on ADRs (list, show, new, edit, publish, link, migrate, stats, templates, etc.). We are building a Claude Skill to support the "machine memory" and "Claude Code" workflows around ADRs. Including the entire git-adr surface in the skill documentation and conversational model prompt will:
+
+- Overwhelm users and the skill's embedded documentation, making the primary memory use case harder to discover and use.
+- Increase prompt size and complexity, raising token usage and cognitive load for Claude-based interactions.
+- Expand the testing and maintenance burden for the skill (more commands to document, test, secure, and keep in sync with git-adr).
+- Increase the attack surface and permission complexity (more write-capable commands require more careful access control).
+- Dilute the initial value proposition: users primarily want quick read/search and lightweight create/edit workflows integrated with AI improvements.
+
+We need a decision about which commands the Claude Skill should expose directly, balanced between usefulness for the Claude Code/memory workflow and simplicity/maintainability.
+
+## Decision Drivers
+
+- Focus: maximize value for the machine memory / Claude Code ADR workflows (reading ADRs, finding ADRs, creating and iterating on ADR text with AI).
+- Minimal surface area: minimize number of commands exposed to reduce docs, testing, and maintenance burden.
+- Safety & permissions: minimize number of write-capable operations to lower risk and simplify auth/audit requirements.
+- Usability: provide an intuitive set of commands that cover common developer tasks without forcing frequent CLI fallback.
+- Extensibility: allow for expansion of exposed commands based on telemetry and user feedback.
+- Performance/cost: limit token usage and external API calls by restricting command types exposed in the skill's prompt and handlers.
+- Power-user escape hatch: retain a clear path for advanced users to access the full git-adr CLI when needed.
+
+## Considered Options
+
+- Option A — Expose the full git-adr command set
+  - Document and wire up all 30+ git-adr commands inside the Claude Skill.
+- Option B — Curated subset (read/write/search/AI improve)
+  - Expose a small, opinionated subset: list, show (read), new, edit (write), search (find), ai suggest (improve).
+- Option C — Minimal read-only subset
+  - Only expose read-focused commands: list, show, search. Require CLI for edits/new.
+- Option D — Layered skill with passthrough
+  - Expose a small curated subset for typical workflows, plus a guarded passthrough command (e.g., "run-cli") that lets authenticated power users run arbitrary git-adr commands through the skill.
+- Option E — Dynamic, user-personalized subset
+  - Expose a base subset but dynamically surface additional commands per-user based on their preferences/permissions/usage history.
+
+## Decision Outcome (Chosen option with justification)
+
+Chosen option: Option B — Curated subset: list, show (read), new, edit (write), search (find), ai suggest (improve).
+
+Justification (technical and practical):
+
+- Coverage vs. simplicity: The chosen subset directly maps to the high-value Claude Code workflows:
+  - list — quickly enumerate ADRs stored in the repo or memory index.
+  - show/read — fetch ADR content for context-aware answers and memory augmentation.
+  - new — create new ADRs from AI-generated drafts or structured prompts.
+  - edit/write — make lightweight updates to existing ADRs (patch/edit via text or patch-based edit flows).
+  - search/find — locate ADRs by keyword, tag, status, or semantic similarity (important for memory retrieval).
+  - ai suggest/improve — leverage Claude to propose improvements, summaries, or refactors of ADR text (core to the AI-assisted workflow).
+- Reduces skill surface: Limits commands to those necessary for memory-focused reading, searching, and small write workflows — reducing documentation and testing effort.
+- Minimizes risk: Only one broad write capability (new/edit) is exposed; this simplifies auth, logging, and review policies relative to exposing many write operations (e.g., publish/migrate/delete).
+- UX alignment: These operations map cleanly to conversational intents a user will express to Claude (e.g., "find ADRs about deployment", "draft a new ADR for canary releases", "improve ADR wording"), improving the skill's natural-language interface.
+- Extensibility: The design explicitly allows expanding the subset based on usage telemetry and user feedback, avoiding premature overcommit.
+- Power-user escape: Documented guidance directs advanced users to use the full git-adr CLI locally or via a separate integration; this preserves power-user functionality without bloating the skill.
+
+Implementation notes tied to the decision:
+- Command aliasing and mapping: Define exact skill command names and map them to git-adr operations and/or repo operations.
+  - list -> git-adr list (or equivalent repo query)
+  - show/read -> git-adr show <id> or read file by path
+  - new -> git-adr new (create ADR file/commit)
+  - edit/write -> git-adr edit or patching flow (open/edit/commit)
+  - search/find -> text/semantic search over ADR content/index
+  - ai suggest/improve -> invoke Claude with ADR text and stored context, then present suggestions and optionally apply edits
+- Limit the skill's prompt/README to the chosen commands to keep model context light.
+- Build role-based permission checks for write flows: require user-level auth for new/edit and confirm changes before commit.
+- Implement audit logging for writes and optional "dry run" preview flows for edits suggested by ai suggest.
+
+## Consequences
+
+Good
+
+- Focused user experience:
+  - Users see a concise skill doc and fewer conversational commands, making the memory/Claude Code use case easier to discover and use.
+  - Conversational intents map directly to the exposed commands, improving reliability of model-to-skill intent routing.
+- Reduced maintenance and testing:
+  - Smaller code surface to document, unit test, and integration test.
+  - Lower effort to keep skill docs in sync with git-adr changes.
+- Simpler security model:
+  - Only a limited set of write operations (new/edit) need hardened authorization, review, and audit paths.
+- Lower token and runtime cost:
+  - Smaller prompt payloads and fewer model-invocations tied to enumerating or exposing many commands.
+- Rapid iteration:
+  - Easy to expand supported commands later based on concrete user telemetry and requests.
+
+Bad
+
+- Missing commands for power users:
+  - Users accustomed to advanced git-adr commands (e.g., publish, migrate, stats, templates, link, export) must use the CLI or a separate integration.
+  - Potential friction for workflows that rely on less-common git-adr operations (e.g., bulk migration of ADRs).
+- Possible rework if needs change:
+  - If users demand a specific additional command, we may need to extend the skill and its documentation; some refactor could be required if the new commands interact with the current handlers in non-trivial ways.
+- Edge-case limitations:
+  - Some complex ADR workflows (bulk operations, special metadata manipulations) won't be supported until we expand the subset.
+
+Neutral
+
+- Extensibility path:
+  - We will monitor usage metrics and user feedback to determine which additional commands to add; this is neither strictly good nor bad but requires governance (who approves additions, testing standards).
+- CLI fallback dependency:
+  - The decision intentionally pushes advanced usage to the CLI. This keeps the skill lean but requires clear documentation and helper links for users to reach the CLI when needed.
+- Implementation complexity concentrated in AI-assisted flow:
+  - The ai suggest/improve command will be feature-rich (generate alternatives, run diffs, apply patches). This concentrates complexity in a single handler rather than dispersing it across many small ones — simplifies some aspects of maintenance while making that handler a critical component to get right.
+
+Tags: claude-skill, git-adr, scope, commands
