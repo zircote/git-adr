@@ -1,0 +1,116 @@
+---
+date: '2025-12-17'
+id: 20251217-rename-homebrew-tap-to-follow-naming-conventions
+status: proposed
+title: Rename Homebrew tap to follow naming conventions
+---
+
+# Rename Homebrew tap to follow naming conventions
+
+## Context and Problem Statement
+
+The GitHub repository previously named `zircote/homebrew-git-adr` was renamed to `zircote/homebrew-tap` to align with the widely used Homebrew naming convention where a tap referenced as `brew tap <user>/<tap>` maps to a repository named `homebrew-<tap>` under the user's GitHub account. The rename enables:
+
+- Hosting multiple Homebrew formulas in the same repository in the future (a single `homebrew-<name>` repository can contain multiple formula files).
+- The standard user experience where `brew tap zircote/tap` automatically resolves to `github.com/zircote/homebrew-tap`.
+- Simpler discoverability and consistency with other community taps.
+
+As part of the rename, references were updated in:
+- `RELEASING.md`
+- `.github/workflows/release.yml`
+- `README.md`
+
+The GitHub Actions secret `HOMEBREW_TAP_TOKEN` was not recreated; it remains valid because it references the same GitHub repository (GitHub preserves repository secrets across a rename). GitHub also preserves redirects from the old repo name to the new one for web/HTTP(s) and git access for a transition period.
+
+Problem statement:
+- Ensure the repository name follows Homebrew conventions to improve UX and allow future extensibility, while minimizing disruption to CI, contributors, and existing users.
+
+## Decision Drivers
+
+- Naming consistency with the Homebrew ecosystem (standardization of tap naming).
+- Future extensibility: ability to host multiple formula files in one repository.
+- Simplified user experience: `brew tap zircote/tap` should work without custom instructions.
+- Minimize disruption to existing CI/CD and release automation.
+- Preserve repository history, issues, PRs, stars, watchers (avoid new repo creation if possible).
+- Keep authentication and secrets working without unnecessary secret recreation.
+- Minimize required changes for existing users and contributors.
+
+## Considered Options
+
+- Keep the existing repository name `zircote/homebrew-git-adr` (do nothing).
+- Create a brand-new repository `zircote/homebrew-tap`, copy/migrate content, and deprecate the old repo (new repo).
+- Rename the existing repository from `zircote/homebrew-git-adr` to `zircote/homebrew-tap` (rename-in-place).
+- Maintain a separate redirect/alias repo (e.g., create an empty `homebrew-git-adr` repo that redirects to `homebrew-tap`), keeping development in the newly named repo.
+- Use an organization-level or different naming pattern (e.g., `zircote/tap`) and rely on custom docs for installation.
+
+## Decision Outcome
+
+Chosen option: Rename the existing repository from `zircote/homebrew-git-adr` to `zircote/homebrew-tap` (rename-in-place).
+
+Justification:
+- Renaming preserves Git history, issues, pull requests, stars, watchers, and existing forks automatically (no content or metadata loss).
+- GitHub provides HTTP(s) and git-level redirects for a repository rename, which minimizes immediate breakage for existing clones and scripts while users transition.
+- Minimal operational overhead compared to creating a new repo and migrating CI secrets, issues and PRs manually.
+- Retains the same repository context for GitHub Actions secrets; `HOMEBREW_TAP_TOKEN` remains valid after rename, avoiding a required secret re-creation and reducing risk to release automation.
+- Aligns with Homebrew expectations so that `brew tap zircote/tap` resolves to the repository without extra configuration, simplifying installation for end users.
+- Enables hosting multiple formulas in the same repo without additional forks or repositories.
+
+Actions taken (technical summary):
+- Renamed repository in GitHub settings to `homebrew-tap`.
+- Updated documentation and workflow references:
+  - `RELEASING.md` — instructions updated to refer to `zircote/tap` and `homebrew-tap`.
+  - `.github/workflows/release.yml` — updated any repository-name literals, tap names, or artifact naming that referenced `homebrew-git-adr`.
+  - `README.md` — updated installation and tap instructions to `brew tap zircote/tap`.
+- Verified GitHub Actions secrets remain present and `HOMEBREW_TAP_TOKEN` continues to work in release workflow runs.
+- Verified that the Homebrew tap resolution works (e.g., `brew tap zircote/tap` resolves to `github.com/zircote/homebrew-tap`).
+- Notified contributors and users via README and release notes about the rename and migration steps.
+
+Recommended follow-up steps for maintainers and users:
+- Maintainers: review all CI/workflow code for hard-coded repository names or GITHUB_REPOSITORY-like usages and update string literals if needed.
+- Maintainers: validate and, where appropriate, update release automation to use the new repo name explicitly rather than relying on redirects.
+- Contributors with local clones: run `git remote set-url origin git@github.com:zircote/homebrew-tap.git` (or the https equivalent).
+- Users who previously tapped the old name: run `brew untap zircote/homebrew-git-adr || true; brew tap zircote/tap` to refresh the local tap reference (redirects may allow old tap to keep working for a time, but explicit retap is recommended).
+- Monitor repository webhooks, external integrations, and package registries for references to the old name and update them.
+
+Commands example for maintainers/contributors:
+- Update local origin:
+  - git@SSH: `git remote set-url origin git@github.com:zircote/homebrew-tap.git`
+  - HTTPS: `git remote set-url origin https://github.com/zircote/homebrew-tap.git`
+- Update local Homebrew tap (for users):
+  - brew untap zircote/homebrew-git-adr || true
+  - brew tap zircote/tap
+
+## Consequences
+
+Good
+- Naming and discoverability
+  - Aligns repository with common Homebrew tap naming patterns; improves discoverability and lowers cognitive load for users (`brew tap zircote/tap`).
+- Future extensibility
+  - Single canonical repo ready to hold multiple formula files and related tooling (no need to create multiple repositories per formula).
+- Low operational overhead
+  - Preserves history, issues, PRs, forks, stars, watchers — no manual migration required.
+- Minimal secrets and CI churn
+  - GitHub repository secrets remain intact after a rename; `HOMEBREW_TAP_TOKEN` continued to function without re-creation.
+- Cleaner documentation and UX
+  - README and release documentation are now consistent with community expectations.
+
+Bad
+- Temporary reliance on GitHub redirects
+  - Redirects from `zircote/homebrew-git-adr` to `zircote/homebrew-tap` are provided by GitHub but are a transitional mechanism; long-term reliance on redirects is fragile.
+  - External scripts, bookmarks, and integrations that hard-code the old repository name should be updated. If left unupdated and GitHub later removes or changes redirect behavior, those integrations will break.
+- Local clone behavior
+  - Existing local clones continue to work via redirects, but `git remote show origin` will still show the old URL until maintainers update remotes. This may confuse contributors.
+- Potential transient CI/workflow issues
+  - Workflows that embed the repository name in artifact naming, release targets, or webhook consumers may need explicit updates. Some third-party services might reference the old repository name and require reconfiguration.
+- User-installed formula state
+  - Users who have already tapped and installed formulae may have their formula references tied to the old tap name. While GitHub redirects and Homebrew’s internal handling may keep installations working temporarily, users should be guided to retap to the new name to avoid future breakage.
+
+Neutral
+- Secrets and tokens
+  - GitHub repository-level secrets are preserved by GitHub when renaming a repository; no immediate action required. However, it's prudent to verify all secrets and their permissions post-rename.
+- CI logs and historical references
+  - Historical CI logs and old URLs will still refer to the old name; the rename does not alter past logs but will make future logs reference the new repository name.
+- External links
+  - Links to the repository (e.g., in other projects’ READMEs) will continue to work via redirect; however, maintainers should update those links over time for clarity.
+
+Overall, renaming the repository to `zircote/homebrew-tap` achieves the principal goals of consistency and extensibility while minimizing disruption through an in-place rename. The remaining work is largely mechanical: update references, notify users/contributors, and ensure workflows and external integrations are updated to the new repository name.
