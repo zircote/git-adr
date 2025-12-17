@@ -8,15 +8,6 @@ description: >
   and teach ADR best practices. Use when users ask about: ADRs, architecture decisions,
   decision records, git-adr commands, documenting technical decisions, or need help
   creating/managing ADRs in a git repository.
-triggers:
-  - "show me ADR"
-  - "what did we decide about"
-  - "record this decision"
-  - "create an ADR"
-  - "find decisions about"
-  - "search ADRs"
-  - "list ADRs"
-  - "architecture decision"
 ---
 
 # git-adr Skill
