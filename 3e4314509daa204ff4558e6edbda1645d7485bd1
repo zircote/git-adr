@@ -1,7 +1,7 @@
 ---
 date: '2025-12-16'
 id: 20251216-use-structured-yaml-format-for-adr-summaries
-status: proposed
+status: accepted
 title: Use Structured YAML Format for ADR Summaries
 ---
 
