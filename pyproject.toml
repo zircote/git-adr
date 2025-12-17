@@ -1,6 +1,6 @@
 [project]
 name = "git-adr"
-version = "0.2.0"
+version = "0.2.1"
 description = "Architecture Decision Records management for git repositories using git notes"
 readme = "README.md"
 requires-python = ">=3.11"
