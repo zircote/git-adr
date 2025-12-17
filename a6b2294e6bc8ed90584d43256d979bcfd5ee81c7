@@ -1,7 +1,7 @@
 ---
 date: '2025-12-16'
 id: 20251216-extend-existing-git-adr-skill-rather-than-replace
-status: proposed
+status: accepted
 title: Extend Existing git-adr Skill Rather Than Replace
 ---
 
