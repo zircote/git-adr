@@ -92,46 +92,46 @@ Implementation proceeds in four phases: Foundation (skill structure), Core Featu
 #### Task 2.1: Context Loading Instructions
 - **Description**: Write `workflows/session-start.md` with auto-load behavior
 - **Acceptance Criteria**:
-  - [ ] Detection logic (git repo? ADRs init?)
-  - [ ] Summary format specification
-  - [ ] Error handling for common issues
-  - [ ] Example output block
+  - [x] Detection logic (git repo? ADRs init?)
+  - [x] Summary format specification
+  - [x] Error handling for common issues
+  - [x] Example output block
 
 #### Task 2.2: Hydration Handler
 - **Description**: Document on-demand full ADR loading in SKILL.md
 - **Dependencies**: Task 2.1
 - **Acceptance Criteria**:
-  - [ ] Trigger phrases documented
-  - [ ] ID/title/keyword matching explained
-  - [ ] `git adr show` command integration
-  - [ ] Example conversation flow
+  - [x] Trigger phrases documented
+  - [x] ID/title/keyword matching explained
+  - [x] `git adr show` command integration
+  - [x] Example conversation flow
 
 #### Task 2.3: Search Handler
 - **Description**: Write `references/search-patterns.md` for decision lookup
 - **Acceptance Criteria**:
-  - [ ] Search syntax documentation
-  - [ ] Natural language → query mapping
-  - [ ] Status/tag filtering
-  - [ ] Example search scenarios
+  - [x] Search syntax documentation
+  - [x] Natural language → query mapping
+  - [x] Status/tag filtering
+  - [x] Example search scenarios
 
 #### Task 2.4: List Handler
 - **Description**: Document list command with format options
 - **Dependencies**: Task 1.3
 - **Acceptance Criteria**:
-  - [ ] Format options: table, yaml, oneline
-  - [ ] Filter options: status, tag, date range
-  - [ ] Output examples
+  - [x] Format options: table, yaml, oneline
+  - [x] Filter options: status, tag, date range
+  - [x] Output examples
 
 ### Phase 2 Deliverables
-- [ ] workflows/session-start.md
-- [ ] Search patterns documentation
-- [ ] Hydration trigger documentation
-- [ ] List command documentation
+- [x] workflows/session-start.md
+- [x] Search patterns documentation
+- [x] Hydration trigger documentation
+- [x] List command documentation
 
 ### Phase 2 Exit Criteria
-- [ ] Context loads at session start (manual test)
-- [ ] `show me ADR-001` triggers hydration
-- [ ] Search returns relevant results
+- [x] Context loads at session start (manual test)
+- [x] `show me ADR-001` triggers hydration
+- [x] Search returns relevant results
 
 ---
 
@@ -146,46 +146,46 @@ Implementation proceeds in four phases: Foundation (skill structure), Core Featu
 #### Task 3.1: Guided Creation Workflow
 - **Description**: Write `workflows/decision-capture.md` for conversation extraction
 - **Acceptance Criteria**:
-  - [ ] Trigger phrase documentation
-  - [ ] Context extraction prompts
-  - [ ] MADR-guided question flow
-  - [ ] Draft review step
-  - [ ] `git adr new` integration
+  - [x] Trigger phrase documentation
+  - [x] Context extraction prompts
+  - [x] MADR-guided question flow
+  - [x] Draft review step
+  - [x] `git adr new` integration
 
 #### Task 3.2: AI Suggest Integration
 - **Description**: Document `git adr ai suggest` in commands.md
 - **Dependencies**: Task 1.3
 - **Acceptance Criteria**:
-  - [ ] When to use AI suggest
-  - [ ] Required setup (AI provider config)
-  - [ ] Example improvement flow
+  - [x] When to use AI suggest (already in commands.md)
+  - [x] Required setup (AI provider config)
+  - [x] Example improvement flow
 
 #### Task 3.3: Decision Recall Workflow
 - **Description**: Write `workflows/decision-recall.md` for finding past decisions
 - **Acceptance Criteria**:
-  - [ ] "What did we decide about X?" handling
-  - [ ] Keyword → ADR mapping
-  - [ ] Related ADRs suggestions
-  - [ ] Example recall scenarios
+  - [x] "What did we decide about X?" handling
+  - [x] Keyword → ADR mapping
+  - [x] Related ADRs suggestions
+  - [x] Example recall scenarios
 
 #### Task 3.4: Error Handling Enhancement
 - **Description**: Comprehensive error messages in SKILL.md
 - **Acceptance Criteria**:
-  - [ ] Not installed: install command
-  - [ ] Not initialized: init command
-  - [ ] ADR not found: list suggestion
-  - [ ] Permission denied: explanation
+  - [x] Not installed: install command
+  - [x] Not initialized: init command
+  - [x] ADR not found: list suggestion
+  - [x] Permission denied: explanation
 
 ### Phase 3 Deliverables
-- [ ] workflows/decision-capture.md
-- [ ] workflows/decision-recall.md
-- [ ] Enhanced error handling
-- [ ] AI suggest documentation
+- [x] workflows/decision-capture.md
+- [x] workflows/decision-recall.md
+- [x] Enhanced error handling
+- [x] AI suggest documentation
 
 ### Phase 3 Exit Criteria
-- [ ] "Record this decision" triggers creation workflow
-- [ ] "What did we decide about caching?" finds relevant ADRs
-- [ ] All error conditions have clear guidance
+- [x] "Record this decision" triggers creation workflow
+- [x] "What did we decide about caching?" finds relevant ADRs
+- [x] All error conditions have clear guidance
 
 ---
 
