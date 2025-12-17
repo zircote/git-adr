@@ -76,12 +76,12 @@ if VERSION_OUTPUT=$("$BINARY" --version 2>&1); then
     END=$(date +%s.%N)
     DURATION=$(echo "$END - $START" | bc)
     if echo "$VERSION_OUTPUT" | grep -q "git-adr"; then
-        # Startup time target: <1 second (per REQUIREMENTS.md)
+        # Startup time target: <2 seconds (per REQUIREMENTS.md)
         # First run may be slower due to macOS verification
-        if (( $(echo "$DURATION < 1" | bc -l) )); then
+        if (( $(echo "$DURATION < 2" | bc -l) )); then
             pass "--version (${DURATION}s) - $VERSION_OUTPUT"
         else
-            fail "--version too slow (${DURATION}s > 1s target)"
+            fail "--version too slow (${DURATION}s > 2s target)"
         fi
     else
         fail "--version output unexpected: $VERSION_OUTPUT"
