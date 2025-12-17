@@ -59,13 +59,15 @@ def run_templates_issue(
     output: str | None = None,
     labels: str = "architecture, adr-proposal",
     stakeholders: list[str] | None = None,
+    assignees: str = "",
 ) -> None:
     """Generate an issue template for ADR proposals.
 
     Args:
         output: Output path (default: .github/ISSUE_TEMPLATE/adr-proposal.md)
         labels: Comma-separated labels to apply
-        stakeholders: List of stakeholders to mention
+        stakeholders: List of stakeholders to mention in the issue body
+        assignees: Comma-separated GitHub usernames for auto-assignment
     """
     from git_adr.templates import render_template
 
@@ -73,6 +75,7 @@ def run_templates_issue(
         "governance/issue-template-adr.md.j2",
         labels=labels,
         stakeholders=stakeholders or [],
+        assignees=assignees,
     )
 
     if output:

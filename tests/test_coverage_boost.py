@@ -673,7 +673,7 @@ class TestFullEditWorkflow:
     """Tests for full editor edit workflow."""
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_editor_returns_error_code(
         self,
         mock_find_editor: MagicMock,
@@ -688,7 +688,7 @@ class TestFullEditWorkflow:
         # Should show warning but continue
         assert result.exit_code in [0, 1]
 
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_full_edit_no_editor_found(
         self,
         mock_find_editor: MagicMock,

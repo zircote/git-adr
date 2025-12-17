@@ -400,7 +400,7 @@ Updated consequences.
                     Path(temp_file).write_text(changed_content)
             return MagicMock(returncode=0)
 
-        with patch("git_adr.commands.new._find_editor", return_value="cat"):
+        with patch("git_adr.commands._editor.find_editor", return_value="cat"):
             with patch("subprocess.run", side_effect=write_changes):
                 result = runner.invoke(app, ["edit", "20250110-use-postgresql"])
                 # May succeed or fail depending on changes detected

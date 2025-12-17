@@ -119,8 +119,11 @@ make install-man  # Requires pandoc
 ## Quick Start
 
 ```bash
-# Initialize ADR tracking in your repository
+# Interactive setup (recommended) - prompts for template, hooks, and CI
 git adr init
+
+# Or non-interactive with specific options
+git adr init --template madr --install-hooks --setup-github-ci
 
 # Create a new ADR (opens editor)
 git adr new "Use PostgreSQL for primary database"
@@ -134,9 +137,21 @@ git adr show 20240115-use-postgresql
 # Search ADRs
 git adr search "database"
 
-# Sync with remote
+# ADRs sync automatically on push (if hooks installed)
+# Or sync manually:
 git adr sync push
 ```
+
+### Init Options
+
+| Option | Description |
+|--------|-------------|
+| `--template <format>` | Set ADR format (madr, nygard, y-statement, etc.) |
+| `--install-hooks` | Install pre-push hooks for automatic sync |
+| `--setup-github-ci` | Generate GitHub Actions workflows |
+| `--no-input` | Skip all interactive prompts |
+
+See [Hooks Guide](docs/HOOKS_GUIDE.md) for detailed hooks documentation.
 
 ## Commands
 
@@ -419,39 +434,37 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Claude Code Skill
 
-A comprehensive Claude Code skill is included for AI-assisted ADR management:
+A Claude Code skill for AI-assisted ADR management. Turn natural language into properly formatted ADRs.
+
+### Why Use the Skill?
+
+- **Instant ADR creation**: Describe a decision, get a formatted ADR
+- **Six professional formats**: MADR, Nygard, Y-Statement, Alexandrian, Business Case, Planguage
+- **Git-native storage**: ADRs in git notes, not files cluttering your repo
+- **Direct execution**: Claude runs `git adr` commands, not just generates markdown
+
+### Installation
 
 ```bash
-# Install the skill (from git-adr repository)
+# Method 1: Copy from repository
 cp -r skills/git-adr ~/.claude/skills/
 
-# Or extract from package
-tar -xzf skills/git-adr.skill -C ~/.claude/skills/
+# Method 2: Download from release
+curl -LO https://github.com/zircote/git-adr/releases/download/vX.Y.Z/git-adr-X.Y.Z.skill
+unzip git-adr-X.Y.Z.skill -d ~/.claude/skills/
 ```
 
-The skill enables Claude to:
-- **Execute commands**: Run any git-adr command directly
-- **Generate content**: Create ADRs in any of the 6 supported formats
-- **Teach best practices**: Guide users on effective ADR writing
-- **Match project style**: Automatically detect and use your configured template
+### Quick Example
 
-Skill structure:
 ```
-skills/git-adr/
-├── SKILL.md                    # Core instructions (258 lines)
-└── references/
-    ├── commands.md             # Full command reference
-    ├── configuration.md        # All adr.* config options
-    ├── best-practices.md       # ADR writing guidance
-    ├── workflows.md            # Common workflow patterns
-    └── formats/
-        ├── madr.md             # MADR 4.0 template
-        ├── nygard.md           # Original minimal format
-        ├── y-statement.md      # Single-sentence format
-        ├── alexandrian.md      # Pattern-language format
-        ├── business-case.md    # Business justification
-        └── planguage.md        # Quantified requirements
+You: "We decided to use PostgreSQL because it has better JSON support"
+
+Claude: I'll create that ADR for you.
+> git adr new "Use PostgreSQL for primary database"
+Created ADR: 20251216-use-postgresql-for-primary-database
 ```
+
+For full documentation, see **[docs/git-adr-skill.md](docs/git-adr-skill.md)**.
 
 ## Acknowledgments
 

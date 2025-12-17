@@ -747,6 +747,78 @@ class Git:
         """
         self.run(["notes", f"--ref={ref}", "prune"])
 
+    def cat_file_batch(
+        self,
+        shas: list[str],
+    ) -> dict[str, str | None]:
+        """Fetch multiple objects in a single subprocess call.
+
+        Uses `git cat-file --batch` for efficient batch retrieval,
+        reducing N subprocess calls to 1.
+
+        Args:
+            shas: List of object SHAs to retrieve.
+
+        Returns:
+            Dictionary mapping SHA to content (None if not found).
+        """
+        if not shas:
+            return {}
+
+        # Build input: one SHA per line
+        input_data = "\n".join(shas) + "\n"
+
+        result = self.run(
+            ["cat-file", "--batch"],
+            input_data=input_data,
+            check=False,
+            timeout=60.0,
+        )
+
+        if not result.success:
+            return dict.fromkeys(shas)
+
+        # Parse batch output:
+        # <sha> <type> <size>\n<content>\n
+        # or: <sha> missing\n
+        contents: dict[str, str | None] = {}
+        output = result.stdout
+        pos = 0
+
+        for sha in shas:
+            # Find the header line for this object
+            newline_pos = output.find("\n", pos)
+            if newline_pos == -1:
+                contents[sha] = None
+                continue
+
+            header = output[pos:newline_pos]
+            pos = newline_pos + 1
+
+            if "missing" in header:
+                contents[sha] = None
+                continue
+
+            # Parse header: <sha> <type> <size>
+            parts = header.split()
+            if len(parts) < 3:
+                contents[sha] = None
+                continue
+
+            try:
+                size = int(parts[2])
+            except ValueError:
+                contents[sha] = None
+                continue
+
+            # Extract content of specified size
+            content = output[pos : pos + size]
+            pos = pos + size + 1  # +1 for trailing newline
+
+            contents[sha] = content
+
+        return contents
+
     # =========================================================================
     # Fetch/Push Operations
     # =========================================================================
@@ -778,6 +850,7 @@ class Git:
         refspec: str | None = None,
         *,
         force: bool = False,
+        timeout: float | None = None,
     ) -> None:
         """Push to a remote.
 
@@ -785,13 +858,14 @@ class Git:
             remote: Remote name.
             refspec: Specific refspec to push.
             force: If True, force push.
+            timeout: Optional timeout in seconds (default: 60.0).
         """
         args = ["push", remote]
         if refspec:
             args.append(refspec)
         if force:
             args.append("--force")
-        self.run(args, timeout=60.0)
+        self.run(args, timeout=timeout if timeout is not None else 60.0)
 
     def fetch_notes(
         self,
@@ -814,6 +888,7 @@ class Git:
         ref: str = "refs/notes/adr",
         *,
         force: bool = False,
+        timeout: float | None = None,
     ) -> None:
         """Push notes to a remote.
 
@@ -821,8 +896,9 @@ class Git:
             remote: Remote name.
             ref: Notes reference to push.
             force: If True, force push.
+            timeout: Optional timeout in seconds.
         """
-        self.push(remote, ref, force=force)
+        self.push(remote, ref, force=force, timeout=timeout)
 
 
 def get_git(cwd: Path | None = None) -> Git:

@@ -236,18 +236,28 @@ class NotesManager:
     def list_all(self) -> list[ADR]:
         """List all ADRs.
 
+        Uses batch fetching to retrieve all ADR content in a single
+        subprocess call, reducing N+1 subprocess overhead to O(2).
+
         Returns:
             List of all ADRs in the repository.
         """
         notes = self._git.notes_list(self.adr_ref)
+
+        # Filter out index and collect note SHAs for batch retrieval
+        note_shas = [
+            note_sha for note_sha, obj_sha in notes if obj_sha != INDEX_OBJECT_ID
+        ]
+
+        if not note_shas:
+            return []
+
+        # Batch fetch all note contents in a single subprocess call
+        contents = self._git.cat_file_batch(note_shas)
+
         adrs: list[ADR] = []
-
-        for _note_sha, obj_sha in notes:
-            # Skip index and other internal notes
-            if obj_sha == INDEX_OBJECT_ID:
-                continue
-
-            content = self._git.notes_show(obj_sha, ref=self.adr_ref)
+        for note_sha in note_shas:
+            content = contents.get(note_sha)
             if content:
                 try:
                     adr = ADR.from_markdown(content)
@@ -482,13 +492,18 @@ class NotesManager:
             force: If True, force push.
             timeout: Optional timeout in seconds for the push operation.
         """
+        # Convert int timeout to float for git operations
+        timeout_float = float(timeout) if timeout is not None else None
+
         # Push ADR notes (must exist)
-        self._git.push_notes(remote, self.adr_ref, force=force)
+        self._git.push_notes(remote, self.adr_ref, force=force, timeout=timeout_float)
 
         # Only push artifacts ref if it exists locally
         try:
             self._git.run(["rev-parse", "--verify", self.artifacts_ref], check=True)
-            self._git.push_notes(remote, self.artifacts_ref, force=force)
+            self._git.push_notes(
+                remote, self.artifacts_ref, force=force, timeout=timeout_float
+            )
         except GitError:
             # Artifacts ref doesn't exist yet - nothing to push
             pass

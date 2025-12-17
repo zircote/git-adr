@@ -11,6 +11,8 @@ from pathlib import Path
 
 from rich.console import Console
 
+from git_adr import __version__
+
 console = Console()
 err_console = Console(stderr=True)
 
@@ -60,6 +62,7 @@ def run_ci_github(
             python_version=python_version,
             export_format=export_format,
             validate_adrs=validate,  # Include validation step in sync
+            git_adr_version=__version__,  # Pin to current version for supply-chain security
         )
 
         output_file = output_dir / "adr-sync.yml"
@@ -78,6 +81,7 @@ def run_ci_github(
             main_branch=main_branch,
             python_version=python_version,
             require_adr_for_changes=False,  # Default: advisory only
+            git_adr_version=__version__,  # Pin to current version for supply-chain security
         )
 
         output_file = output_dir / "adr-validate.yml"
@@ -158,6 +162,7 @@ def run_ci_gitlab(
         wiki_provider=wiki_provider,
         python_version=python_version,
         export_format=export_format,
+        git_adr_version=__version__,  # Pin to current version for supply-chain security
     )
 
     if output_file.exists() and output_file.name == ".gitlab-ci.yml":

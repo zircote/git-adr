@@ -25,7 +25,7 @@ runner = CliRunner()
 class TestNewCommandEditor:
     """Tests for new command with editor mocking."""
 
-    @patch("git_adr.commands.new._open_editor")
+    @patch("git_adr.commands.new.open_editor")
     def test_new_with_mocked_editor(
         self, mock_editor: MagicMock, adr_repo_with_data: Path
     ) -> None:
@@ -40,7 +40,7 @@ class TestNewCommandEditor:
         assert result.exit_code == 0
         assert "Created ADR" in result.output
 
-    @patch("git_adr.commands.new._open_editor")
+    @patch("git_adr.commands.new.open_editor")
     def test_new_editor_aborted(
         self, mock_editor: MagicMock, adr_repo_with_data: Path
     ) -> None:
@@ -51,7 +51,7 @@ class TestNewCommandEditor:
         assert result.exit_code == 0
         assert "aborted" in result.output.lower()
 
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_new_no_editor_found(
         self, mock_find: MagicMock, adr_repo_with_data: Path
     ) -> None:
@@ -62,8 +62,8 @@ class TestNewCommandEditor:
         assert result.exit_code != 0
         assert "editor" in result.output.lower()
 
-    @patch("git_adr.commands.new.subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.subprocess.run")
+    @patch("git_adr.commands._editor.find_editor")
     def test_new_editor_error(
         self,
         mock_find: MagicMock,
@@ -85,18 +85,18 @@ class TestNewCommandHelpers:
 
     def test_find_editor_from_env(self) -> None:
         """Test _find_editor with EDITOR environment variable."""
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         config = Config()
 
         with patch.dict(os.environ, {"EDITOR": "nano"}, clear=False):
             with patch("shutil.which", return_value="/usr/bin/nano"):
-                editor = _find_editor(config)
+                editor = find_editor(config)
                 assert editor == "nano"
 
     def test_find_editor_from_visual(self) -> None:
         """Test _find_editor with VISUAL environment variable."""
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         config = Config()
 
@@ -105,22 +105,22 @@ class TestNewCommandHelpers:
                 mock_which.side_effect = (
                     lambda x: f"/usr/bin/{x}" if x == "code" else None
                 )
-                editor = _find_editor(config)
+                editor = find_editor(config)
                 assert editor == "code"
 
     def test_find_editor_from_config(self) -> None:
         """Test _find_editor with config.editor."""
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         config = Config(editor="nvim")
 
         with patch("shutil.which", return_value="/usr/bin/nvim"):
-            editor = _find_editor(config)
+            editor = find_editor(config)
             assert editor == "nvim"
 
     def test_find_editor_fallback(self) -> None:
         """Test _find_editor fallback chain."""
-        from git_adr.commands.new import _find_editor
+        from git_adr.commands._editor import find_editor
 
         config = Config()
 
@@ -131,28 +131,28 @@ class TestNewCommandHelpers:
 
         with patch.dict(os.environ, {"EDITOR": "", "VISUAL": ""}, clear=False):
             with patch("shutil.which", side_effect=which_mock):
-                editor = _find_editor(config)
+                editor = find_editor(config)
                 assert editor == "vim"
 
     def test_build_editor_command_gui(self) -> None:
         """Test _build_editor_command with GUI editor."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("code", "/tmp/test.md")
+        cmd = build_editor_command("code", "/tmp/test.md")
         assert cmd == ["code", "--wait", "/tmp/test.md"]
 
     def test_build_editor_command_terminal(self) -> None:
         """Test _build_editor_command with terminal editor."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("vim", "/tmp/test.md")
+        cmd = build_editor_command("vim", "/tmp/test.md")
         assert cmd == ["vim", "/tmp/test.md"]
 
     def test_build_editor_command_with_args(self) -> None:
         """Test _build_editor_command with existing args."""
-        from git_adr.commands.new import _build_editor_command
+        from git_adr.commands._editor import build_editor_command
 
-        cmd = _build_editor_command("vim -c startinsert", "/tmp/test.md")
+        cmd = build_editor_command("vim -c startinsert", "/tmp/test.md")
         assert cmd == ["vim", "-c", "startinsert", "/tmp/test.md"]
 
     def test_ensure_list_none(self) -> None:
@@ -188,7 +188,7 @@ class TestNewCommandHelpers:
 class TestSupersedeCommand:
     """Tests for supersede command with mocking."""
 
-    @patch("git_adr.commands.new._open_editor")
+    @patch("git_adr.commands._editor.open_editor")
     def test_supersede_with_mocked_editor(
         self, mock_editor: MagicMock, adr_repo_with_data: Path
     ) -> None:
@@ -206,7 +206,7 @@ class TestSupersedeCommand:
             or "supersede" in result.output.lower()
         )
 
-    @patch("git_adr.commands.new._open_editor")
+    @patch("git_adr.commands._editor.open_editor")
     def test_supersede_aborted(
         self, mock_editor: MagicMock, adr_repo_with_data: Path
     ) -> None:
@@ -219,7 +219,7 @@ class TestSupersedeCommand:
         assert result.exit_code == 0
         assert "aborted" in result.output.lower()
 
-    @patch("git_adr.commands.new._open_editor")
+    @patch("git_adr.commands._editor.open_editor")
     def test_supersede_already_superseded(
         self, mock_editor: MagicMock, adr_repo_with_data: Path
     ) -> None:
@@ -336,7 +336,7 @@ class TestEditCommand:
     """Tests for edit command with mocking."""
 
     @patch("subprocess.run")
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_edit_full_mode(
         self,
         mock_find: MagicMock,
@@ -373,7 +373,7 @@ class TestEditCommand:
         # Should succeed with updated content
         assert result.exit_code in [0, 1]
 
-    @patch("git_adr.commands.new._find_editor")
+    @patch("git_adr.commands._editor.find_editor")
     def test_edit_full_mode_no_editor(
         self, mock_find: MagicMock, adr_repo_with_data: Path
     ) -> None:
