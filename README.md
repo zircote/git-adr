@@ -45,7 +45,7 @@ Or download manually from [GitHub Releases](https://github.com/zircote/git-adr/r
 ### Homebrew (macOS)
 
 ```bash
-brew tap zircote/git-adr
+brew tap zircote/tap
 brew install git-adr
 ```
 
