@@ -5,17 +5,11 @@ Removes an ADR from git notes storage.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 from rich.console import Console
 
-from git_adr.core import (
-    ConfigManager,
-    GitError,
-    NotesManager,
-    get_git,
-)
+from git_adr.commands._shared import setup_command_context
+from git_adr.core import GitError
 
 console = Console()
 err_console = Console(stderr=True)
@@ -35,26 +29,11 @@ def run_rm(
         typer.Exit: On error.
     """
     try:
-        # Get git and config
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        # Check if initialized
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
+        # Initialize command context
+        ctx = setup_command_context()
 
         # Get ADR to verify it exists
-        notes_manager = NotesManager(git, config)
-        adr = notes_manager.get(adr_id)
+        adr = ctx.notes_manager.get(adr_id)
 
         if adr is None:
             err_console.print(f"[red]Error:[/red] ADR not found: {adr_id}")
@@ -92,7 +71,7 @@ def run_rm(
                 raise typer.Exit(0)
 
         # Remove the ADR
-        result = notes_manager.remove(adr_id)
+        result = ctx.notes_manager.remove(adr_id)
 
         if result:
             console.print(f"[green]✓[/green] Removed ADR: {adr_id}")

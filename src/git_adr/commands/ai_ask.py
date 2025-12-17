@@ -5,19 +5,13 @@ Natural language Q&A about ADRs using RAG.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 
-from git_adr.core import (
-    ConfigManager,
-    GitError,
-    NotesManager,
-    get_git,
-)
+from git_adr.commands._shared import setup_command_context
+from git_adr.core import GitError
 
 console = Console()
 err_console = Console(stderr=True)
@@ -42,33 +36,19 @@ def run_ai_ask(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
+        # Initialize command context
+        ctx = setup_command_context()
 
         # Check AI configuration
-        if not config.ai_provider:
+        if not ctx.config.ai_provider:
             err_console.print(
                 "[red]Error:[/red] AI provider not configured.\n"
                 "Run: git adr config set ai.provider <openai|anthropic|google|ollama>"
             )
             raise typer.Exit(1)
 
-        notes_manager = NotesManager(git, config)
-
         # Get ADRs for context
-        all_adrs = notes_manager.list_all()
+        all_adrs = ctx.notes_manager.list_all()
 
         # Filter superseded unless explicitly included
         if not include_superseded:
@@ -106,7 +86,7 @@ def run_ai_ask(
         try:
             from git_adr.ai import AIService
 
-            ai_service = AIService(config)
+            ai_service = AIService(ctx.config)
             response = ai_service.ask_question(question, all_adrs)
 
             # Display answer

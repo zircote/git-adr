@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
 
 import typer
 import yaml
@@ -15,14 +14,8 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 
-from git_adr.commands._shared import get_status_style
-from git_adr.core import (
-    ADRStatus,
-    ConfigManager,
-    GitError,
-    NotesManager,
-    get_git,
-)
+from git_adr.commands._shared import get_status_style, setup_command_context
+from git_adr.core import ADRStatus, GitError
 
 console = Console()
 err_console = Console(stderr=True)
@@ -46,26 +39,11 @@ def run_show(
         typer.Exit: On error.
     """
     try:
-        # Get git and config
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        # Check if initialized
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
+        # Initialize command context
+        ctx = setup_command_context()
 
         # Get ADR
-        notes_manager = NotesManager(git, config)
-        adr = notes_manager.get(adr_id)
+        adr = ctx.notes_manager.get(adr_id)
 
         if adr is None:
             err_console.print(f"[red]Error:[/red] ADR not found: {adr_id}")

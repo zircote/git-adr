@@ -5,23 +5,19 @@ AI-guided ADR creation with interactive elicitation.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.prompt import Prompt
 
+from git_adr.commands._shared import setup_command_context
 from git_adr.core import (
     ADR,
     ADRMetadata,
     ADRStatus,
-    ConfigManager,
     GitError,
-    NotesManager,
     generate_adr_id,
-    get_git,
 )
 
 console = Console()
@@ -48,23 +44,11 @@ def run_ai_draft(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
+        # Initialize command context
+        ctx = setup_command_context()
 
         # Check AI configuration
-        if not config.ai_provider:
+        if not ctx.config.ai_provider:
             err_console.print(
                 "[red]Error:[/red] AI provider not configured.\n"
                 "Run: git adr config set ai.provider <openai|anthropic|google|ollama>"
@@ -87,7 +71,7 @@ def run_ai_draft(
                 Panel(
                     f"[bold]AI-Assisted ADR Creation[/bold]\n\n"
                     f"Topic: [cyan]{title}[/cyan]\n"
-                    f"Provider: [dim]{config.ai_provider}[/dim]",
+                    f"Provider: [dim]{ctx.config.ai_provider}[/dim]",
                     title="git adr ai draft",
                 )
             )
@@ -126,7 +110,7 @@ def run_ai_draft(
         commit_context = ""
         if from_commits:
             try:
-                result = git.run(["log", "--oneline", from_commits])
+                result = ctx.git.run(["log", "--oneline", from_commits])
                 if result.exit_code == 0:
                     commit_context = f"\n\nRecent commits:\n{result.stdout}"
             except Exception:  # nosec B110 - commit context is optional; graceful degradation
@@ -139,7 +123,7 @@ def run_ai_draft(
         try:
             from git_adr.ai import AIService
 
-            ai_service = AIService(config)
+            ai_service = AIService(ctx.config)
 
             # Combine context
             full_context = elicited_context or ""
@@ -169,8 +153,7 @@ def run_ai_draft(
             # Create and save ADR
             from datetime import date
 
-            notes_manager = NotesManager(git, config)
-            existing_ids = {adr.id for adr in notes_manager.list_all()}
+            existing_ids = {adr.id for adr in ctx.notes_manager.list_all()}
             adr_id = generate_adr_id(title, existing_ids)
 
             metadata = ADRMetadata(
@@ -178,11 +161,11 @@ def run_ai_draft(
                 title=title,
                 date=date.today(),
                 status=ADRStatus.PROPOSED,
-                format=template or config.template,
+                format=template or ctx.config.template,
             )
 
             adr = ADR(metadata=metadata, content=response.content)
-            notes_manager.add(adr)
+            ctx.notes_manager.add(adr)
 
             console.print()
             console.print(f"[green]✓[/green] Created ADR: [cyan]{adr_id}[/cyan]")

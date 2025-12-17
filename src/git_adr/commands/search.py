@@ -5,22 +5,13 @@ Full-text search across ADRs with highlighted snippets.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
-from git_adr.commands._shared import get_status_style
-from git_adr.core import (
-    ADRStatus,
-    ConfigManager,
-    GitError,
-    IndexManager,
-    NotesManager,
-    get_git,
-)
+from git_adr.commands._shared import get_status_style, setup_command_context
+from git_adr.core import ADRStatus, GitError
 
 console = Console()
 err_console = Console(stderr=True)
@@ -48,23 +39,8 @@ def run_search(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
-
-        notes_manager = NotesManager(git, config)
-        index_manager = IndexManager(notes_manager)
+        # Initialize command context with index manager
+        ctx = setup_command_context(require_index=True)
 
         # Parse status filter
         parsed_status = None
@@ -76,7 +52,7 @@ def run_search(
                 raise typer.Exit(1)
 
         # Perform search
-        matches = index_manager.search(
+        matches = ctx.index_manager.search(
             query=query,
             status=parsed_status,
             tag=tag,

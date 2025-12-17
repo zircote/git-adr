@@ -212,7 +212,7 @@ class TestRmGitErrors:
         # Mock NotesManager.remove to raise GitError
         # GitError requires: message, command (list), exit_code
         with patch(
-            "git_adr.commands.rm.NotesManager.remove",
+            "git_adr.core.notes.NotesManager.remove",
             side_effect=GitError(
                 "Simulated git error",
                 ["git", "notes", "remove"],
@@ -231,7 +231,7 @@ class TestRmGitErrors:
 
         # Mock NotesManager.remove to return False
         with patch(
-            "git_adr.commands.rm.NotesManager.remove",
+            "git_adr.core.notes.NotesManager.remove",
             return_value=False,
         ):
             result = runner.invoke(app, ["rm", "20250110-use-postgresql", "--force"])
