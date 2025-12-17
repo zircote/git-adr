@@ -216,7 +216,7 @@ class TestEditorCommand:
             if old_visual:
                 os.environ["VISUAL"] = old_visual
 
-    def testbuild_editor_command(self) -> None:
+    def test_build_editor_command(self) -> None:
         """Test _build_editor_command."""
         from git_adr.commands._editor import build_editor_command
 

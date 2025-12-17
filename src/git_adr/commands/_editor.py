@@ -56,17 +56,29 @@ def find_editor(config: Config) -> str | None:
     """
     # Check config
     if config.editor:
-        parts = shlex.split(config.editor)
-        if parts and shutil.which(parts[0]):
-            return config.editor
+        try:
+            parts = shlex.split(config.editor)
+            if parts and shutil.which(parts[0]):
+                return config.editor
+        except ValueError:
+            # Malformed editor string (e.g., unmatched quotes)
+            err_console.print(
+                f"[yellow]Warning:[/yellow] Invalid editor config: {config.editor}"
+            )
 
     # Check environment
     for env_var in ["EDITOR", "VISUAL"]:
         editor = os.environ.get(env_var)
         if editor:
-            parts = shlex.split(editor)
-            if parts and shutil.which(parts[0]):
-                return editor
+            try:
+                parts = shlex.split(editor)
+                if parts and shutil.which(parts[0]):
+                    return editor
+            except ValueError:
+                # Malformed editor string (e.g., unmatched quotes)
+                err_console.print(
+                    f"[yellow]Warning:[/yellow] Invalid ${env_var}: {editor}"
+                )
 
     # Check fallbacks
     for editor in EDITOR_FALLBACKS:
@@ -90,9 +102,14 @@ def build_editor_command(editor: str, file_path: str) -> list[str]:
     """
     # Use shlex.split() for proper shell-style parsing of editor string
     # This correctly handles paths with spaces, quoted arguments, etc.
-    parts = shlex.split(editor)
-    cmd = parts[0]
-    args = parts[1:]
+    try:
+        parts = shlex.split(editor)
+        cmd = parts[0]
+        args = parts[1:]
+    except ValueError:
+        # Fallback: treat entire string as command (already validated by find_editor)
+        cmd = editor
+        args = []
 
     # Check if this is a GUI editor that needs --wait
     cmd_name = Path(cmd).stem.lower()

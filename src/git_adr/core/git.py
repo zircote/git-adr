@@ -750,8 +750,6 @@ class Git:
     def cat_file_batch(
         self,
         shas: list[str],
-        *,
-        obj_type: str = "blob",
     ) -> dict[str, str | None]:
         """Fetch multiple objects in a single subprocess call.
 
@@ -760,7 +758,6 @@ class Git:
 
         Args:
             shas: List of object SHAs to retrieve.
-            obj_type: Expected object type for filtering (default: blob).
 
         Returns:
             Dictionary mapping SHA to content (None if not found).
