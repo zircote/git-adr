@@ -1,0 +1,102 @@
+---
+date: '2025-12-16'
+id: 20251216-extend-existing-git-adr-skill-rather-than-replace
+status: proposed
+title: Extend Existing git-adr Skill Rather Than Replace
+---
+
+# Extend Existing git-adr Skill Rather Than Replace
+
+Context and Problem Statement
+- There is an existing git-adr Claude skill installed at ~/.claude/skills/git-adr/ which provides CLI-based ADR (architecture decision record) creation and documentation workflows.
+- We need to add "machine memory" capability to the git-adr skill so the skill can:
+  - Remember prior ADRs, decisions, and related context across sessions.
+  - Use stored knowledge to provide contextual suggestions, auto-fill metadata, and enable search.
+- Requirements and constraints:
+  - Preserve existing CLI commands and behavior for current users.
+  - Avoid breaking local customizations in ~/.claude/skills/git-adr/ (users may have edited files).
+  - Provide an opt-in, privacy-conscious memory feature that degrades gracefully if the machine memory capability is unavailable, denied, or disabled.
+  - Keep maintenance/operational overhead and user disruption minimal.
+- Problem statement: Should we extend the existing git-adr skill in-place to add machine memory, or instead replace it with a new skill / separate skill that implements memory?
+
+Decision Drivers (bulleted list)
+- Backwards compatibility: preserve existing CLI usage, command names, file formats, and local user edits.
+- Minimal user disruption: automatically provide new features without forcing reinstallation or migration where possible.
+- Safety/privacy: require explicit user consent for storing and/or transmitting memory; provide clear controls and local-first storage where feasible.
+- Maintainability: keep a single codebase to reduce duplication and speed future enhancements.
+- Upgradeability & rollback: allow safe updates and the ability to rollback if issues arise.
+- Extensibility: design so future memory-related features (e.g., richer indexing, cloud sync) can be added without major rewrites.
+- Robustness: skill should detect absence of memory capability and gracefully fall back to current behavior.
+- Performance: memory integration should not significantly slow down common operations.
+- Security: minimize attack surface, protect stored memory data (encryption at rest if local, secure transport if remote).
+
+Considered Options (bulleted list)
+- Extend the existing skill in-place (modify ~/.claude/skills/git-adr/ codebase to add memory features)
+- Replace the skill with a new git-adr-memory skill (delete/replace installation folder with a new skill implementing memory)
+- Add a separate skill that augments git-adr (install a second skill, e.g., git-adr-memory, that proxies or coordinates with the existing git-adr)
+- Implement a thin wrapper skill (new skill overrides CLI name and delegates to new implementation while still using parts of the old)
+- Implement memory as a standalone service/plugin used by multiple skills (create a generic memory skill and integrate it with git-adr via inter-skill API)
+
+Decision Outcome (Chosen option with justification)
+- Chosen option: Extend the existing skill in-place (modify ~/.claude/skills/git-adr/ to add machine memory capability).
+- Justification:
+  - Backwards compatibility: In-place extension ensures existing users keep their current workflows and customizations by default; commands, config files, and file paths remain valid.
+  - Seamless upgrade: An in-place upgrade can be delivered via the usual skill update mechanism (or a migration script), giving users the new features automatically while allowing opt-in/opt-out behavior.
+  - Single source of truth: Keeping features in the same repository/skill avoids duplication of command logic and reduces the risk of divergent behavior between separate skills.
+  - Simpler UX: Users do not have to install or manage multiple skills for a cohesive git-adr experience.
+  - Easier maintenance: Developers maintain a single codebase and test matrix; adding memory-specific code modularly decreases long-term maintenance cost versus coordinating multiple skills or wrappers.
+  - Safe fallback: The extension will be implemented to detect whether machine memory is available and whether the user has consented; if not, the skill remains functionally identical to the prior version.
+- Implementation outline (technical specifics):
+  - Code layout:
+    - Add a memory module at ~/.claude/skills/git-adr/src/memory.py (or src/memory/ with __init__.py) that encapsulates all memory interactions.
+    - Keep CLI command handlers in existing modules; add optional memory integration hooks.
+  - CLI surface:
+    - Default CLI commands remain the same.
+    - New optional flags and subcommands: e.g., `git-adr --memory` or `git-adr memory sync` and a configuration key `memory.enabled` in ~/.claude/skills/git-adr/config.json (default: false).
+    - If user enables memory, new behaviors: contextual suggestions, ADR retrieval, auto-fill metadata.
+  - Storage:
+    - Default local-first store at ~/.claude/skills/git-adr/data/memory.db (SQLite) with an abstracted storage layer so a future cloud sync can be added.
+    - Encrypt memory.db at rest with an optional user-supplied passphrase or OS keystore integration.
+  - Integration with Claude machine memory APIs:
+    - Use a well-contained adapter (e.g., memory/adapter_claude.py) that translates our memory model to the Claude machine-memory API.
+    - Support a “local-only” adapter fallback if Claude machine memory API is unavailable or user denies remote storage.
+  - Migration/upgrade:
+    - Add an idempotent migration script update/migrate_memory_v1.py that:
+      - Backs up the skill folder (e.g., ~/.claude/skills/git-adr/backup-YYYYMMDD/)
+      - Detects local edits and preserves them (three-way merge approach or explicit user prompt on conflicts)
+      - Adds default config and data directories without overwriting existing files.
+  - Feature gating:
+    - Memory capabilities gated behind:
+      - config `memory.enabled` (explicit user opt-in)
+      - runtime capability check (is machine memory API available)
+      - privacy consent during first-run interactive prompt or CLI `--enable-memory` flag.
+  - Tests and CI:
+    - Unit tests for memory module with mocks for storage and Claude API.
+    - Integration tests validating CLI behavior with memory enabled/disabled.
+    - Add E2E test scenario ensuring graceful fallback when memory backend is unreachable.
+  - Rollout strategy:
+    - Canary: release to a small subset of users or internal testers first.
+    - Telemetry (opt-in) and verbose logging to capture issues during rollout.
+    - Fast rollback path: update installer to restore previous commit or skip migration if rollback requested.
+
+Consequences
+- Good
+  - Preserves existing user workflows and local customizations by default.
+  - Users get new memory features automatically via update without needing to install or learn a separate skill.
+  - Single codebase reduces duplication and lowers maintenance burden.
+  - Easier to keep CLI behavior consistent; less chance of divergent behavior across separate skills.
+  - Modular memory module and adapter pattern make it straightforward to add cloud sync or alternate memory backends later.
+  - Graceful degradation ensures no regression if memory is unavailable or disabled.
+  - Smaller cognitive load for users (one skill to manage).
+- Bad
+  - Increased coupling: the git-adr codebase grows and now includes memory concerns; if not modularized well, future changes may become harder to reason about.
+  - Risk during upgrade: modifying existing files under ~/.claude/skills/git-adr/ could conflict with user custom edits. Migration is required and must be carefully implemented to avoid data loss.
+  - Larger attack surface: storing memory locally (or enabling cloud sync) introduces security/privacy risk; requires careful encryption and permission handling.
+  - Versioning complexity: updates must maintain backward compatibility; tests must catch subtle regressions for users who rely on older behaviors.
+  - Release complexity: we must implement robust migration, backup, and rollback processes to handle potential failures during in-place upgrades.
+- Neutral
+  - Performance: memory integration may add latency for memory-enabled features (search, suggestions), but core CLI flows remain as fast as before when memory is disabled.
+  - Feature discoverability: adding memory in-place keeps the UX consistent but requires clear documentation and discoverability (e.g., first-run message, CLI help) so users understand new options.
+  - Testing scope increases (more integration scenarios), but test investment scales with feature benefit.
+
+Tags: claude-skill, git-adr, machine-memory, architecture
