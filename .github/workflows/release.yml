@@ -229,7 +229,7 @@ jobs:
 
             ### Homebrew (macOS)
             ```bash
-            brew tap zircote/git-adr
+            brew tap zircote/tap
             brew install git-adr
             ```
 
@@ -361,7 +361,7 @@ jobs:
       - name: Checkout Homebrew tap
         uses: actions/checkout@v4
         with:
-          repository: zircote/homebrew-git-adr
+          repository: zircote/homebrew-tap
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           path: homebrew-tap
 
@@ -601,7 +601,7 @@ jobs:
             exit 0
           fi
           # Explicitly set remote URL with token for cross-repo push
-          git remote set-url origin "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/zircote/homebrew-git-adr.git"
+          git remote set-url origin "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/zircote/homebrew-tap.git"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/git-adr.rb

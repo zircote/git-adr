@@ -115,7 +115,7 @@ The `onedir` mode is used for fast startup (<1 second) vs `onefile` which extrac
 ## Homebrew Formula
 
 The Homebrew formula is maintained at:
-- Repository: `zircote/homebrew-git-adr`
+- Repository: `zircote/homebrew-tap`
 - Formula: `Formula/git-adr.rb`
 
 The `release.yml` workflow automatically updates the formula with:
@@ -129,8 +129,8 @@ If automatic update fails:
 
 ```bash
 # Clone the tap
-git clone https://github.com/zircote/homebrew-git-adr.git
-cd homebrew-git-adr
+git clone https://github.com/zircote/homebrew-tap.git
+cd homebrew-tap
 
 # Get new SHA256
 curl -L https://pypi.org/pypi/git-adr/X.Y.Z/json | jq '.urls[] | select(.packagetype=="sdist") | .digests.sha256'
