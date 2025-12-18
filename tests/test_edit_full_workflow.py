@@ -280,13 +280,13 @@ class TestEditErrorHandling:
         """Test edit when GitError is raised."""
         from git_adr.core.git import GitError
 
-        with patch("git_adr.commands.edit.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.return_value = True
 
             # ConfigManager load raises GitError
-            with patch("git_adr.commands.edit.ConfigManager") as mock_cm_class:
+            with patch("git_adr.commands._shared.ConfigManager") as mock_cm_class:
                 mock_cm = MagicMock()
                 mock_cm_class.return_value = mock_cm
                 mock_cm.load.side_effect = GitError(

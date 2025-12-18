@@ -56,7 +56,7 @@ def run_show(
             and not adr.metadata.deciders
             and sys.stdin.isatty()
         ):
-            adr = _prompt_for_deciders(adr, notes_manager)
+            adr = _prompt_for_deciders(adr, ctx.notes_manager)
 
         # Output based on format
         if format_ == "markdown":

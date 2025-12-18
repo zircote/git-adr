@@ -10,6 +10,7 @@ Creates a new Architecture Decision Record with multiple input modes:
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 import typer
 from rich.console import Console

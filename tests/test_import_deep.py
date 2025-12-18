@@ -118,12 +118,12 @@ class TestImportGitError:
             )
         )
 
-        with patch("git_adr.commands.import_.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.return_value = True
 
-            with patch("git_adr.commands.import_.ConfigManager") as mock_cm:
+            with patch("git_adr.commands._shared.ConfigManager") as mock_cm:
                 mock_cm_instance = MagicMock()
                 mock_cm.return_value = mock_cm_instance
                 mock_cm_instance.get.return_value = True
