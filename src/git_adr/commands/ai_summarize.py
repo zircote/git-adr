@@ -7,19 +7,14 @@ from __future__ import annotations
 
 import re
 from datetime import date, timedelta
-from pathlib import Path
 
 import typer
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 
-from git_adr.core import (
-    ConfigManager,
-    GitError,
-    NotesManager,
-    get_git,
-)
+from git_adr.commands._shared import setup_command_context
+from git_adr.core import GitError
 
 console = Console()
 err_console = Console(stderr=True)
@@ -39,37 +34,23 @@ def run_ai_summarize(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
+        # Initialize command context
+        ctx = setup_command_context()
 
         # Check AI configuration
-        if not config.ai_provider:
+        if not ctx.config.ai_provider:
             err_console.print(
                 "[red]Error:[/red] AI provider not configured.\n"
                 "Run: git adr config set ai.provider <openai|anthropic|google|ollama>"
             )
             raise typer.Exit(1)
 
-        notes_manager = NotesManager(git, config)
-
         # Parse period
         days = _parse_period(period)
         cutoff = date.today() - timedelta(days=days)
 
         # Get ADRs within period
-        all_adrs = notes_manager.list_all()
+        all_adrs = ctx.notes_manager.list_all()
         recent_adrs = [adr for adr in all_adrs if adr.metadata.date >= cutoff]
 
         if not recent_adrs:
@@ -91,7 +72,7 @@ def run_ai_summarize(
         try:
             from git_adr.ai import AIService
 
-            ai_service = AIService(config)
+            ai_service = AIService(ctx.config)
             response = ai_service.summarize_adrs(recent_adrs, format_=format_)
 
             # Display summary
