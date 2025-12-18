@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import typer
 from rich.console import Console

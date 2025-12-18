@@ -362,7 +362,7 @@ class TestStatsDeep:
 
     def test_stats_git_error(self, adr_repo_with_data: Path) -> None:
         """Test stats GitError handling (lines 147-148)."""
-        with patch("git_adr.commands.stats.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.side_effect = GitError(
@@ -383,7 +383,7 @@ class TestLogDeep:
 
     def test_log_git_error(self, adr_repo_with_data: Path) -> None:
         """Test log GitError handling (lines 73-74)."""
-        with patch("git_adr.commands.log.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.return_value = True
@@ -397,7 +397,7 @@ class TestLogDeep:
             )
 
             with patch(
-                "git_adr.commands.log.ConfigManager", return_value=mock_config_manager
+                "git_adr.commands._shared.ConfigManager", return_value=mock_config_manager
             ):
                 mock_git.run.side_effect = GitError("Git log error", ["git", "log"], 1)
 
@@ -407,7 +407,7 @@ class TestLogDeep:
 
     def test_log_run_returns_failure(self, adr_repo_with_data: Path) -> None:
         """Test log when git run returns failure (lines 69-70)."""
-        with patch("git_adr.commands.log.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.return_value = True
@@ -419,7 +419,7 @@ class TestLogDeep:
             mock_config_manager.load.return_value = mock_config
 
             with patch(
-                "git_adr.commands.log.ConfigManager", return_value=mock_config_manager
+                "git_adr.commands._shared.ConfigManager", return_value=mock_config_manager
             ):
                 mock_result = MagicMock()
                 mock_result.success = False
@@ -447,7 +447,7 @@ class TestSyncDeep:
 
     def test_sync_git_error_general(self, adr_repo_with_data: Path) -> None:
         """Test sync general GitError handling (lines 99-100)."""
-        with patch("git_adr.commands.sync.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.side_effect = GitError(
@@ -459,7 +459,7 @@ class TestSyncDeep:
 
     def test_sync_pull_error_reraise(self, adr_repo_with_data: Path) -> None:
         """Test sync pull error re-raise (line 78)."""
-        with patch("git_adr.commands.sync.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.return_value = True
@@ -470,7 +470,7 @@ class TestSyncDeep:
             mock_config = MagicMock()
             mock_cm.load.return_value = mock_config
 
-            with patch("git_adr.commands.sync.ConfigManager", return_value=mock_cm):
+            with patch("git_adr.commands._shared.ConfigManager", return_value=mock_cm):
                 mock_notes = MagicMock()
                 # Error that isn't "couldn't find remote ref"
                 mock_notes.sync_pull.side_effect = GitError(
@@ -478,7 +478,7 @@ class TestSyncDeep:
                 )
 
                 with patch(
-                    "git_adr.commands.sync.NotesManager", return_value=mock_notes
+                    "git_adr.commands._shared.NotesManager", return_value=mock_notes
                 ):
                     result = runner.invoke(app, ["sync"])
                     # Should propagate the error
@@ -486,7 +486,7 @@ class TestSyncDeep:
 
     def test_sync_push_error_reraise(self, adr_repo_with_data: Path) -> None:
         """Test sync push error re-raise (line 93)."""
-        with patch("git_adr.commands.sync.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.return_value = True
@@ -497,7 +497,7 @@ class TestSyncDeep:
             mock_config = MagicMock()
             mock_cm.load.return_value = mock_config
 
-            with patch("git_adr.commands.sync.ConfigManager", return_value=mock_cm):
+            with patch("git_adr.commands._shared.ConfigManager", return_value=mock_cm):
                 mock_notes = MagicMock()
                 mock_notes.sync_pull.return_value = None
                 # Error that isn't "failed to push"
@@ -506,7 +506,7 @@ class TestSyncDeep:
                 )
 
                 with patch(
-                    "git_adr.commands.sync.NotesManager", return_value=mock_notes
+                    "git_adr.commands._shared.NotesManager", return_value=mock_notes
                 ):
                     result = runner.invoke(app, ["sync", "--pull", "--push"])
                     # Should propagate the error
@@ -514,7 +514,7 @@ class TestSyncDeep:
 
     def test_sync_success_messages(self, adr_repo_with_data: Path) -> None:
         """Test sync success messages (lines 71, 85)."""
-        with patch("git_adr.commands.sync.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.return_value = True
@@ -525,13 +525,13 @@ class TestSyncDeep:
             mock_config = MagicMock()
             mock_cm.load.return_value = mock_config
 
-            with patch("git_adr.commands.sync.ConfigManager", return_value=mock_cm):
+            with patch("git_adr.commands._shared.ConfigManager", return_value=mock_cm):
                 mock_notes = MagicMock()
                 mock_notes.sync_pull.return_value = None
                 mock_notes.sync_push.return_value = None
 
                 with patch(
-                    "git_adr.commands.sync.NotesManager", return_value=mock_notes
+                    "git_adr.commands._shared.NotesManager", return_value=mock_notes
                 ):
                     result = runner.invoke(app, ["sync", "--pull", "--push"])
                     # Should succeed
@@ -587,7 +587,7 @@ class TestArtifactRmDeep:
 
     def test_artifact_rm_remove_failure(self, adr_repo_with_data: Path) -> None:
         """Test artifact-rm when remove fails (lines 98-99)."""
-        with patch("git_adr.commands.artifact_rm.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.return_value = True
@@ -598,7 +598,7 @@ class TestArtifactRmDeep:
             mock_cm.load.return_value = mock_config
 
             with patch(
-                "git_adr.commands.artifact_rm.ConfigManager", return_value=mock_cm
+                "git_adr.commands._shared.ConfigManager", return_value=mock_cm
             ):
                 mock_notes = MagicMock()
                 mock_adr = MagicMock()
@@ -614,7 +614,7 @@ class TestArtifactRmDeep:
                 mock_notes.remove_artifact.return_value = False
 
                 with patch(
-                    "git_adr.commands.artifact_rm.NotesManager", return_value=mock_notes
+                    "git_adr.commands._shared.NotesManager", return_value=mock_notes
                 ):
                     result = runner.invoke(
                         app,
@@ -625,7 +625,7 @@ class TestArtifactRmDeep:
 
     def test_artifact_rm_git_error(self, adr_repo_with_data: Path) -> None:
         """Test artifact-rm GitError handling (lines 102-103)."""
-        with patch("git_adr.commands.artifact_rm.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.side_effect = GitError(

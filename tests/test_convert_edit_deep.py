@@ -319,13 +319,13 @@ class TestRunEditFunction:
 
     def test_run_edit_git_error(self, adr_repo_with_data: Path) -> None:
         """Test run_edit with GitError."""
-        with patch("git_adr.commands.edit.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.return_value = True
 
             # ConfigManager raises GitError
-            with patch("git_adr.commands.edit.ConfigManager") as mock_cm:
+            with patch("git_adr.commands._shared.ConfigManager") as mock_cm:
                 mock_cm.side_effect = GitError("Config error", ["git", "config"], 1)
 
                 result = runner.invoke(app, ["edit", "some-adr"])
@@ -373,13 +373,13 @@ class TestRunConvertFunction:
 
     def test_run_convert_git_error(self, adr_repo_with_data: Path) -> None:
         """Test run_convert with GitError."""
-        with patch("git_adr.commands.convert.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.return_value = True
 
             # ConfigManager raises GitError
-            with patch("git_adr.commands.convert.ConfigManager") as mock_cm:
+            with patch("git_adr.commands._shared.ConfigManager") as mock_cm:
                 mock_cm.side_effect = GitError("Config error", ["git", "config"], 1)
 
                 result = runner.invoke(app, ["convert", "some-adr", "--to", "madr"])

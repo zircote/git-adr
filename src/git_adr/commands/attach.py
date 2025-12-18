@@ -79,7 +79,7 @@ def run_attach(
 
         # Check size warning
         size = file_path.stat().st_size
-        if size > config.artifact_warn_size:
+        if size > ctx.config.artifact_warn_size:
             size_mb = size / (1024 * 1024)
             console.print(
                 f"[yellow]Warning:[/yellow] File is {size_mb:.1f}MB. "

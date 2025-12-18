@@ -68,7 +68,7 @@ class TestAIAskTagFilter:
 
     def test_ai_ask_import_error(self, adr_repo_with_data: Path) -> None:
         """Test ai ask when AI module import fails (lines 128-132)."""
-        with patch("git_adr.commands.ai_ask.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.return_value = True
@@ -79,14 +79,14 @@ class TestAIAskTagFilter:
             mock_config.ai_provider = "openai"
             mock_cm.load.return_value = mock_config
 
-            with patch("git_adr.commands.ai_ask.ConfigManager", return_value=mock_cm):
+            with patch("git_adr.commands._shared.ConfigManager", return_value=mock_cm):
                 mock_notes = MagicMock()
                 mock_adr = MagicMock()
                 mock_adr.metadata.status.value = "accepted"
                 mock_notes.list_all.return_value = [mock_adr]
 
                 with patch(
-                    "git_adr.commands.ai_ask.NotesManager", return_value=mock_notes
+                    "git_adr.commands._shared.NotesManager", return_value=mock_notes
                 ):
                     # Make the import fail
                     with patch.dict("sys.modules", {"git_adr.ai": None}):
@@ -96,7 +96,7 @@ class TestAIAskTagFilter:
 
     def test_ai_ask_git_error(self, adr_repo_with_data: Path) -> None:
         """Test ai ask GitError handling (lines 138-139)."""
-        with patch("git_adr.commands.ai_ask.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.side_effect = GitError(
@@ -229,7 +229,7 @@ class TestArtifactsFormatSize:
 
     def test_artifacts_git_error(self, adr_repo_with_data: Path) -> None:
         """Test artifacts GitError handling (lines 84-85)."""
-        with patch("git_adr.commands.artifacts.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.side_effect = GitError(
@@ -267,7 +267,7 @@ class TestArtifactGetDeep:
         self, adr_repo_with_data: Path
     ) -> None:
         """Test artifact-get when content retrieval fails (lines 83-84)."""
-        with patch("git_adr.commands.artifact_get.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.return_value = True
@@ -278,7 +278,7 @@ class TestArtifactGetDeep:
             mock_cm.load.return_value = mock_config
 
             with patch(
-                "git_adr.commands.artifact_get.ConfigManager", return_value=mock_cm
+                "git_adr.commands._shared.ConfigManager", return_value=mock_cm
             ):
                 mock_notes = MagicMock()
                 mock_adr = MagicMock()
@@ -294,7 +294,7 @@ class TestArtifactGetDeep:
                 mock_notes.get_artifact.return_value = None
 
                 with patch(
-                    "git_adr.commands.artifact_get.NotesManager",
+                    "git_adr.commands._shared.NotesManager",
                     return_value=mock_notes,
                 ):
                     result = runner.invoke(
@@ -323,7 +323,7 @@ class TestArtifactGetDeep:
 
     def test_artifact_get_git_error(self, adr_repo_with_data: Path) -> None:
         """Test artifact-get GitError handling (lines 106-107)."""
-        with patch("git_adr.commands.artifact_get.get_git") as mock_get_git:
+        with patch("git_adr.commands._shared.get_git") as mock_get_git:
             mock_git = MagicMock()
             mock_get_git.return_value = mock_git
             mock_git.is_repository.side_effect = GitError(
