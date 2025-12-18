@@ -277,9 +277,7 @@ class TestArtifactGetDeep:
             mock_config = MagicMock()
             mock_cm.load.return_value = mock_config
 
-            with patch(
-                "git_adr.commands._shared.ConfigManager", return_value=mock_cm
-            ):
+            with patch("git_adr.commands._shared.ConfigManager", return_value=mock_cm):
                 mock_notes = MagicMock()
                 mock_adr = MagicMock()
                 mock_notes.get.return_value = mock_adr

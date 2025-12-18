@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import date, timedelta
+from typing import cast
 
 import typer
 from rich.console import Console
@@ -16,6 +17,7 @@ from rich.table import Table
 from git_adr.commands._shared import setup_command_context
 from git_adr.core import GitError
 from git_adr.core.adr import ADRStatus
+from git_adr.core.index import IndexManager
 
 console = Console()
 err_console = Console(stderr=True)
@@ -35,9 +37,10 @@ def run_stats(
     try:
         # Initialize command context with index manager
         ctx = setup_command_context(require_index=True)
+        index_manager = cast(IndexManager, ctx.index_manager)
 
         # Rebuild index to ensure accuracy
-        ctx.index_manager.rebuild()
+        index_manager.rebuild()
 
         # Get all ADRs
         all_adrs = ctx.notes_manager.list_all()

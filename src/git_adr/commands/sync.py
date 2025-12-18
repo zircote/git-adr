@@ -47,7 +47,9 @@ def run_sync(
         if pull:
             console.print(f"[dim]Fetching notes from {remote}...[/dim]")
             try:
-                ctx.notes_manager.sync_pull(remote=remote, merge_strategy=merge_strategy)
+                ctx.notes_manager.sync_pull(
+                    remote=remote, merge_strategy=merge_strategy
+                )
                 console.print(f"[green]✓[/green] Pulled ADR notes from {remote}")
             except GitError as e:
                 # Check for "remote ref not found" error - this is expected when

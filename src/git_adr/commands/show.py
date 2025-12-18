@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import TYPE_CHECKING
 
 import typer
 import yaml
@@ -16,6 +17,9 @@ from rich.panel import Panel
 
 from git_adr.commands._shared import get_status_style, setup_command_context
 from git_adr.core import ADRStatus, GitError
+
+if TYPE_CHECKING:
+    from git_adr.core.notes import NotesManager
 
 console = Console()
 err_console = Console(stderr=True)

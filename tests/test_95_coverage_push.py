@@ -397,7 +397,8 @@ class TestLogDeep:
             )
 
             with patch(
-                "git_adr.commands._shared.ConfigManager", return_value=mock_config_manager
+                "git_adr.commands._shared.ConfigManager",
+                return_value=mock_config_manager,
             ):
                 mock_git.run.side_effect = GitError("Git log error", ["git", "log"], 1)
 
@@ -419,7 +420,8 @@ class TestLogDeep:
             mock_config_manager.load.return_value = mock_config
 
             with patch(
-                "git_adr.commands._shared.ConfigManager", return_value=mock_config_manager
+                "git_adr.commands._shared.ConfigManager",
+                return_value=mock_config_manager,
             ):
                 mock_result = MagicMock()
                 mock_result.success = False
@@ -597,9 +599,7 @@ class TestArtifactRmDeep:
             mock_config = MagicMock()
             mock_cm.load.return_value = mock_config
 
-            with patch(
-                "git_adr.commands._shared.ConfigManager", return_value=mock_cm
-            ):
+            with patch("git_adr.commands._shared.ConfigManager", return_value=mock_cm):
                 mock_notes = MagicMock()
                 mock_adr = MagicMock()
                 mock_notes.get.return_value = mock_adr

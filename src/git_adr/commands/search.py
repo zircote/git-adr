@@ -5,6 +5,8 @@ Full-text search across ADRs with highlighted snippets.
 
 from __future__ import annotations
 
+from typing import cast
+
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -12,6 +14,7 @@ from rich.text import Text
 
 from git_adr.commands._shared import get_status_style, setup_command_context
 from git_adr.core import ADRStatus, GitError
+from git_adr.core.index import IndexManager
 
 console = Console()
 err_console = Console(stderr=True)
@@ -41,6 +44,7 @@ def run_search(
     try:
         # Initialize command context with index manager
         ctx = setup_command_context(require_index=True)
+        index_manager = cast(IndexManager, ctx.index_manager)
 
         # Parse status filter
         parsed_status = None
@@ -52,7 +56,7 @@ def run_search(
                 raise typer.Exit(1)
 
         # Perform search
-        matches = ctx.index_manager.search(
+        matches = index_manager.search(
             query=query,
             status=parsed_status,
             tag=tag,
