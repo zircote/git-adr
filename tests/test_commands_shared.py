@@ -13,6 +13,7 @@ import typer
 
 from git_adr.commands._shared import CommandContext, setup_command_context
 from git_adr.core import ConfigManager, NotesManager
+from git_adr.core.index import IndexManager
 
 
 class TestSetupCommandContext:
@@ -46,6 +47,7 @@ class TestSetupCommandContext:
         ctx = setup_command_context(cwd=initialized_adr_repo, require_index=True)
 
         assert ctx.index_manager is not None
+        assert isinstance(ctx.index_manager, IndexManager)
 
     def test_setup_uses_current_directory_by_default(
         self, initialized_adr_repo: Path, monkeypatch: pytest.MonkeyPatch
