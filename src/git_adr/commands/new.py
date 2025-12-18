@@ -10,24 +10,21 @@ Creates a new Architecture Decision Record with multiple input modes:
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
 import typer
 from rich.console import Console
 from rich.markdown import Markdown
 
 from git_adr.commands._editor import open_editor
+from git_adr.commands._shared import setup_command_context
 from git_adr.core import (
     ADR,
     ADRMetadata,
     ADRStatus,
     Config,
-    ConfigManager,
     GitError,
-    NotesManager,
     ensure_list,
     generate_adr_id,
-    get_git,
     validate_adr,
 )
 from git_adr.core.templates import TemplateEngine
@@ -66,29 +63,14 @@ def run_new(
         typer.Exit: On error.
     """
     try:
-        # Get git and config
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        # Check if initialized
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
+        # Initialize command context
+        ctx = setup_command_context()
 
         # Get template format
-        format_name = template or config.template
+        format_name = template or ctx.config.template
 
         # Generate ADR ID
-        notes_manager = NotesManager(git, config)
-        existing_ids = {adr.id for adr in notes_manager.list_all()}
+        existing_ids = {adr.id for adr in ctx.notes_manager.list_all()}
         adr_id = generate_adr_id(title, existing_ids)
 
         # Parse status
@@ -104,7 +86,7 @@ def run_new(
                 raise typer.Exit(1)
 
         # Create template engine
-        template_engine = TemplateEngine(config.custom_templates_dir)
+        template_engine = TemplateEngine(ctx.config.custom_templates_dir)
 
         # Render template
         try:
@@ -129,7 +111,7 @@ def run_new(
             template_content=content,
             file_path=file,
             no_edit=no_edit,
-            config=config,
+            config=ctx.config,
         )
 
         if final_content is None:
@@ -219,7 +201,7 @@ def run_new(
 
         # Validate linked commit
         if link:
-            if not git.commit_exists(link):
+            if not ctx.git.commit_exists(link):
                 err_console.print(
                     f"[yellow]Warning:[/yellow] Commit {link[:8]} not found"
                 )
@@ -235,7 +217,7 @@ def run_new(
                 err_console.print(f"  • {issue}")
 
         # Store ADR
-        notes_manager.add(adr)
+        ctx.notes_manager.add(adr)
 
         # Success
         console.print()
