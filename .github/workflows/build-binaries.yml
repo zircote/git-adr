@@ -97,10 +97,50 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Set up Python
+      - name: Set up Python (Unix)
+        if: runner.os != 'Windows'
         env:
           PYTHON_VERSION: ${{ env.PYTHON_VERSION }}
-        run: uv python install ${{ env.PYTHON_VERSION }}
+        run: |
+          # Retry up to 3 times for flaky network operations
+          for i in 1 2 3; do
+            echo "Attempt $i: Installing Python ${PYTHON_VERSION}..."
+            if uv python install "${PYTHON_VERSION}"; then
+              echo "Python installed successfully"
+              exit 0
+            fi
+            echo "Attempt $i failed, waiting 30s before retry..."
+            sleep 30
+          done
+          echo "All attempts failed"
+          exit 1
+
+      - name: Set up Python (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          PYTHON_VERSION: ${{ env.PYTHON_VERSION }}
+        run: |
+          # Retry up to 3 times for flaky network operations
+          $maxAttempts = 3
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            Write-Host "Attempt $i`: Installing Python $env:PYTHON_VERSION..."
+            try {
+              uv python install $env:PYTHON_VERSION
+              if ($LASTEXITCODE -eq 0) {
+                Write-Host "Python installed successfully"
+                exit 0
+              }
+            } catch {
+              Write-Host "Error: $_"
+            }
+            if ($i -lt $maxAttempts) {
+              Write-Host "Attempt $i failed, waiting 30s before retry..."
+              Start-Sleep -Seconds 30
+            }
+          }
+          Write-Host "All attempts failed"
+          exit 1
 
       # Platform-specific system dependencies
       - name: Install system dependencies (macOS)
@@ -116,13 +156,37 @@ jobs:
 
       # Windows: libsodium installed via pip (PyNaCl bundles it)
 
-      # Install git-adr with all extras
+      # Install git-adr with all extras (with retry for flaky networks)
       - name: Install dependencies
-        run: uv sync --all-extras
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            echo "Attempt $i: Installing dependencies..."
+            if uv sync --all-extras; then
+              echo "Dependencies installed successfully"
+              exit 0
+            fi
+            echo "Attempt $i failed, waiting 30s before retry..."
+            sleep 30
+          done
+          echo "All attempts failed"
+          exit 1
 
-      # Install PyInstaller
+      # Install PyInstaller (with retry for flaky networks)
       - name: Install PyInstaller
-        run: uv pip install pyinstaller
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            echo "Attempt $i: Installing PyInstaller..."
+            if uv pip install pyinstaller; then
+              echo "PyInstaller installed successfully"
+              exit 0
+            fi
+            echo "Attempt $i failed, waiting 30s before retry..."
+            sleep 30
+          done
+          echo "All attempts failed"
+          exit 1
 
       # Update version in source
       - name: Update version
