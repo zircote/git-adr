@@ -6,12 +6,16 @@ Modifies an existing ADR - opens in editor or makes quick metadata changes.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import typer
 from rich.console import Console
 
 from git_adr.commands._shared import setup_command_context
 from git_adr.core import ADR, ADRStatus, GitError
+
+if TYPE_CHECKING:
+    from git_adr.core.notes import NotesManager
 
 console = Console()
 err_console = Console(stderr=True)

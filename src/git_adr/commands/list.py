@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 from datetime import date
+from typing import cast
 
 import typer
 from rich.console import Console
@@ -14,6 +15,7 @@ from rich.table import Table
 
 from git_adr.commands._shared import get_status_style, setup_command_context
 from git_adr.core import ADRStatus, GitError
+from git_adr.core.index import IndexManager
 
 console = Console()
 err_console = Console(stderr=True)
@@ -43,6 +45,7 @@ def run_list(
     try:
         # Initialize command context with index manager
         ctx = setup_command_context(require_index=True)
+        index_manager = cast(IndexManager, ctx.index_manager)
 
         # Parse filters
         parsed_status = None
@@ -59,7 +62,7 @@ def run_list(
         until_date = _parse_date(until) if until else None
 
         # Query index
-        result = ctx.index_manager.query(
+        result = index_manager.query(
             status=parsed_status,
             tag=tag,
             since=since_date,

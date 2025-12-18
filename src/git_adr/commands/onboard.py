@@ -5,6 +5,8 @@ Interactive onboarding wizard for new team members.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, cast
+
 import typer
 from rich.console import Console
 from rich.markdown import Markdown
@@ -13,6 +15,10 @@ from rich.panel import Panel
 from git_adr.commands._shared import setup_command_context
 from git_adr.core import GitError
 from git_adr.core.adr import ADRStatus
+from git_adr.core.index import IndexManager
+
+if TYPE_CHECKING:
+    from git_adr.core.notes import NotesManager
 
 console = Console()
 err_console = Console(stderr=True)
@@ -38,9 +44,10 @@ def run_onboard(
     try:
         # Initialize command context with index manager
         ctx = setup_command_context(require_index=True)
+        index_manager = cast(IndexManager, ctx.index_manager)
 
         # Rebuild index
-        ctx.index_manager.rebuild()
+        index_manager.rebuild()
 
         # Get all ADRs
         all_adrs = ctx.notes_manager.list_all()

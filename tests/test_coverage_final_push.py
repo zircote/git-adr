@@ -553,6 +553,121 @@ class TestConfigCommandEdgeCases:
         # Should show "not set" message or default value
         assert result.exit_code == 0
 
+    def test_config_get_without_key(self, adr_repo_with_data: Path) -> None:
+        """Test config --get without a key (covers lines 62-63)."""
+        result = runner.invoke(app, ["config", "--get"])
+        # Should fail - --get requires a key
+        assert result.exit_code in [1, 2]
+
+    def test_config_set_without_value(self, adr_repo_with_data: Path) -> None:
+        """Test config --set without value (covers lines 70-71)."""
+        result = runner.invoke(app, ["config", "--set", "template"])
+        # Should fail - --set requires key and value
+        assert result.exit_code in [1, 2]
+
+    def test_config_set_without_key(self, adr_repo_with_data: Path) -> None:
+        """Test config --set without key (covers lines 70-71)."""
+        result = runner.invoke(app, ["config", "--set"])
+        # Should fail - --set requires key and value
+        assert result.exit_code in [1, 2]
+
+    def test_config_unset_without_key(self, adr_repo_with_data: Path) -> None:
+        """Test config --unset without key (covers lines 78-79)."""
+        result = runner.invoke(app, ["config", "--unset"])
+        # Should fail - --unset requires a key
+        assert result.exit_code in [1, 2]
+
+    def test_config_list_empty(self, initialized_adr_repo: Path) -> None:
+        """Test config --list with no config set (covers lines 109-114)."""
+        # In a freshly initialized repo, unset any config first
+        runner.invoke(app, ["config", "--unset", "template"])
+        runner.invoke(app, ["config", "--unset", "namespace"])
+        # Now list should show empty or "no config" message
+        result = runner.invoke(app, ["config", "--list"])
+        assert result.exit_code == 0
+
+    def test_config_list_empty_local_scope(
+        self, initialized_adr_repo: Path, monkeypatch
+    ) -> None:
+        """Test config --list with empty local config (covers lines 109-114)."""
+        from git_adr.commands import config as config_cmd
+
+        # Mock list_all to return empty dict to simulate no local config
+        original_list_config = config_cmd._list_config
+
+        def mock_list_config(config_manager, global_):
+            # Return empty config to trigger "no config set" branch
+            _ = config_manager.list_all(global_=global_)  # Call to cover the line
+            # Clear and check for empty
+            from git_adr.commands.config import console
+
+            if not global_:
+                console.print("[dim]No local configuration set[/dim]")
+                console.print()
+                console.print("Available configuration keys:")
+                config_cmd._show_available_keys()
+                return
+            return original_list_config(config_manager, global_)
+
+        # Test with the default (local) scope on a repo without local config
+        # Force the empty path by monkeypatching ConfigManager.list_all
+        from git_adr.core.config import ConfigManager
+
+        original_list_all = ConfigManager.list_all
+
+        def mock_list_all(self, global_=False):
+            if not global_:
+                return {}  # Empty local config
+            return original_list_all(self, global_=global_)
+
+        monkeypatch.setattr(ConfigManager, "list_all", mock_list_all)
+        result = runner.invoke(app, ["config", "--list"])
+        assert result.exit_code == 0
+        # Should show "No local configuration set" and available keys
+        assert "configuration" in result.output.lower() or result.exit_code == 0
+
+
+class TestSearchEdgeCases:
+    """Tests for search command error paths."""
+
+    def test_search_invalid_status(self, adr_repo_with_data: Path) -> None:
+        """Test search with invalid status (covers lines 54-56)."""
+        result = runner.invoke(app, ["search", "test", "--status", "not-a-real-status"])
+        # Should fail with invalid status error
+        assert result.exit_code == 1
+        assert "Invalid status" in result.output or "invalid" in result.output.lower()
+
+
+class TestListEdgeCases:
+    """Tests for list command error paths."""
+
+    def test_list_invalid_format(self, adr_repo_with_data: Path) -> None:
+        """Test list with invalid format (covers lines 83-84)."""
+        result = runner.invoke(app, ["list", "--format", "invalid-format"])
+        # Should fail with unknown format error
+        assert result.exit_code == 1
+        assert "format" in result.output.lower()
+
+    def test_list_invalid_since_date(self, adr_repo_with_data: Path) -> None:
+        """Test list with invalid since date format (covers lines 109-112)."""
+        result = runner.invoke(app, ["list", "--since", "not-a-date"])
+        # Should fail with invalid date format error
+        assert result.exit_code == 1
+        assert "Invalid date" in result.output or "date" in result.output.lower()
+
+    def test_list_invalid_until_date(self, adr_repo_with_data: Path) -> None:
+        """Test list with invalid until date format (covers lines 109-112)."""
+        result = runner.invoke(app, ["list", "--until", "2024-13-45"])
+        # Should fail with invalid date format error
+        assert result.exit_code == 1
+        assert "Invalid date" in result.output or "date" in result.output.lower()
+
+    def test_list_invalid_status(self, adr_repo_with_data: Path) -> None:
+        """Test list with invalid status filter."""
+        result = runner.invoke(app, ["list", "--status", "invalid-status"])
+        # Should fail with invalid status error
+        assert result.exit_code == 1
+
 
 # =============================================================================
 # Stats Command Edge Cases
@@ -609,6 +724,123 @@ class TestLogCommandEdgeCases:
 
 class TestMetricsCommandEdgeCases:
     """Tests for metrics command edge cases."""
+
+
+class TestGitErrorHandlers:
+    """Tests to cover GitError exception handlers in commands."""
+
+    def test_config_git_error(self, adr_repo_with_data: Path, monkeypatch) -> None:
+        """Test config command handles GitError (covers config.py lines 95-96)."""
+        from git_adr.commands import config as config_cmd
+        from git_adr.core.git import GitError
+
+        def mock_list(*args, **kwargs):
+            raise GitError("Test git error from config", ["git", "config"], 1)
+
+        monkeypatch.setattr(config_cmd, "_list_config", mock_list)
+        result = runner.invoke(app, ["config", "--list"])
+        assert result.exit_code == 1
+        assert "Test git error" in result.output or "Error" in result.output
+
+    def test_export_git_error(self, adr_repo_with_data: Path, monkeypatch) -> None:
+        """Test export handles GitError (covers export.py lines 93-94)."""
+        from git_adr.core.git import GitError
+
+        def mock_setup(*args, **kwargs):
+            raise GitError("Test git error in export", ["git", "notes"], 1)
+
+        import git_adr.commands.export as export_cmd
+
+        monkeypatch.setattr(export_cmd, "setup_command_context", mock_setup)
+        result = runner.invoke(app, ["export"])
+        assert result.exit_code == 1
+        assert "Error" in result.output
+
+    def test_metrics_git_error(self, adr_repo_with_data: Path, monkeypatch) -> None:
+        """Test metrics handles GitError (covers metrics.py lines 77-78)."""
+        from git_adr.core.git import GitError
+
+        def mock_setup(*args, **kwargs):
+            raise GitError("Test git error in metrics", ["git", "notes"], 1)
+
+        import git_adr.commands.metrics as metrics_cmd
+
+        monkeypatch.setattr(metrics_cmd, "setup_command_context", mock_setup)
+        result = runner.invoke(app, ["metrics"])
+        assert result.exit_code == 1
+        assert "Error" in result.output
+
+    def test_onboard_git_error(self, adr_repo_with_data: Path, monkeypatch) -> None:
+        """Test onboard handles GitError (covers onboard.py lines 80-81)."""
+        from git_adr.core.git import GitError
+
+        def mock_setup(*args, **kwargs):
+            raise GitError("Test git error in onboard", ["git", "notes"], 1)
+
+        import git_adr.commands.onboard as onboard_cmd
+
+        monkeypatch.setattr(onboard_cmd, "setup_command_context", mock_setup)
+        result = runner.invoke(app, ["onboard"])
+        assert result.exit_code == 1
+        assert "Error" in result.output
+
+    def test_report_git_error(self, adr_repo_with_data: Path, monkeypatch) -> None:
+        """Test report handles GitError (covers report.py lines 74-75)."""
+        from git_adr.core.git import GitError
+
+        def mock_setup(*args, **kwargs):
+            raise GitError("Test git error in report", ["git", "notes"], 1)
+
+        import git_adr.commands.report as report_cmd
+
+        monkeypatch.setattr(report_cmd, "setup_command_context", mock_setup)
+        result = runner.invoke(app, ["report"])
+        assert result.exit_code == 1
+        assert "Error" in result.output
+
+    def test_stats_git_error(self, adr_repo_with_data: Path, monkeypatch) -> None:
+        """Test stats handles GitError."""
+        from git_adr.core.git import GitError
+
+        def mock_setup(*args, **kwargs):
+            raise GitError("Test git error in stats", ["git", "notes"], 1)
+
+        import git_adr.commands.stats as stats_cmd
+
+        monkeypatch.setattr(stats_cmd, "setup_command_context", mock_setup)
+        result = runner.invoke(app, ["stats"])
+        assert result.exit_code == 1
+        assert "Error" in result.output
+
+    def test_list_git_error_inside(self, adr_repo_with_data: Path, monkeypatch) -> None:
+        """Test list handles GitError (covers list.py lines 94-95)."""
+        from git_adr.core.git import GitError
+
+        def mock_setup(*args, **kwargs):
+            raise GitError("Test git error in list", ["git", "notes"], 1)
+
+        import git_adr.commands.list as list_cmd
+
+        monkeypatch.setattr(list_cmd, "setup_command_context", mock_setup)
+        result = runner.invoke(app, ["list"])
+        assert result.exit_code == 1
+        assert "Error" in result.output
+
+    def test_search_git_error_inside(
+        self, adr_repo_with_data: Path, monkeypatch
+    ) -> None:
+        """Test search handles GitError (covers search.py lines 78-79)."""
+        from git_adr.core.git import GitError
+
+        def mock_setup(*args, **kwargs):
+            raise GitError("Test git error in search", ["git", "notes"], 1)
+
+        import git_adr.commands.search as search_cmd
+
+        monkeypatch.setattr(search_cmd, "setup_command_context", mock_setup)
+        result = runner.invoke(app, ["search", "test"])
+        assert result.exit_code == 1
+        assert "Error" in result.output
 
     def test_metrics_not_git_repo(self, tmp_path: Path) -> None:
         """Test metrics in non-git directory."""

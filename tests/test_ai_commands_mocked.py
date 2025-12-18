@@ -345,7 +345,7 @@ class TestAISuggestCommand:
         assert result.exit_code != 0
         assert "not found" in result.output.lower()
 
-    def test_suggest_no_ai_provider(self, no_ai_repo_with_data: Path) -> None:
+    def test_suggest_no_ai_provider(self, no_ai_config_repo: Path) -> None:
         """Test suggest without AI provider configured."""
         result = runner.invoke(app, ["ai", "suggest", "20250110-use-postgresql"])
         assert result.exit_code != 0
@@ -421,7 +421,7 @@ class TestAISummarizeCommand:
         # Should report no ADRs found
         assert result.exit_code == 0
 
-    def test_summarize_no_ai_provider(self, no_ai_repo_with_data: Path) -> None:
+    def test_summarize_no_ai_provider(self, no_ai_config_repo: Path) -> None:
         """Test summarize without AI provider."""
         result = runner.invoke(app, ["ai", "summarize"])
         assert result.exit_code != 0
