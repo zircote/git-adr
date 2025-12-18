@@ -19,6 +19,16 @@ runner = CliRunner()
 
 
 @pytest.fixture
+def no_ai_config_repo(adr_repo_with_data: Path) -> Path:
+    """Repository with AI explicitly disabled (overrides global config)."""
+    git = Git(cwd=adr_repo_with_data)
+    # Set empty provider to override any global config
+    git.config_set("adr.ai.provider", "")
+    git.config_set("adr.ai.model", "")
+    return adr_repo_with_data
+
+
+@pytest.fixture
 def ai_configured_repo(adr_repo_with_data: Path) -> Path:
     """Repository with AI provider configured."""
     git = Git(cwd=adr_repo_with_data)
@@ -38,7 +48,7 @@ def ai_configured_repo(adr_repo_with_data: Path) -> Path:
 class TestAIDraftCommand:
     """Tests for ai draft command."""
 
-    def test_ai_draft_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_draft_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test AI draft without provider configured."""
         result = runner.invoke(
             app,
@@ -182,7 +192,7 @@ class TestAIDraftCommand:
 class TestAISummarizeCommand:
     """Tests for ai summarize command."""
 
-    def test_ai_summarize_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_summarize_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test AI summarize without provider configured."""
         result = runner.invoke(
             app,
@@ -269,7 +279,7 @@ class TestAISummarizeCommand:
 class TestAIAskCommand:
     """Tests for ai ask command."""
 
-    def test_ai_ask_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_ask_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test AI ask without provider configured."""
         result = runner.invoke(
             app,
@@ -306,7 +316,7 @@ class TestAIAskCommand:
 class TestAISuggestCommand:
     """Tests for ai suggest command."""
 
-    def test_ai_suggest_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_suggest_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test AI suggest without provider configured."""
         result = runner.invoke(
             app,

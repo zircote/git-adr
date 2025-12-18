@@ -37,6 +37,39 @@ class MockAIResponse:
 
 
 @pytest.fixture
+def no_ai_config_repo(initialized_adr_repo: Path) -> Path:
+    """Repository with AI explicitly disabled (overrides global config)."""
+    git = Git(cwd=initialized_adr_repo)
+    # Set empty provider to override any global config
+    git.config_set("adr.ai.provider", "")
+    git.config_set("adr.ai.model", "")
+    return initialized_adr_repo
+
+
+@pytest.fixture
+def no_ai_repo_with_data(no_ai_config_repo: Path) -> Path:
+    """Repository with ADR data but no AI config (for testing AI provider errors)."""
+    git = Git(cwd=no_ai_config_repo)
+    config_manager = ConfigManager(git)
+    config = config_manager.load()
+    notes_manager = NotesManager(git, config)
+
+    # Add sample ADR
+    sample_adr = ADR(
+        metadata=ADRMetadata(
+            id="20250110-use-postgresql",
+            title="Use PostgreSQL for Database",
+            date=date(2025, 1, 10),
+            status=ADRStatus.ACCEPTED,
+            tags=["database"],
+        ),
+        content="## Context\n\nWe need a database.\n\n## Decision\n\nUse PostgreSQL.",
+    )
+    notes_manager.add(sample_adr)
+    return no_ai_config_repo
+
+
+@pytest.fixture
 def ai_configured_repo(initialized_adr_repo: Path) -> Path:
     """Repository with AI configured."""
     git = Git(cwd=initialized_adr_repo)
@@ -172,14 +205,21 @@ class TestAIDraftCommand:
         )
         assert result.exit_code == 0
 
-    def test_draft_no_ai_provider(self, initialized_adr_repo: Path) -> None:
+    def test_draft_no_ai_provider(self, no_ai_config_repo: Path) -> None:
         """Test draft without AI provider configured."""
         result = runner.invoke(app, ["ai", "draft", "Test ADR", "--batch"])
         assert result.exit_code != 0
         assert "provider" in result.output.lower()
 
-    def test_draft_not_initialized(self, temp_git_repo: Path) -> None:
+    def test_draft_not_initialized(
+        self, temp_git_repo: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test draft in non-initialized repo."""
+        # Change to the temp repo directory
+        monkeypatch.chdir(temp_git_repo)
+        # Override any global AI config to test initialization check
+        git = Git(cwd=temp_git_repo)
+        git.config_set("adr.ai.provider", "")
         result = runner.invoke(app, ["ai", "draft", "Test ADR", "--batch"])
         assert result.exit_code != 0
         # May fail with init error or AI provider error depending on order of checks
@@ -263,7 +303,7 @@ class TestAIAskCommand:
         # Should succeed but may report no ADRs
         assert result.exit_code == 0
 
-    def test_ask_no_ai_provider(self, initialized_adr_repo: Path) -> None:
+    def test_ask_no_ai_provider(self, no_ai_config_repo: Path) -> None:
         """Test ask without AI provider."""
         result = runner.invoke(app, ["ai", "ask", "Question"])
         assert result.exit_code != 0
@@ -311,7 +351,7 @@ class TestAISuggestCommand:
         assert result.exit_code != 0
         assert "not found" in result.output.lower()
 
-    def test_suggest_no_ai_provider(self, adr_repo_with_data: Path) -> None:
+    def test_suggest_no_ai_provider(self, no_ai_repo_with_data: Path) -> None:
         """Test suggest without AI provider configured."""
         result = runner.invoke(app, ["ai", "suggest", "20250110-use-postgresql"])
         assert result.exit_code != 0
@@ -387,7 +427,7 @@ class TestAISummarizeCommand:
         # Should report no ADRs found
         assert result.exit_code == 0
 
-    def test_summarize_no_ai_provider(self, adr_repo_with_data: Path) -> None:
+    def test_summarize_no_ai_provider(self, no_ai_repo_with_data: Path) -> None:
         """Test summarize without AI provider."""
         result = runner.invoke(app, ["ai", "summarize"])
         assert result.exit_code != 0

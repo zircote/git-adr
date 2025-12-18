@@ -125,9 +125,11 @@ def run_init(
         # Create config manager and set initial config
         config_manager = ConfigManager(git)
 
-        # Check if already initialized
-        existing_namespace = config_manager.get("namespace")
-        if existing_namespace and not force:
+        # Check if already initialized by looking for adr.initialized config
+        # Note: We check via git config directly because ConfigManager.get returns defaults
+        is_initialized = git.config_get("adr.initialized") == "true"
+        if is_initialized and not force:
+            existing_namespace = config_manager.get("namespace")
             err_console.print(
                 f"[yellow]Warning:[/yellow] git-adr is already initialized "
                 f"(namespace: {existing_namespace})"
@@ -164,6 +166,9 @@ def run_init(
 
         # Configure notes rewrite for rebase safety
         # This ensures notes are preserved during rebase/amend operations
+        # When reinitializing with --force, first clear any existing multi-valued config
+        if force:
+            git.config_unset("notes.rewriteRef", all_values=True)
         git.config_set("notes.rewriteRef", config.notes_ref)
         git.config_set("notes.rewriteRef", config.artifacts_ref, append=True)
         git.config_set("notes.rewrite.rebase", "true")

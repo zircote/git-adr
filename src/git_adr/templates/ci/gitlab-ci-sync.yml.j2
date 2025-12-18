@@ -28,6 +28,8 @@ fetch-notes:
   script:
     - git config --add remote.origin.fetch '+refs/notes/*:refs/notes/*'
     - git fetch origin 'refs/notes/*:refs/notes/*'
+    # Initialize local git-adr config (required for commands to work)
+    - git adr init --no-input --force
     - git adr list --format table
   rules:
     - if: $CI_COMMIT_BRANCH == "{{ main_branch | default('main') }}"
@@ -45,6 +47,11 @@ validate-adrs:
     - apt-get update && apt-get install -y git jq
     - pip install git-adr{% if git_adr_version %}=={{ git_adr_version }}{% endif %}
   script:
+    # Fetch notes (each job runs in isolated container)
+    - git config --add remote.origin.fetch '+refs/notes/*:refs/notes/*'
+    - git fetch origin 'refs/notes/*:refs/notes/*'
+    # Initialize local git-adr config (required for commands to work)
+    - git adr init --no-input --force
     - |
       ERRORS=""
 
@@ -90,6 +97,11 @@ sync-wiki:
     - apt-get update && apt-get install -y git
     - pip install git-adr[wiki]{% if git_adr_version %}=={{ git_adr_version }}{% endif %}
   script:
+    # Fetch notes (each job runs in isolated container)
+    - git config --add remote.origin.fetch '+refs/notes/*:refs/notes/*'
+    - git fetch origin 'refs/notes/*:refs/notes/*'
+    # Initialize local git-adr config (required for commands to work)
+    - git adr init --no-input --force
 {% if wiki_provider == 'gitlab' %}
     - git adr wiki init --provider gitlab || true
     - git adr wiki sync
@@ -123,6 +135,11 @@ export-adrs:
     - apt-get update && apt-get install -y git
     - pip install git-adr{% if git_adr_version %}=={{ git_adr_version }}{% endif %}{% if export_format == 'docx' %}[export]{% endif %}
   script:
+    # Fetch notes (each job runs in isolated container)
+    - git config --add remote.origin.fetch '+refs/notes/*:refs/notes/*'
+    - git fetch origin 'refs/notes/*:refs/notes/*'
+    # Initialize local git-adr config (required for commands to work)
+    - git adr init --no-input --force
     - mkdir -p {{ export_dir | default('adr-export') }}
     - git adr export --format {{ export_format }} --output {{ export_dir | default('adr-export') }}/
   artifacts:
@@ -143,6 +160,11 @@ adr-summary:
     - apt-get update && apt-get install -y git jq
     - pip install git-adr{% if git_adr_version %}=={{ git_adr_version }}{% endif %}
   script:
+    # Fetch notes (each job runs in isolated container)
+    - git config --add remote.origin.fetch '+refs/notes/*:refs/notes/*'
+    - git fetch origin 'refs/notes/*:refs/notes/*'
+    # Initialize local git-adr config (required for commands to work)
+    - git adr init --no-input --force
     - |
       echo "=== ADR Summary ==="
       echo "Total ADRs: $(git adr list --format json | jq '. | length')"

@@ -16,8 +16,19 @@ from git_adr.ai import AIService, AIServiceError
 from git_adr.cli import app
 from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
 from git_adr.core.config import Config
+from git_adr.core.git import Git
 
 runner = CliRunner()
+
+
+@pytest.fixture
+def no_ai_config_repo(adr_repo_with_data: Path) -> Path:
+    """Repository with AI explicitly disabled (overrides global config)."""
+    git = Git(cwd=adr_repo_with_data)
+    # Set empty provider to override any global config
+    git.config_set("adr.ai.provider", "")
+    git.config_set("adr.ai.model", "")
+    return adr_repo_with_data
 
 
 # =============================================================================
@@ -205,7 +216,7 @@ class TestAISuggestCommand:
         result = runner.invoke(app, ["ai", "suggest", "--help"])
         assert result.exit_code == 0
 
-    def test_suggest_without_ai(self, adr_repo_with_data: Path) -> None:
+    def test_suggest_without_ai(self, no_ai_config_repo: Path) -> None:
         """Test suggest without AI configuration."""
         result = runner.invoke(app, ["ai", "suggest", "use-postgresql"])
         # Should fail gracefully without AI config
@@ -225,7 +236,7 @@ class TestAISummarizeCommand:
         result = runner.invoke(app, ["ai", "summarize", "--help"])
         assert result.exit_code == 0
 
-    def test_summarize_without_ai(self, adr_repo_with_data: Path) -> None:
+    def test_summarize_without_ai(self, no_ai_config_repo: Path) -> None:
         """Test summarize without AI configuration."""
         result = runner.invoke(app, ["ai", "summarize"])
         assert result.exit_code != 0 or "provider" in result.output.lower()
@@ -240,7 +251,7 @@ class TestAIAskCommand:
         result = runner.invoke(app, ["ai", "ask", "--help"])
         assert result.exit_code == 0
 
-    def test_ask_without_ai(self, adr_repo_with_data: Path) -> None:
+    def test_ask_without_ai(self, no_ai_config_repo: Path) -> None:
         """Test ask without AI configuration."""
         result = runner.invoke(app, ["ai", "ask", "Why PostgreSQL?"])
         assert result.exit_code != 0 or "provider" in result.output.lower()

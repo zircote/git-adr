@@ -16,8 +16,19 @@ from typer.testing import CliRunner
 from git_adr.ai.service import AIService, AIServiceError
 from git_adr.cli import app
 from git_adr.core.config import Config
+from git_adr.core.git import Git
 
 runner = CliRunner()
+
+
+@pytest.fixture
+def no_ai_config_repo(adr_repo_with_data: Path) -> Path:
+    """Repository with AI explicitly disabled (overrides global config)."""
+    git = Git(cwd=adr_repo_with_data)
+    # Set empty provider to override any global config
+    git.config_set("adr.ai.provider", "")
+    git.config_set("adr.ai.model", "")
+    return adr_repo_with_data
 
 
 def make_config(
@@ -244,7 +255,7 @@ class TestAIServiceDefaultModel:
 class TestAICommandsNoProvider:
     """Tests for AI commands when provider not configured."""
 
-    def test_ai_ask_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_ask_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test ai ask without provider configured."""
         result = runner.invoke(
             app,
@@ -258,7 +269,7 @@ class TestAICommandsNoProvider:
             or "not configured" in result.output.lower()
         )
 
-    def test_ai_draft_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_draft_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test ai draft without provider configured."""
         result = runner.invoke(
             app,
@@ -266,7 +277,7 @@ class TestAICommandsNoProvider:
         )
         assert result.exit_code == 1
 
-    def test_ai_suggest_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_suggest_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test ai suggest without provider configured."""
         result = runner.invoke(
             app,

@@ -425,12 +425,14 @@ class Git:
         key: str,
         *,
         global_: bool = False,
+        all_values: bool = False,
     ) -> bool:
         """Unset a git config value.
 
         Args:
             key: Config key to unset.
             global_: If True, unset from global config.
+            all_values: If True, unset all values for multi-valued keys.
 
         Returns:
             True if the key was found and removed, False if it didn't exist.
@@ -438,7 +440,8 @@ class Git:
         args = ["config"]
         if global_:
             args.append("--global")
-        args.extend(["--unset", key])
+        unset_flag = "--unset-all" if all_values else "--unset"
+        args.extend([unset_flag, key])
 
         result = self.run(args, check=False, allow_exit_codes=[5])
         return result.exit_code == 0
