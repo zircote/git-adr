@@ -5,18 +5,12 @@ Lists artifacts attached to an ADR.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from git_adr.core import (
-    ConfigManager,
-    GitError,
-    NotesManager,
-    get_git,
-)
+from git_adr.commands._shared import setup_command_context
+from git_adr.core import GitError
 
 console = Console()
 err_console = Console(stderr=True)
@@ -32,31 +26,17 @@ def run_artifacts(adr_id: str) -> None:
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
-
-        notes_manager = NotesManager(git, config)
+        # Initialize command context
+        ctx = setup_command_context()
 
         # Verify ADR exists
-        adr = notes_manager.get(adr_id)
+        adr = ctx.notes_manager.get(adr_id)
         if adr is None:
             err_console.print(f"[red]Error:[/red] ADR not found: {adr_id}")
             raise typer.Exit(1)
 
         # List artifacts
-        artifacts = notes_manager.list_artifacts(adr_id)
+        artifacts = ctx.notes_manager.list_artifacts(adr_id)
 
         if not artifacts:
             console.print(f"[dim]No artifacts attached to {adr_id}[/dim]")

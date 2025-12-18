@@ -5,19 +5,13 @@ Synchronize ADRs with configured wiki.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from git_adr.core import (
-    ConfigManager,
-    GitError,
-    NotesManager,
-    get_git,
-)
+from git_adr.commands._shared import setup_command_context
+from git_adr.core import GitError
 
 console = Console()
 err_console = Console(stderr=True)
@@ -39,23 +33,11 @@ def run_wiki_sync(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
+        # Initialize command context
+        ctx = setup_command_context()
 
         # Check wiki configuration
-        wiki_type = config_manager.get("wiki.type")
+        wiki_type = ctx.config_manager.get("wiki.type")
         if not wiki_type:
             err_console.print(
                 "[red]Error:[/red] Wiki not configured.\nRun: git adr wiki init"
@@ -70,17 +52,15 @@ def run_wiki_sync(
             )
             raise typer.Exit(1)
 
-        notes_manager = NotesManager(git, config)
-
         # Get ADRs to sync
         if adr:
-            adr_obj = notes_manager.get(adr)
+            adr_obj = ctx.notes_manager.get(adr)
             if not adr_obj:
                 err_console.print(f"[red]Error:[/red] ADR not found: {adr}")
                 raise typer.Exit(1)
             adrs = [adr_obj]
         else:
-            adrs = notes_manager.list_all()
+            adrs = ctx.notes_manager.list_all()
 
         if not adrs:
             console.print("[yellow]No ADRs to sync[/yellow]")
@@ -99,7 +79,7 @@ def run_wiki_sync(
         # Perform sync
         from git_adr.wiki import WikiService, WikiServiceError
 
-        wiki_service = WikiService(git, config)
+        wiki_service = WikiService(ctx.git, ctx.config)
 
         try:
             if dry_run:

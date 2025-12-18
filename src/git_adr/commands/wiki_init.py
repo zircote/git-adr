@@ -5,17 +5,12 @@ Initialize wiki synchronization for ADRs.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from git_adr.core import (
-    ConfigManager,
-    GitError,
-    get_git,
-)
+from git_adr.commands._shared import setup_command_context
+from git_adr.core import GitError
 
 console = Console()
 err_console = Console(stderr=True)
@@ -35,25 +30,13 @@ def run_wiki_init(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
+        # Initialize command context
+        ctx = setup_command_context()
 
         # Initialize wiki service
         from git_adr.wiki import WikiService, WikiServiceError
 
-        wiki_service = WikiService(git, config)
+        wiki_service = WikiService(ctx.git, ctx.config)
 
         try:
             result = wiki_service.init(platform)
@@ -61,8 +44,8 @@ def run_wiki_init(
             wiki_url = result["wiki_url"]
 
             # Store wiki config
-            config_manager.set("wiki.type", detected_platform)
-            config_manager.set("wiki.url", wiki_url)
+            ctx.config_manager.set("wiki.type", detected_platform)
+            ctx.config_manager.set("wiki.url", wiki_url)
 
             console.print(
                 Panel(
