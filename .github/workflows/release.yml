@@ -377,8 +377,18 @@ jobs:
           get_pypi_info() {
             local pkg=$1
             local json=$(curl -sf "https://pypi.org/pypi/${pkg}/json")
+            if [ -z "$json" ]; then
+              echo "::warning::Failed to fetch PyPI info for ${pkg}"
+              echo "|"
+              return
+            fi
             local url=$(echo "$json" | jq -r '.urls[] | select(.packagetype=="sdist") | .url' | head -1)
             local sha=$(echo "$json" | jq -r '.urls[] | select(.packagetype=="sdist") | .digests.sha256' | head -1)
+            if [ -z "$url" ] || [ "$url" = "null" ]; then
+              echo "::warning::No sdist found for ${pkg} - package may only have wheels"
+              echo "|"
+              return
+            fi
             echo "${url}|${sha}"
           }
 
@@ -409,7 +419,7 @@ jobs:
           # AI transitive deps
           OPENAI_INFO=$(get_pypi_info "openai")
           ANTHROPIC_INFO=$(get_pypi_info "anthropic")
-          GOOGLE_GENAI_INFO=$(get_pypi_info "google-generativeai")
+          GOOGLE_GENAI_INFO=$(get_pypi_info "google-genai")
           TIKTOKEN_INFO=$(get_pypi_info "tiktoken")
           HTTPX_INFO=$(get_pypi_info "httpx")
           HTTPCORE_INFO=$(get_pypi_info "httpcore")
@@ -475,12 +485,17 @@ jobs:
             echo ''
           } > Formula/git-adr.rb
 
-          # Add resource blocks
+          # Add resource blocks (skip packages without sdist)
           add_resource() {
             local name=$1
             local info=$2
             local url=$(echo "$info" | cut -d'|' -f1)
             local sha=$(echo "$info" | cut -d'|' -f2)
+            # Skip resources without a URL (no sdist available)
+            if [ -z "$url" ]; then
+              echo "::warning::Skipping ${name} - no sdist URL available"
+              return
+            fi
             {
               echo "  resource \"${name}\" do"
               echo "    url \"${url}\""
@@ -513,7 +528,7 @@ jobs:
           # AI transitive deps
           add_resource "openai" "$OPENAI_INFO"
           add_resource "anthropic" "$ANTHROPIC_INFO"
-          add_resource "google-generativeai" "$GOOGLE_GENAI_INFO"
+          add_resource "google-genai" "$GOOGLE_GENAI_INFO"
           add_resource "tiktoken" "$TIKTOKEN_INFO"
           add_resource "httpx" "$HTTPX_INFO"
           add_resource "httpcore" "$HTTPCORE_INFO"
