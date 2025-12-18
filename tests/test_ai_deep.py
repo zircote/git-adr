@@ -18,6 +18,9 @@ from git_adr.core.git import Git
 runner = CliRunner()
 
 
+# no_ai_config_repo fixture is now in conftest.py
+
+
 @pytest.fixture
 def ai_configured_repo(adr_repo_with_data: Path) -> Path:
     """Repository with AI provider configured."""
@@ -38,7 +41,7 @@ def ai_configured_repo(adr_repo_with_data: Path) -> Path:
 class TestAIDraftCommand:
     """Tests for ai draft command."""
 
-    def test_ai_draft_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_draft_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test AI draft without provider configured."""
         result = runner.invoke(
             app,
@@ -182,7 +185,7 @@ class TestAIDraftCommand:
 class TestAISummarizeCommand:
     """Tests for ai summarize command."""
 
-    def test_ai_summarize_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_summarize_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test AI summarize without provider configured."""
         result = runner.invoke(
             app,
@@ -269,7 +272,7 @@ class TestAISummarizeCommand:
 class TestAIAskCommand:
     """Tests for ai ask command."""
 
-    def test_ai_ask_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_ask_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test AI ask without provider configured."""
         result = runner.invoke(
             app,
@@ -306,7 +309,7 @@ class TestAIAskCommand:
 class TestAISuggestCommand:
     """Tests for ai suggest command."""
 
-    def test_ai_suggest_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_suggest_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test AI suggest without provider configured."""
         result = runner.invoke(
             app,

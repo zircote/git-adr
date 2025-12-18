@@ -18,6 +18,9 @@ from git_adr.core.git import Git
 runner = CliRunner()
 
 
+# no_ai_config_repo and no_ai_initialized_repo fixtures are now in conftest.py
+
+
 # =============================================================================
 # AI Draft Command with Mocking
 # =============================================================================
@@ -79,7 +82,7 @@ Generated consequences.
 class TestAISuggestMocked:
     """Tests for AI suggest command with mocked service."""
 
-    def test_suggest_missing_config(self, initialized_adr_repo: Path) -> None:
+    def test_suggest_missing_config(self, no_ai_initialized_repo: Path) -> None:
         """Test suggest without AI configuration."""
         result = runner.invoke(app, ["ai", "suggest", "test-adr"])
         assert result.exit_code != 0 or "provider" in result.output.lower()
@@ -93,7 +96,7 @@ class TestAISuggestMocked:
 class TestAISummarizeMocked:
     """Tests for AI summarize command with mocked service."""
 
-    def test_summarize_missing_config(self, adr_repo_with_data: Path) -> None:
+    def test_summarize_missing_config(self, no_ai_config_repo: Path) -> None:
         """Test summarize without AI configuration."""
         result = runner.invoke(app, ["ai", "summarize"])
         assert result.exit_code != 0 or "provider" in result.output.lower()
@@ -114,7 +117,7 @@ class TestAISummarizeMocked:
 class TestAIAskMocked:
     """Tests for AI ask command with mocked service."""
 
-    def test_ask_missing_config(self, adr_repo_with_data: Path) -> None:
+    def test_ask_missing_config(self, no_ai_config_repo: Path) -> None:
         """Test ask without AI configuration."""
         result = runner.invoke(app, ["ai", "ask", "What databases do we use?"])
         assert result.exit_code != 0 or "provider" in result.output.lower()

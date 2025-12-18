@@ -19,6 +19,9 @@ from git_adr.core.git import Git
 runner = CliRunner()
 
 
+# no_ai_config_repo fixture is now in conftest.py
+
+
 # =============================================================================
 # ConfigManager Tests - Validation Error Paths
 # =============================================================================
@@ -515,16 +518,16 @@ class TestArtifactRmEdgeCases:
 class TestAICommandsEdgeCases:
     """Tests for AI command edge cases."""
 
-    def test_ai_ask_empty_question(self, adr_repo_with_data: Path) -> None:
-        """Test ai ask with empty question."""
+    def test_ai_ask_empty_question(self, no_ai_config_repo: Path) -> None:
+        """Test ai ask with empty question (no AI provider)."""
         result = runner.invoke(app, ["ai", "ask", ""])
-        # Should fail with empty question
+        # Should fail with empty question or no provider
         assert result.exit_code in [1, 2]
 
-    def test_ai_draft_empty_topic(self, adr_repo_with_data: Path) -> None:
-        """Test ai draft with empty topic."""
+    def test_ai_draft_empty_topic(self, no_ai_config_repo: Path) -> None:
+        """Test ai draft with empty topic (no AI provider)."""
         result = runner.invoke(app, ["ai", "draft", ""])
-        # Should fail with empty topic
+        # Should fail with empty topic or no provider
         assert result.exit_code in [1, 2]
 
 

@@ -20,6 +20,9 @@ from git_adr.core.config import Config
 runner = CliRunner()
 
 
+# no_ai_config_repo fixture is now in conftest.py
+
+
 # =============================================================================
 # AI Service Tests
 # =============================================================================
@@ -205,7 +208,7 @@ class TestAISuggestCommand:
         result = runner.invoke(app, ["ai", "suggest", "--help"])
         assert result.exit_code == 0
 
-    def test_suggest_without_ai(self, adr_repo_with_data: Path) -> None:
+    def test_suggest_without_ai(self, no_ai_config_repo: Path) -> None:
         """Test suggest without AI configuration."""
         result = runner.invoke(app, ["ai", "suggest", "use-postgresql"])
         # Should fail gracefully without AI config
@@ -225,7 +228,7 @@ class TestAISummarizeCommand:
         result = runner.invoke(app, ["ai", "summarize", "--help"])
         assert result.exit_code == 0
 
-    def test_summarize_without_ai(self, adr_repo_with_data: Path) -> None:
+    def test_summarize_without_ai(self, no_ai_config_repo: Path) -> None:
         """Test summarize without AI configuration."""
         result = runner.invoke(app, ["ai", "summarize"])
         assert result.exit_code != 0 or "provider" in result.output.lower()
@@ -240,7 +243,7 @@ class TestAIAskCommand:
         result = runner.invoke(app, ["ai", "ask", "--help"])
         assert result.exit_code == 0
 
-    def test_ask_without_ai(self, adr_repo_with_data: Path) -> None:
+    def test_ask_without_ai(self, no_ai_config_repo: Path) -> None:
         """Test ask without AI configuration."""
         result = runner.invoke(app, ["ai", "ask", "Why PostgreSQL?"])
         assert result.exit_code != 0 or "provider" in result.output.lower()

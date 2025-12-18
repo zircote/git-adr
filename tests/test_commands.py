@@ -78,10 +78,12 @@ class TestCLIInNonRepo:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test init fails gracefully outside git repo."""
-        # Note: CliRunner doesn't respect chdir, but we test the error path
+        # Change to tmp_path which is not a git repository
+        monkeypatch.chdir(tmp_path)
         result = runner.invoke(app, ["init"])
         # Should fail with non-zero exit code when not in a git repository
         assert result.exit_code != 0, "Expected non-zero exit code outside git repo"
+        assert "repository" in result.output.lower() or "error" in result.output.lower()
 
 
 class TestCommandSubgroups:

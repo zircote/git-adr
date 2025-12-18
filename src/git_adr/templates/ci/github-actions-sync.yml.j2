@@ -41,6 +41,12 @@ jobs:
       - name: Install git-adr
         run: pip install git-adr{% if git_adr_version %}=={{ git_adr_version }}{% endif %}
 
+      - name: Initialize git-adr
+        run: |
+          # Initialize local git-adr config even when notes already exist from fetch
+          # Required because git-adr commands check adr.initialized config
+          git adr init --no-input --force
+
 {% if validate_adrs %}
       - name: Validate ADRs
         run: |

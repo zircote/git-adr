@@ -21,6 +21,9 @@ from git_adr.core.templates import TemplateEngine
 runner = CliRunner()
 
 
+# no_ai_config_repo fixture is now in conftest.py
+
+
 # =============================================================================
 # AI Ask Command Tests
 # =============================================================================
@@ -49,7 +52,7 @@ class TestAIAskCommand:
         assert result.exit_code == 1
         assert "init" in result.output.lower()
 
-    def test_ai_ask_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_ask_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test ai ask without provider configured."""
         result = runner.invoke(app, ["ai", "ask", "What databases do we use?"])
         assert result.exit_code == 1
@@ -121,7 +124,7 @@ class TestAISuggestCommand:
         assert result.exit_code == 1
         assert "init" in result.output.lower()
 
-    def test_ai_suggest_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_suggest_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test ai suggest without provider configured."""
         result = runner.invoke(app, ["ai", "suggest", "20250110-use-postgresql"])
         assert result.exit_code == 1

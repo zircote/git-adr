@@ -20,6 +20,9 @@ from git_adr.core.config import Config
 runner = CliRunner()
 
 
+# no_ai_config_repo fixture is now in conftest.py
+
+
 def make_config(
     provider: str, model: str | None = None, temperature: float = 0.7
 ) -> Config:
@@ -244,7 +247,7 @@ class TestAIServiceDefaultModel:
 class TestAICommandsNoProvider:
     """Tests for AI commands when provider not configured."""
 
-    def test_ai_ask_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_ask_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test ai ask without provider configured."""
         result = runner.invoke(
             app,
@@ -258,7 +261,7 @@ class TestAICommandsNoProvider:
             or "not configured" in result.output.lower()
         )
 
-    def test_ai_draft_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_draft_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test ai draft without provider configured."""
         result = runner.invoke(
             app,
@@ -266,7 +269,7 @@ class TestAICommandsNoProvider:
         )
         assert result.exit_code == 1
 
-    def test_ai_suggest_no_provider(self, adr_repo_with_data: Path) -> None:
+    def test_ai_suggest_no_provider(self, no_ai_config_repo: Path) -> None:
         """Test ai suggest without provider configured."""
         result = runner.invoke(
             app,
