@@ -14,15 +14,13 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+from git_adr.commands._shared import setup_command_context
 from git_adr.core import (
     ADR,
     ADRMetadata,
-    ConfigManager,
     GitError,
-    NotesManager,
     ensure_list,
     generate_adr_id,
-    get_git,
 )
 from git_adr.core.adr import ADRStatus
 
@@ -74,22 +72,8 @@ def run_import(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
-
-        notes_manager = NotesManager(git, config)
+        # Initialize command context
+        ctx = setup_command_context()
 
         # Validate source path
         source_path = _validate_source_path(path)
@@ -128,14 +112,14 @@ def run_import(
             imported = 0
             for adr in adrs:
                 # Check if already exists
-                existing = notes_manager.get(adr.metadata.id)
+                existing = ctx.notes_manager.get(adr.metadata.id)
                 if existing:
                     console.print(
                         f"[yellow]Skipping[/yellow] {adr.metadata.id}: already exists"
                     )
                     continue
 
-                notes_manager.add(adr)
+                ctx.notes_manager.add(adr)
                 console.print(f"[green]Imported[/green] {adr.metadata.id}")
                 imported += 1
 

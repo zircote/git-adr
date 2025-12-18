@@ -10,14 +10,8 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from git_adr.core import (
-    ADR,
-    ADRStatus,
-    ConfigManager,
-    GitError,
-    NotesManager,
-    get_git,
-)
+from git_adr.commands._shared import setup_command_context
+from git_adr.core import ADR, ADRStatus, GitError
 
 console = Console()
 err_console = Console(stderr=True)
@@ -45,23 +39,10 @@ def run_edit(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
+        # Initialize command context
+        ctx = setup_command_context()
 
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
-
-        notes_manager = NotesManager(git, config)
-        adr = notes_manager.get(adr_id)
+        adr = ctx.notes_manager.get(adr_id)
 
         if adr is None:
             err_console.print(f"[red]Error:[/red] ADR not found: {adr_id}")
@@ -72,7 +53,7 @@ def run_edit(
 
         if quick_edit:
             _quick_edit(
-                notes_manager,
+                ctx.notes_manager,
                 adr,
                 status=status,
                 add_tag=add_tag or [],
@@ -81,7 +62,7 @@ def run_edit(
                 unlink=unlink,
             )
         else:
-            _full_edit(notes_manager, adr, config)
+            _full_edit(ctx.notes_manager, adr, ctx.config)
 
     except GitError as e:
         err_console.print(f"[red]Error:[/red] {e}")
