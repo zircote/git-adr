@@ -8,18 +8,12 @@ from __future__ import annotations
 import json
 from collections import Counter
 from datetime import UTC, datetime
-from pathlib import Path
 
 import typer
 from rich.console import Console
 
-from git_adr.core import (
-    ConfigManager,
-    GitError,
-    IndexManager,
-    NotesManager,
-    get_git,
-)
+from git_adr.commands._shared import setup_command_context
+from git_adr.core import GitError
 from git_adr.core.adr import ADRStatus
 
 console = Console()
@@ -42,40 +36,25 @@ def run_report(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
-
-        notes_manager = NotesManager(git, config)
-        index_manager = IndexManager(notes_manager)
+        # Initialize command context with index manager
+        ctx = setup_command_context(require_index=True)
 
         # Rebuild index
-        index_manager.rebuild()
+        ctx.index_manager.rebuild()
 
         # Get all ADRs
-        all_adrs = notes_manager.list_all()
+        all_adrs = ctx.notes_manager.list_all()
 
         if format_ == "json":
-            report = _generate_json_report(all_adrs, notes_manager)
+            report = _generate_json_report(all_adrs, ctx.notes_manager)
         elif format_ == "html":
-            report = _generate_html_report(all_adrs, notes_manager)
+            report = _generate_html_report(all_adrs, ctx.notes_manager)
         elif format_ == "terminal":
             # For terminal, just display using rich
-            _display_terminal_report(all_adrs, notes_manager, team)
+            _display_terminal_report(all_adrs, ctx.notes_manager, team)
             return
         else:
-            report = _generate_markdown_report(all_adrs, notes_manager)
+            report = _generate_markdown_report(all_adrs, ctx.notes_manager)
 
         if output:
             output_path = Path(output)

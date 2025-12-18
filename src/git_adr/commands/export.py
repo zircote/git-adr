@@ -13,14 +13,8 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from git_adr.core import (
-    ADR,
-    ConfigManager,
-    GitError,
-    IndexManager,
-    NotesManager,
-    get_git,
-)
+from git_adr.commands._shared import setup_command_context
+from git_adr.core import ADR, GitError
 
 console = Console()
 err_console = Console(stderr=True)
@@ -49,36 +43,21 @@ def run_export(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
-
-        notes_manager = NotesManager(git, config)
-        index_manager = IndexManager(notes_manager)
+        # Initialize command context with index manager
+        ctx = setup_command_context(require_index=True)
 
         # Rebuild index
-        index_manager.rebuild()
+        ctx.index_manager.rebuild()
 
         # Get ADRs
         if adr:
-            adr_obj = notes_manager.get(adr)
+            adr_obj = ctx.notes_manager.get(adr)
             if not adr_obj:
                 err_console.print(f"[red]Error:[/red] ADR not found: {adr}")
                 raise typer.Exit(1)
             all_adrs = [adr_obj]
         else:
-            all_adrs = notes_manager.list_all()
+            all_adrs = ctx.notes_manager.list_all()
 
         if not all_adrs:
             console.print("[yellow]No ADRs to export[/yellow]")
@@ -90,15 +69,15 @@ def run_export(
 
         # Export based on format
         if format_ == "json":
-            _export_json(all_adrs, output_path, notes_manager)
+            _export_json(all_adrs, output_path, ctx.notes_manager)
         elif format_ == "html":
-            _export_html(all_adrs, output_path, notes_manager)
+            _export_html(all_adrs, output_path, ctx.notes_manager)
         elif format_ == "docx":
             console.print("[yellow]DOCX export coming soon[/yellow]")
             console.print("[dim]Install: pip install 'git-adr\\[export]'[/dim]")
             return
         else:
-            _export_markdown(all_adrs, output_path, notes_manager)
+            _export_markdown(all_adrs, output_path, ctx.notes_manager)
 
         console.print(
             f"[green]✓[/green] Exported {len(all_adrs)} ADRs to {output_path}"

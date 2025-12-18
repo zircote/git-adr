@@ -5,18 +5,12 @@ Converts an ADR to a different format.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 from rich.console import Console
 from rich.markdown import Markdown
 
-from git_adr.core import (
-    ConfigManager,
-    GitError,
-    NotesManager,
-    get_git,
-)
+from git_adr.commands._shared import setup_command_context
+from git_adr.core import GitError
 from git_adr.core.templates import TEMPLATE_DESCRIPTIONS, TemplateEngine
 
 console = Console()
@@ -39,30 +33,17 @@ def run_convert(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
+        # Initialize command context
+        ctx = setup_command_context()
 
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
-
-        notes_manager = NotesManager(git, config)
-        adr = notes_manager.get(adr_id)
+        adr = ctx.notes_manager.get(adr_id)
 
         if adr is None:
             err_console.print(f"[red]Error:[/red] ADR not found: {adr_id}")
             raise typer.Exit(1)
 
         # Create template engine
-        template_engine = TemplateEngine(config.custom_templates_dir)
+        template_engine = TemplateEngine(ctx.config.custom_templates_dir)
 
         # Validate target format
         available_formats = template_engine.list_formats()
@@ -103,7 +84,7 @@ def run_convert(
         )
         updated_adr.metadata.format = to
 
-        notes_manager.update(updated_adr)
+        ctx.notes_manager.update(updated_adr)
 
         console.print(
             f"[green]✓[/green] Converted ADR [cyan]{adr_id}[/cyan] "
