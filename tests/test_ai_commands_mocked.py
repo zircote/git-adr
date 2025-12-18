@@ -36,20 +36,14 @@ class MockAIResponse:
         self.provider = provider
 
 
-@pytest.fixture
-def no_ai_config_repo(initialized_adr_repo: Path) -> Path:
-    """Repository with AI explicitly disabled (overrides global config)."""
-    git = Git(cwd=initialized_adr_repo)
-    # Set empty provider to override any global config
-    git.config_set("adr.ai.provider", "")
-    git.config_set("adr.ai.model", "")
-    return initialized_adr_repo
+# no_ai_config_repo fixture is now in conftest.py as no_ai_initialized_repo
+# (for initialized repo without sample data and without AI config)
 
 
 @pytest.fixture
-def no_ai_repo_with_data(no_ai_config_repo: Path) -> Path:
+def no_ai_repo_with_data(no_ai_initialized_repo: Path) -> Path:
     """Repository with ADR data but no AI config (for testing AI provider errors)."""
-    git = Git(cwd=no_ai_config_repo)
+    git = Git(cwd=no_ai_initialized_repo)
     config_manager = ConfigManager(git)
     config = config_manager.load()
     notes_manager = NotesManager(git, config)
@@ -66,7 +60,7 @@ def no_ai_repo_with_data(no_ai_config_repo: Path) -> Path:
         content="## Context\n\nWe need a database.\n\n## Decision\n\nUse PostgreSQL.",
     )
     notes_manager.add(sample_adr)
-    return no_ai_config_repo
+    return no_ai_initialized_repo
 
 
 @pytest.fixture

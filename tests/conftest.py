@@ -353,6 +353,44 @@ def test_tmp_dir(tmp_path: Path) -> Iterator[Path]:
 # =============================================================================
 
 
+# =============================================================================
+# AI Isolation Fixtures
+# =============================================================================
+
+
+def _disable_ai_for_repo(repo: Path) -> Path:
+    """Disable AI configuration for the given repository.
+
+    Helper function to ensure consistent AI disabling across fixtures.
+    Sets empty provider and model to override any global config.
+    """
+    git = Git(cwd=repo)
+    git.config_set("adr.ai.provider", "")
+    git.config_set("adr.ai.model", "")
+    return repo
+
+
+@pytest.fixture
+def no_ai_config_repo(adr_repo_with_data: Path) -> Path:
+    """Repository with sample data and AI explicitly disabled.
+
+    Use this fixture when testing AI commands that should fail due to
+    no AI provider being configured. This overrides any global git config
+    that might have adr.ai.provider set.
+    """
+    return _disable_ai_for_repo(adr_repo_with_data)
+
+
+@pytest.fixture
+def no_ai_initialized_repo(initialized_adr_repo: Path) -> Path:
+    """Initialized repository with AI explicitly disabled (no sample data).
+
+    Use this when you need an initialized ADR repo without sample data
+    and without AI provider configured.
+    """
+    return _disable_ai_for_repo(initialized_adr_repo)
+
+
 @pytest.fixture
 def create_commit(temp_git_repo_with_commit: Path) -> Callable[[str], str]:
     """Create a helper function to add commits.

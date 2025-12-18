@@ -18,24 +18,7 @@ from git_adr.core.git import Git
 runner = CliRunner()
 
 
-@pytest.fixture
-def no_ai_config_repo(adr_repo_with_data: Path) -> Path:
-    """Repository with AI explicitly disabled (overrides global config)."""
-    git = Git(cwd=adr_repo_with_data)
-    # Set empty provider to override any global config
-    git.config_set("adr.ai.provider", "")
-    git.config_set("adr.ai.model", "")
-    return adr_repo_with_data
-
-
-@pytest.fixture
-def no_ai_initialized_repo(initialized_adr_repo: Path) -> Path:
-    """Initialized repo with AI explicitly disabled (overrides global config)."""
-    git = Git(cwd=initialized_adr_repo)
-    # Set empty provider to override any global config
-    git.config_set("adr.ai.provider", "")
-    git.config_set("adr.ai.model", "")
-    return initialized_adr_repo
+# no_ai_config_repo and no_ai_initialized_repo fixtures are now in conftest.py
 
 
 # =============================================================================

@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
 from typer.testing import CliRunner
 
 from git_adr.cli import app
@@ -168,6 +169,7 @@ class TestConfigCommandCoverage:
             try:
                 git.config_unset(key)
             except Exception:
+                # Some keys may not be set in this repo; ignore unset failures.
                 pass
 
         result = runner.invoke(app, ["config", "--list"])
@@ -370,15 +372,55 @@ class TestGitCoverage:
         assert result is None
 
     def test_notes_remove_nonexistent(self, initialized_adr_repo: Path) -> None:
-        """Test notes_remove for non-existent note."""
+        """Test notes_remove for non-existent note returns False."""
         from git_adr.core.git import Git
 
         git = Git(cwd=initialized_adr_repo)
-        # Should not raise, just return False or handle gracefully
-        try:
-            git.notes_remove("HEAD", ref="refs/notes/test-nonexistent")
-        except Exception:
-            pass  # Expected if note doesn't exist
+        # Should not raise and should return False when note does not exist
+        result = git.notes_remove("HEAD", ref="refs/notes/test-nonexistent")
+        assert result is False
+
+    def test_config_unset_all_values(self, initialized_adr_repo: Path) -> None:
+        """Test config_unset with all_values=True for multi-valued keys.
+
+        Covers the all_values parameter that uses --unset-all flag.
+        This is used when clearing multi-valued config like notes.rewriteRef.
+        """
+        from git_adr.core.git import Git
+
+        git = Git(cwd=initialized_adr_repo)
+
+        # First, set up a multi-valued config key
+        git.config_set("test.multivalue", "value1")
+        git.run(["config", "--add", "test.multivalue", "value2"])
+        git.run(["config", "--add", "test.multivalue", "value3"])
+
+        # Verify multiple values exist
+        result = git.run(["config", "--get-all", "test.multivalue"])
+        values = result.stdout.strip().split("\n")
+        assert len(values) == 3
+
+        # Use all_values=True to unset all values at once
+        unset_result = git.config_unset("test.multivalue", all_values=True)
+        assert unset_result is True
+
+        # Verify all values are gone
+        result = git.config_get("test.multivalue")
+        assert result is None
+
+    def test_config_unset_all_values_nonexistent(
+        self, initialized_adr_repo: Path
+    ) -> None:
+        """Test config_unset with all_values=True on non-existent key."""
+        from git_adr.core.git import Git
+
+        git = Git(cwd=initialized_adr_repo)
+
+        # Should return False for non-existent key
+        result = git.config_unset(
+            "nonexistent.multi.key.that.does.not.exist", all_values=True
+        )
+        assert result is False
 
 
 # =============================================================================
@@ -389,8 +431,11 @@ class TestGitCoverage:
 class TestADRCoverage:
     """Tests for adr.py coverage gaps."""
 
-    def test_adr_from_note_invalid_yaml(self) -> None:
-        """Test ADR.from_note with invalid YAML frontmatter."""
+    def test_adr_from_markdown_invalid_yaml(self) -> None:
+        """Test ADR.from_markdown with invalid YAML frontmatter.
+
+        Covers the yaml.YAMLError exception handling in from_markdown.
+        """
         from git_adr.core.adr import ADR
 
         invalid_content = """---
@@ -400,13 +445,9 @@ invalid: yaml: content: [
 ## Context
 Test
 """
-        # Should handle gracefully
-        try:
-            result = ADR.from_note(invalid_content)
-            # If it doesn't raise, it should have defaults
-            assert result is not None
-        except Exception:
-            pass  # Expected to fail with invalid YAML
+        # Should raise ValueError with specific message for invalid YAML
+        with pytest.raises(ValueError, match="Invalid YAML frontmatter"):
+            ADR.from_markdown(invalid_content)
 
     def test_adr_metadata_optional_fields(self) -> None:
         """Test ADRMetadata with optional fields."""

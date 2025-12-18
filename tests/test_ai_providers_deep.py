@@ -16,19 +16,11 @@ from typer.testing import CliRunner
 from git_adr.ai.service import AIService, AIServiceError
 from git_adr.cli import app
 from git_adr.core.config import Config
-from git_adr.core.git import Git
 
 runner = CliRunner()
 
 
-@pytest.fixture
-def no_ai_config_repo(adr_repo_with_data: Path) -> Path:
-    """Repository with AI explicitly disabled (overrides global config)."""
-    git = Git(cwd=adr_repo_with_data)
-    # Set empty provider to override any global config
-    git.config_set("adr.ai.provider", "")
-    git.config_set("adr.ai.model", "")
-    return adr_repo_with_data
+# no_ai_config_repo fixture is now in conftest.py
 
 
 def make_config(
