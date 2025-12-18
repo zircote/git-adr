@@ -6,20 +6,17 @@ Creates a new ADR that supersedes an existing one.
 from __future__ import annotations
 
 from datetime import date
-from pathlib import Path
 
 import typer
 from rich.console import Console
 
+from git_adr.commands._shared import setup_command_context
 from git_adr.core import (
     ADR,
     ADRMetadata,
     ADRStatus,
-    ConfigManager,
     GitError,
-    NotesManager,
     generate_adr_id,
-    get_git,
 )
 from git_adr.core.templates import TemplateEngine
 
@@ -43,25 +40,11 @@ def run_supersede(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
-
-        notes_manager = NotesManager(git, config)
+        # Initialize command context
+        ctx = setup_command_context()
 
         # Get the original ADR
-        original = notes_manager.get(adr_id)
+        original = ctx.notes_manager.get(adr_id)
         if original is None:
             err_console.print(f"[red]Error:[/red] ADR not found: {adr_id}")
             raise typer.Exit(1)
@@ -75,14 +58,14 @@ def run_supersede(
                 err_console.print(f"  Superseded by: {original.metadata.superseded_by}")
 
         # Generate new ADR ID
-        existing_ids = {adr.id for adr in notes_manager.list_all()}
+        existing_ids = {adr.id for adr in ctx.notes_manager.list_all()}
         new_id = generate_adr_id(title, existing_ids)
 
         # Get template format
-        format_name = template or config.template
+        format_name = template or ctx.config.template
 
         # Create template engine and render
-        template_engine = TemplateEngine(config.custom_templates_dir)
+        template_engine = TemplateEngine(ctx.config.custom_templates_dir)
 
         try:
             content = template_engine.render_for_new(
@@ -110,7 +93,7 @@ def run_supersede(
         # Open editor for new ADR
         from git_adr.commands._editor import open_editor
 
-        final_content = open_editor(content, config)
+        final_content = open_editor(content, ctx.config)
 
         if final_content is None:
             console.print("[yellow]Aborted[/yellow]")
@@ -134,8 +117,8 @@ def run_supersede(
         original.metadata.superseded_by = new_id
 
         # Save both
-        notes_manager.add(new_adr)
-        notes_manager.update(original)
+        ctx.notes_manager.add(new_adr)
+        ctx.notes_manager.update(original)
 
         console.print()
         console.print(

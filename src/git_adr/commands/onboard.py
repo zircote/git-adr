@@ -5,20 +5,13 @@ Interactive onboarding wizard for new team members.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 
-from git_adr.core import (
-    ConfigManager,
-    GitError,
-    IndexManager,
-    NotesManager,
-    get_git,
-)
+from git_adr.commands._shared import setup_command_context
+from git_adr.core import GitError
 from git_adr.core.adr import ADRStatus
 
 console = Console()
@@ -43,29 +36,14 @@ def run_onboard(
         typer.Exit: On error.
     """
     try:
-        git = get_git(cwd=Path.cwd())
-
-        if not git.is_repository():
-            err_console.print("[red]Error:[/red] Not a git repository")
-            raise typer.Exit(1)
-
-        config_manager = ConfigManager(git)
-        config = config_manager.load()
-
-        if not config_manager.get("initialized"):
-            err_console.print(
-                "[red]Error:[/red] git-adr not initialized. Run `git adr init` first."
-            )
-            raise typer.Exit(1)
-
-        notes_manager = NotesManager(git, config)
-        index_manager = IndexManager(notes_manager)
+        # Initialize command context with index manager
+        ctx = setup_command_context(require_index=True)
 
         # Rebuild index
-        index_manager.rebuild()
+        ctx.index_manager.rebuild()
 
         # Get all ADRs
-        all_adrs = notes_manager.list_all()
+        all_adrs = ctx.notes_manager.list_all()
 
         if not all_adrs:
             console.print("[dim]No ADRs found in this repository.[/dim]")
@@ -89,7 +67,7 @@ def run_onboard(
         if quick:
             _quick_onboard(all_adrs, role)
         else:
-            _interactive_onboard(all_adrs, notes_manager, role)
+            _interactive_onboard(all_adrs, ctx.notes_manager, role)
 
     except GitError as e:
         err_console.print(f"[red]Error:[/red] {e}")
