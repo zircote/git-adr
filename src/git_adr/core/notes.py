@@ -81,12 +81,17 @@ class NotesManager:
     def is_initialized(self) -> bool:
         """Check if git-adr is initialized in this repository.
 
+        Checks the adr.initialized config flag set by `git adr init`.
+        This is more reliable than checking for notes existence because:
+        - A freshly initialized repo has no notes yet
+        - Notes may not be fetched from remote yet
+
         Returns:
             True if initialized, False otherwise.
         """
-        # Check if any notes exist in the ADR namespace
-        notes = self._git.notes_list(self.adr_ref)
-        return len(notes) > 0
+        # Check the initialization marker set by init command
+        initialized = self._git.config_get("adr.initialized")
+        return initialized == "true"
 
     def initialize(self, *, force: bool = False) -> None:
         """Initialize git-adr in the repository.
