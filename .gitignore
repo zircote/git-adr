@@ -65,6 +65,9 @@ Thumbs.db
 # Claude Code prompt logs
 .prompt-log.json
 
+# Memory capture database
+.memory/
+
 # Distribution and build artifacts
 *.tar.gz
 *.whl
