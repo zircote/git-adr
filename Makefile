@@ -4,7 +4,8 @@
 .PHONY: all clean test test-unit test-integration test-coverage lint format check \
         build man-pages completions install install-bin install-man install-completions \
         uninstall dist release help ci dev-install docs typecheck security audit \
-        binary binary-clean smoke-test
+        binary binary-clean smoke-test \
+        version bump-patch bump-minor bump-major tag release-patch release-minor release-major
 
 # ============================================================
 # Configuration (following gh CLI conventions)
@@ -83,8 +84,18 @@ help:
 	@echo "  make binary-clean   Clean and rebuild binary"
 	@echo "  make smoke-test     Run smoke tests against binary"
 	@echo ""
+	@echo "Version:"
+	@echo "  make version        Show current version"
+	@echo "  make bump-patch     Bump patch version (0.2.3 -> 0.2.4)"
+	@echo "  make bump-minor     Bump minor version (0.2.3 -> 0.3.0)"
+	@echo "  make bump-major     Bump major version (0.2.3 -> 1.0.0)"
+	@echo "  make tag            Create git tag for current version"
+	@echo ""
 	@echo "Release:"
 	@echo "  make release        Build release tarball with all artifacts"
+	@echo "  make release-patch  Bump patch, tag, ready to push"
+	@echo "  make release-minor  Bump minor, tag, ready to push"
+	@echo "  make release-major  Bump major, tag, ready to push"
 	@echo "  make clean          Clean build artifacts"
 	@echo ""
 	@echo "Configuration:"
@@ -222,6 +233,44 @@ release: build
 	@mkdir -p $(DIST_DIR)
 	tar -czf $(DIST_DIR)/$(RELEASE_NAME).tar.gz -C $(BUILD_DIR) $(RELEASE_NAME)
 	@echo "Created $(DIST_DIR)/$(RELEASE_NAME).tar.gz"
+
+# ============================================================
+# Version management
+# ============================================================
+
+# Show current version
+version:
+	@python3 scripts/bump-version.py --show
+
+# Bump patch version (0.2.3 -> 0.2.4)
+bump-patch:
+	@python3 scripts/bump-version.py patch
+
+# Bump minor version (0.2.3 -> 0.3.0)
+bump-minor:
+	@python3 scripts/bump-version.py minor
+
+# Bump major version (0.2.3 -> 1.0.0)
+bump-major:
+	@python3 scripts/bump-version.py major
+
+# Create git tag for current version
+tag:
+	@version=$$(python3 scripts/bump-version.py --show) && \
+	git tag -a "v$$version" -m "Release v$$version" && \
+	echo "Created tag: v$$version"
+
+# Bump patch and create tag
+release-patch: bump-patch tag
+	@echo "Release ready. Run 'git push --follow-tags' to publish."
+
+# Bump minor and create tag
+release-minor: bump-minor tag
+	@echo "Release ready. Run 'git push --follow-tags' to publish."
+
+# Bump major and create tag
+release-major: bump-major tag
+	@echo "Release ready. Run 'git push --follow-tags' to publish."
 
 # ============================================================
 # Binary targets (standalone executable with PyInstaller)
