@@ -1,0 +1,20 @@
+{
+    "name": "git-adr",
+    "version": "0.2.4",
+    "description": "Comprehensive agent library featuring 115+ specialized Opus 4.5 agents organized by domain",
+    "author": {
+        "name": "zircote",
+        "url": "https://github.com/zircote"
+    },
+    "license": "MIT",
+    "keywords": [
+        "development",
+        "skills",
+        "git",
+        "adr",
+        "git-adr"
+    ],
+    "skills": [
+        "./skills/git-adr/SKILL.md"
+    ]
+}
