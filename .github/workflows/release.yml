@@ -145,24 +145,6 @@ jobs:
           fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Package skill
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          # Create .skill file (ZIP archive per skill-spec)
-          cd skills
-          zip -r "../git-adr-${VERSION}.skill" git-adr/
-          cd ..
-          echo "Created: git-adr-${VERSION}.skill"
-          unzip -l "git-adr-${VERSION}.skill"
-
-      - name: Upload skill package
-        uses: actions/upload-artifact@v6
-        with:
-          name: skill-package
-          path: |
-            git-adr-*.skill
-
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
