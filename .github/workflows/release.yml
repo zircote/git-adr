@@ -155,19 +155,19 @@ jobs:
           fetch-depth: 0
 
       - name: Download package artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: dist
           path: dist/
 
       - name: Download release artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: release-artifacts
           path: release/
 
       - name: Download skill package
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         # Skill package is optional - don't fail if not available
         continue-on-error: true
         with:
@@ -269,7 +269,7 @@ jobs:
     environment: pypi
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: dist
           path: dist/
