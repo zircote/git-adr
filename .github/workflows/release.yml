@@ -341,7 +341,7 @@ jobs:
           echo "Found: $SDIST_URL with SHA256: $SDIST_SHA256"
 
       - name: Checkout Homebrew tap
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: zircote/homebrew-tap
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
