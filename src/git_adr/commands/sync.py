@@ -48,7 +48,7 @@ def run_sync(
             console.print(f"[dim]Fetching notes from {remote}...[/dim]")
             try:
                 ctx.notes_manager.sync_pull(
-                    remote=remote, merge_strategy=merge_strategy
+                    remote=remote, _merge_strategy=merge_strategy
                 )
                 console.print(f"[green]✓[/green] Pulled ADR notes from {remote}")
             except GitError as e:
