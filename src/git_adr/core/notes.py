@@ -7,14 +7,19 @@ stability across rebase and amend operations.
 
 from __future__ import annotations
 
+import base64
 import contextlib
 import hashlib
+import logging
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from git_adr.core.adr import ADR, ADRMetadata
 from git_adr.core.git import GitError
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from git_adr.core.config import Config
@@ -23,6 +28,9 @@ if TYPE_CHECKING:
 
 # Special object ID for the ADR index note
 INDEX_OBJECT_ID = "0" * 40  # Null SHA as index anchor
+
+# Maximum ADR content size (10MB) - prevents memory exhaustion from huge notes
+MAX_ADR_CONTENT_SIZE = 10 * 1024 * 1024
 
 
 @dataclass
@@ -185,7 +193,7 @@ class NotesManager:
         )
 
         if update_index:
-            self._update_index(adr.metadata, action="add")
+            self._update_index(adr.metadata, _action="add")
 
         return adr.id
 
@@ -197,6 +205,9 @@ class NotesManager:
 
         Returns:
             ADR instance, or None if not found.
+
+        Raises:
+            ValueError: If ADR content exceeds MAX_ADR_CONTENT_SIZE.
         """
         obj_id = self._adr_id_to_object(adr_id)
         content = self._git.notes_show(obj_id, ref=self.adr_ref)
@@ -204,10 +215,17 @@ class NotesManager:
         if content is None:
             return None
 
+        # Guard against memory exhaustion from very large notes
+        if len(content) > MAX_ADR_CONTENT_SIZE:
+            raise ValueError(
+                f"ADR content exceeds maximum size ({MAX_ADR_CONTENT_SIZE} bytes)"
+            )
+
         try:
             adr = ADR.from_markdown(content)
             return adr
-        except ValueError:
+        except ValueError as e:
+            logger.warning("Failed to parse ADR %s: %s", adr_id, e)
             return None
 
     def update(self, adr: ADR, *, update_index: bool = True) -> None:
@@ -267,7 +285,8 @@ class NotesManager:
                 try:
                     adr = ADR.from_markdown(content)
                     adrs.append(adr)
-                except ValueError:
+                except ValueError as e:
+                    logger.warning("Failed to parse ADR note %s: %s", note_sha[:8], e)
                     continue
 
         return adrs
@@ -345,8 +364,6 @@ class NotesManager:
         artifact_obj = self._artifact_hash_to_object(sha256)
 
         # Store as base64-encoded for binary safety
-        import base64
-
         encoded = base64.b64encode(content).decode("ascii")
 
         artifact_note = (
@@ -389,8 +406,6 @@ class NotesManager:
         Returns:
             Tuple of (artifact_info, content), or None if not found.
         """
-        import base64
-
         artifact_obj = self._artifact_hash_to_object(sha256)
         note_content = self._git.notes_show(artifact_obj, ref=self.artifacts_ref)
 
@@ -438,8 +453,6 @@ class NotesManager:
             return []
 
         # Find artifact references in content
-        import re
-
         artifact_refs = re.findall(r"artifact:([a-f0-9]{64})", adr.content)
 
         artifacts: list[ArtifactInfo] = []
@@ -462,8 +475,6 @@ class NotesManager:
         Returns:
             True if removed, False if not found.
         """
-        import re
-
         adr = self.get(adr_id)
         if adr is None:
             return False
@@ -517,13 +528,13 @@ class NotesManager:
         self,
         remote: str = "origin",
         *,
-        merge_strategy: str = "union",
+        _merge_strategy: str = "union",
     ) -> None:
         """Pull ADR notes from a remote.
 
         Args:
             remote: Remote name.
-            merge_strategy: Strategy for merging conflicts.
+            _merge_strategy: Strategy for merging conflicts (reserved for future use).
         """
         # Fetch ADR notes
         self._git.fetch_notes(remote, self.adr_ref)
@@ -582,26 +593,26 @@ class NotesManager:
 
     def _update_index(
         self,
-        metadata: ADRMetadata,
-        action: str = "add",
+        _metadata: ADRMetadata,
+        _action: str = "add",
     ) -> None:
         """Update the ADR index with new/updated metadata.
 
         The index is stored as a special note for fast listing.
 
         Args:
-            metadata: ADR metadata to index.
-            action: "add" or "update".
+            _metadata: ADR metadata to index (reserved for future use).
+            _action: "add" or "update" (reserved for future use).
         """
         # For now, we don't maintain a separate index - list_all reads all notes
         # This could be optimized later with a dedicated index note
         pass
 
-    def _update_index_remove(self, adr_id: str) -> None:
+    def _update_index_remove(self, _adr_id: str) -> None:
         """Remove an ADR from the index.
 
         Args:
-            adr_id: ADR ID to remove.
+            _adr_id: ADR ID to remove (reserved for future use).
         """
         # Placeholder for index optimization
         pass

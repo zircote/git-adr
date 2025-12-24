@@ -68,10 +68,28 @@ VALID_MERGE_STRATEGIES = {
 
 @dataclass
 class Config:
-    """git-adr configuration.
+    """git-adr configuration settings.
 
-    Configuration is loaded from git config and provides access to
-    all git-adr settings.
+    Configuration is loaded from git config (`adr.*` keys) and provides
+    access to all git-adr settings. Use ConfigManager.load() to obtain
+    an instance with current values.
+
+    Attributes:
+        namespace: Git notes namespace for ADR storage (default: "adr").
+        artifacts_namespace: Git notes namespace for binary attachments.
+        template: Default ADR template format (madr, nygard, y-statement, etc.).
+        editor: Editor command override; falls back to $EDITOR or vim.
+        artifact_warn_size: Size threshold (bytes) for attachment warnings.
+        artifact_max_size: Maximum allowed attachment size (bytes).
+        sync_auto_push: Automatically push notes after modifications.
+        sync_auto_pull: Automatically pull notes before read operations.
+        sync_merge_strategy: Merge strategy for notes conflicts.
+        ai_provider: AI service provider (openai, anthropic, google, ollama).
+        ai_model: Model name for AI operations.
+        ai_temperature: Temperature setting for AI generation (0.0-1.0).
+        wiki_platform: Wiki platform for sync (github, gitlab, or auto-detect).
+        wiki_auto_sync: Automatically sync to wiki after modifications.
+        custom_templates_dir: Path to directory with custom ADR templates.
     """
 
     # Notes namespaces
@@ -177,6 +195,9 @@ class ConfigManager:
     ) -> str | None:
         """Get a configuration value.
 
+        Uses cache to avoid redundant subprocess calls. Cache is populated
+        once per session and invalidated when config is modified.
+
         Args:
             key: Configuration key (without prefix).
             global_: If True, read from global config.
@@ -187,10 +208,10 @@ class ConfigManager:
         """
         full_key = self._full_key(key)
 
-        # Try git config directly (most accurate)
-        value = self._git.config_get(full_key, global_=global_)
-        if value is not None:
-            return value
+        # Check cache first (avoids subprocess per read)
+        self._ensure_cache(global_=global_)
+        if full_key in self._cache:
+            return self._cache[full_key]
 
         # Check defaults
         short_key = key.replace(f"{CONFIG_PREFIX}.", "")

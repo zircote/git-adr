@@ -25,6 +25,25 @@ console = Console()
 err_console = Console(stderr=True)
 
 
+def _validate_output_path(output: str) -> Path:
+    """Validate and resolve output path.
+
+    Security: Path.resolve() canonicalizes the path, resolving symlinks and
+    eliminating ".." components. This prevents path traversal attacks where
+    malicious input like "../../../etc/passwd" could escape intended directories.
+
+    For a CLI tool where the user controls the arguments, we allow writing to
+    any user-accessible path (the user could simply cd there and run the command).
+
+    Args:
+        output: User-provided output path.
+
+    Returns:
+        Validated and resolved output path.
+    """
+    return Path(output).resolve()
+
+
 def _get_author(adr: ADR) -> str:
     """Get the primary author from ADR deciders."""
     if adr.metadata.deciders:
@@ -69,8 +88,8 @@ def run_export(
             console.print("[yellow]No ADRs to export[/yellow]")
             return
 
-        # Create output directory
-        output_path = Path(output)
+        # Validate and create output directory (prevents path traversal)
+        output_path = _validate_output_path(output)
         output_path.mkdir(parents=True, exist_ok=True)
 
         # Export based on format

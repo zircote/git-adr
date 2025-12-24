@@ -6,6 +6,7 @@ Provides AI-powered features using various LLM providers.
 from __future__ import annotations
 
 import os
+import time
 import warnings
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
@@ -143,6 +144,42 @@ class AIService:
 
         return self._llm
 
+    def _invoke_with_retry(
+        self,
+        prompt: str,
+        max_retries: int = 3,
+        base_delay: float = 1.0,
+    ) -> str:
+        """Invoke LLM with exponential backoff retry.
+
+        Args:
+            prompt: The prompt to send.
+            max_retries: Maximum number of retry attempts.
+            base_delay: Base delay in seconds (doubled each retry).
+
+        Returns:
+            Response content string.
+
+        Raises:
+            AIServiceError: If all retries fail.
+        """
+        llm = self._get_llm()
+        last_error: Exception | None = None
+
+        for attempt in range(max_retries + 1):
+            try:
+                response = llm.invoke(prompt)
+                return response.content if hasattr(response, "content") else str(response)
+            except Exception as e:
+                last_error = e
+                if attempt < max_retries:
+                    delay = base_delay * (2**attempt)
+                    time.sleep(delay)
+                    continue
+                break
+
+        raise AIServiceError(f"LLM invocation failed after {max_retries + 1} attempts: {last_error}") from last_error
+
     def draft_adr(
         self,
         title: str,
@@ -161,8 +198,6 @@ class AIService:
         Returns:
             AIResponse with generated ADR content.
         """
-        llm = self._get_llm()
-
         prompt = f"""You are an expert software architect. Generate a complete Architecture Decision Record (ADR) in MADR 4.0 format.
 
 Title: {title}
@@ -181,11 +216,7 @@ Generate the ADR with these sections:
 Be specific and technical. Use bullet points where appropriate.
 Do NOT include YAML frontmatter - just the markdown content."""
 
-        try:
-            response = llm.invoke(prompt)
-        except Exception as e:
-            raise AIServiceError(f"LLM invocation failed: {e}") from e
-        content = response.content if hasattr(response, "content") else str(response)
+        content = self._invoke_with_retry(prompt)
 
         return AIResponse(
             content=content,
@@ -202,8 +233,6 @@ Do NOT include YAML frontmatter - just the markdown content."""
         Returns:
             AIResponse with improvement suggestions.
         """
-        llm = self._get_llm()
-
         prompt = f"""You are an expert software architect reviewing Architecture Decision Records.
 
 Analyze this ADR and suggest specific improvements:
@@ -224,11 +253,7 @@ Provide suggestions in these categories:
 For each suggestion, explain WHY it would improve the ADR.
 Be specific and actionable."""
 
-        try:
-            response = llm.invoke(prompt)
-        except Exception as e:
-            raise AIServiceError(f"LLM invocation failed: {e}") from e
-        content = response.content if hasattr(response, "content") else str(response)
+        content = self._invoke_with_retry(prompt)
 
         return AIResponse(
             content=content,
@@ -250,8 +275,6 @@ Be specific and actionable."""
         Returns:
             AIResponse with summary.
         """
-        llm = self._get_llm()
-
         # Build ADR context
         adr_context = "\n\n".join(
             f"**{adr.metadata.id}**: {adr.metadata.title}\n"
@@ -282,11 +305,7 @@ Highlight:
 - Common themes or patterns
 - Any decisions that might need attention (deprecated, long-pending)"""
 
-        try:
-            response = llm.invoke(prompt)
-        except Exception as e:
-            raise AIServiceError(f"LLM invocation failed: {e}") from e
-        content = response.content if hasattr(response, "content") else str(response)
+        content = self._invoke_with_retry(prompt)
 
         return AIResponse(
             content=content,
@@ -308,8 +327,6 @@ Highlight:
         Returns:
             AIResponse with answer and citations.
         """
-        llm = self._get_llm()
-
         # Build ADR context for RAG
         adr_context = "\n\n---\n\n".join(
             f"ADR ID: {adr.metadata.id}\n"
@@ -335,11 +352,7 @@ Answer the question based ONLY on the ADRs provided above. If the information is
 Include citations to specific ADRs when referencing decisions. Format citations as [ADR-ID].
 Be specific and technical."""
 
-        try:
-            response = llm.invoke(prompt)
-        except Exception as e:
-            raise AIServiceError(f"LLM invocation failed: {e}") from e
-        content = response.content if hasattr(response, "content") else str(response)
+        content = self._invoke_with_retry(prompt)
 
         return AIResponse(
             content=content,
