@@ -1,0 +1,47 @@
+{
+  "$schema": "https://claude.ai/hooks-schema.json",
+  "hooks": [
+    {
+      "name": "format-on-edit",
+      "description": "Run ruff format on edited Python files",
+      "event": "PostToolUse",
+      "matcher": "Write|Edit|str_replace_editor",
+      "type": "command",
+      "command": "ruff format $CLAUDE_FILE_PATHS 2>/dev/null || black $CLAUDE_FILE_PATHS 2>/dev/null || true",
+      "conditions": {
+        "fileExtensions": [".py", ".pyi"]
+      }
+    },
+    {
+      "name": "lint-check-on-edit",
+      "description": "Check for lint errors after Python edits",
+      "event": "PostToolUse",
+      "matcher": "Write|Edit|str_replace_editor",
+      "type": "command",
+      "command": "ruff check $CLAUDE_FILE_PATHS --output-format=concise 2>/dev/null | head -20 || true",
+      "conditions": {
+        "fileExtensions": [".py", ".pyi"]
+      }
+    },
+    {
+      "name": "typecheck-on-edit",
+      "description": "Run pyright on edited files to catch type errors",
+      "event": "PostToolUse",
+      "matcher": "Write|Edit|str_replace_editor",
+      "type": "command",
+      "command": "pyright $CLAUDE_FILE_PATHS 2>&1 | grep -E 'error:' | head -10 || true",
+      "conditions": {
+        "fileExtensions": [".py", ".pyi"]
+      }
+    },
+    {
+      "name": "pre-commit-quality-gate",
+      "description": "Full quality check before git commits",
+      "event": "PreToolUse",
+      "matcher": "Bash",
+      "type": "command",
+      "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -qE 'git commit'; then ruff check . && pyright; fi",
+      "blocking": true
+    }
+  ]
+}
