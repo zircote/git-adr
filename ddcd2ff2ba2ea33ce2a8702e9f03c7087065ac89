@@ -1,0 +1,20 @@
+---
+type: progress
+timestamp: '2025-12-24T21:12:55.607514+00:00'
+summary: Pruned all branches and worktrees, leaving only main
+---
+
+Pruned all branches and worktrees, leaving only main
+## Summary
+Complete cleanup of git-adr repository branches and worktrees.
+
+## Changes Made
+- Removed 6 worktrees from `/Users/AllenR1_1/Projects/worktrees/git-adr/`
+- Deleted 6 local branches (`plan/*`)
+- Deleted ~25 remote branches (`copilot/*`, `fix/*`, `plan/*`, `dependabot/*`, etc.)
+- Pruned stale remote tracking references
+
+## Final State
+- Single local branch: `main`
+- Single remote branch: `origin/main`
+- Single worktree: main repository
