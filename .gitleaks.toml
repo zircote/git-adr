@@ -1,0 +1,172 @@
+# Gitleaks Configuration
+# https://github.com/gitleaks/gitleaks
+#
+# This configuration extends the default rules with custom patterns
+# for internal secrets and organization-specific exclusions.
+
+title = "Custom Gitleaks Configuration"
+
+# Extend default rules - this includes all built-in detection patterns
+[extend]
+useDefault = true
+
+# =============================================================================
+# Custom Rules - Internal Secret Patterns
+# =============================================================================
+
+[[rules]]
+id = "internal-api-key"
+description = "Internal API Key Pattern"
+regex = '''(?i)internal[_-]?api[_-]?key\s*[:=]\s*['"]?([a-zA-Z0-9_-]{32,64})['"]?'''
+keywords = ["internal_api_key", "internal-api-key", "internalapikey"]
+entropy = 3.5
+
+[[rules]]
+id = "internal-service-token"
+description = "Internal Service Token"
+regex = '''(?i)service[_-]?token\s*[:=]\s*['"]?(svc_[a-zA-Z0-9_-]{24,48})['"]?'''
+keywords = ["service_token", "service-token", "servicetoken", "svc_"]
+entropy = 3.0
+
+[[rules]]
+id = "database-connection-string"
+description = "Database Connection String with Credentials"
+regex = '''(?i)(postgres|mysql|mongodb|redis|amqp)://[^:]+:[^@]+@[^\s'"]+'''
+keywords = ["postgres://", "mysql://", "mongodb://", "redis://", "amqp://"]
+
+[[rules]]
+id = "jwt-secret"
+description = "JWT Secret Key"
+regex = '''(?i)jwt[_-]?secret\s*[:=]\s*['"]?([a-zA-Z0-9_/+=]{32,128})['"]?'''
+keywords = ["jwt_secret", "jwt-secret", "jwtsecret", "JWT_SECRET"]
+entropy = 3.5
+
+[[rules]]
+id = "encryption-key"
+description = "Encryption Key Pattern"
+regex = '''(?i)(encryption|encrypt|aes|cipher)[_-]?key\s*[:=]\s*['"]?([a-fA-F0-9]{32,64})['"]?'''
+keywords = ["encryption_key", "encrypt_key", "aes_key", "cipher_key"]
+entropy = 3.5
+
+[[rules]]
+id = "webhook-secret"
+description = "Webhook Secret"
+regex = '''(?i)webhook[_-]?secret\s*[:=]\s*['"]?([a-zA-Z0-9_-]{20,64})['"]?'''
+keywords = ["webhook_secret", "webhook-secret", "webhooksecret"]
+entropy = 3.0
+
+[[rules]]
+id = "oauth-client-secret"
+description = "OAuth Client Secret"
+regex = '''(?i)(oauth|client)[_-]?secret\s*[:=]\s*['"]?([a-zA-Z0-9_-]{24,64})['"]?'''
+keywords = ["oauth_secret", "client_secret", "oauth-secret", "client-secret"]
+entropy = 3.0
+
+[[rules]]
+id = "signing-key"
+description = "Signing Key"
+regex = '''(?i)signing[_-]?key\s*[:=]\s*['"]?([a-zA-Z0-9_/+=]{32,128})['"]?'''
+keywords = ["signing_key", "signing-key", "signingkey"]
+entropy = 3.5
+
+[[rules]]
+id = "bearer-token-hardcoded"
+description = "Hardcoded Bearer Token"
+regex = '''(?i)bearer\s+[a-zA-Z0-9_-]{20,}'''
+keywords = ["bearer"]
+entropy = 3.0
+
+[[rules]]
+id = "basic-auth-hardcoded"
+description = "Hardcoded Basic Auth"
+regex = '''(?i)basic\s+[a-zA-Z0-9+/=]{20,}'''
+keywords = ["basic"]
+entropy = 3.0
+
+# =============================================================================
+# Allowed Patterns - Test Files and Examples
+# =============================================================================
+
+[allowlist]
+description = "Global allowlist for false positives"
+
+# Regex patterns for allowed content
+regexes = [
+    # Test/example placeholder values
+    '''(?i)(test|example|sample|dummy|fake|mock|placeholder)[_-]?(api[_-]?key|token|secret|password)''',
+    # Common test values
+    '''(?i)(password|secret|key)\s*[:=]\s*['"]?(test|example|changeme|password123|secret123)['"]?''',
+    # UUID v4 format often used in tests
+    '''[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}''',
+    # Explicitly marked as fake/test
+    '''(?i)#\s*(fake|test|example|not-real|placeholder)''',
+    # Documentation examples
+    '''(?i)(your[_-]?|my[_-]?|example[_-]?)(api[_-]?key|token|secret|password)''',
+    # Environment variable references (not actual values)
+    '''\$\{?[A-Z_]+\}?''',
+    '''process\.env\.[A-Z_]+''',
+    '''os\.environ\[['"]\w+['"]\]''',
+    '''os\.getenv\(['"]\w+['"]\)''',
+]
+
+# Specific commits to ignore (for historical cleanup)
+commits = [
+    # Add commit SHAs here if needed for historical exceptions
+]
+
+# Paths that commonly contain false positives
+paths = [
+    # Test directories
+    '''(^|/)tests?/''',
+    '''(^|/)__tests__/''',
+    '''(^|/)test_.*\.py$''',
+    '''(^|/).*_test\.go$''',
+    '''(^|/).*\.test\.(js|ts|jsx|tsx)$''',
+    '''(^|/).*\.spec\.(js|ts|jsx|tsx)$''',
+    # Mock/fixture directories
+    '''(^|/)mocks?/''',
+    '''(^|/)fixtures?/''',
+    '''(^|/)testdata/''',
+    '''(^|/)__mocks__/''',
+    # Documentation
+    '''(^|/)docs?/''',
+    '''(^|/)examples?/''',
+    '''\.md$''',
+    # Snapshots
+    '''__snapshots__/''',
+    '''\.snap$''',
+]
+
+# =============================================================================
+# Path Exclusions - Generated and Vendor Files
+# =============================================================================
+
+[rules.internal-api-key.allowlist]
+paths = [
+    '''(^|/)vendor/''',
+    '''(^|/)node_modules/''',
+]
+
+# Global path exclusions
+# These paths are completely excluded from scanning
+# Note: Use sparingly - prefer allowlist patterns for specific exceptions
+
+# =============================================================================
+# Severity Configuration
+# =============================================================================
+
+# Files that should trigger immediate blocking (high confidence patterns)
+# These are handled by default rules with high entropy requirements
+
+# =============================================================================
+# Custom Entropy Thresholds
+# =============================================================================
+# Higher entropy = more random = more likely to be a real secret
+# Default entropy threshold is typically around 3.5-4.0
+# Adjust per-rule as needed above
+
+# =============================================================================
+# Reporting Configuration
+# =============================================================================
+# Output format options: json, csv, sarif
+# Set via CLI: gitleaks detect --report-format sarif --report-path results.sarif

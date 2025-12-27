@@ -78,3 +78,17 @@ coverage/
 # Snyk Security Extension - AI Rules (auto-generated)
 .windsurf/rules/snyk_rules.md
 .prompt-log-enabled
+
+# Type checkers (additional caches)
+.pyright/
+.pyre/
+.pytype/
+
+# Security - secrets and credentials
+.secrets/
+secrets/
+credentials/
+.secrets.baseline
+
+# Jupyter (if used for experiments)
+.ipynb_checkpoints/

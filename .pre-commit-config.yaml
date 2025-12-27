@@ -1,0 +1,142 @@
+# Pre-commit configuration for git-adr
+# https://pre-commit.com
+#
+# Install: pip install pre-commit && pre-commit install
+# Update: pre-commit autoupdate
+# Run all: pre-commit run --all-files
+
+default_stages: [commit]
+fail_fast: false
+
+repos:
+  # =============================================================================
+  # Security Scanning
+  # =============================================================================
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+        name: gitleaks - Detect secrets in code
+        args: ["--config", ".gitleaks.toml"]
+        stages: [commit, push]
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: detect-secrets - Baseline secret detection
+        args:
+          - --baseline
+          - .secrets.baseline
+        exclude: |
+          (?x)^(
+            \.secrets\.baseline|
+            .*\.lock|
+            package-lock\.json
+          )$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: detect-private-key
+        name: detect-private-key - Block private key commits
+
+  # =============================================================================
+  # General File Quality
+  # =============================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: trailing-whitespace - Remove trailing whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+        name: end-of-file-fixer - Ensure files end with newline
+        exclude: |
+          (?x)^(
+            .*\.svg|
+            .*\.eps
+          )$
+      - id: check-yaml
+        name: check-yaml - Validate YAML syntax
+        args: [--unsafe]
+      - id: check-json
+        name: check-json - Validate JSON syntax
+      - id: check-toml
+        name: check-toml - Validate TOML syntax
+      - id: check-merge-conflict
+        name: check-merge-conflict - Block merge conflict markers
+      - id: check-added-large-files
+        name: check-added-large-files - Block large file commits
+        args: [--maxkb=1000]
+      - id: check-case-conflict
+        name: check-case-conflict - Check for case-insensitive conflicts
+      - id: check-symlinks
+        name: check-symlinks - Check for broken symlinks
+      - id: mixed-line-ending
+        name: mixed-line-ending - Normalize line endings
+        args: [--fix=lf]
+
+  # =============================================================================
+  # Python Hooks
+  # =============================================================================
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        name: ruff - Python linter
+        types_or: [python, pyi]
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+        name: ruff-format - Python formatter
+        types_or: [python, pyi]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        name: mypy - Python type checking
+        additional_dependencies:
+          - types-PyYAML>=6.0.0
+        args: [--ignore-missing-imports]
+        exclude: |
+          (?x)^(
+            tests/.*|
+            docs/.*
+          )$
+
+  # =============================================================================
+  # Shell Script Hooks (for CI scripts)
+  # =============================================================================
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        name: shellcheck - Shell script linter
+        args: [--severity=warning]
+
+  # =============================================================================
+  # Documentation Hooks
+  # =============================================================================
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
+    hooks:
+      - id: markdownlint
+        name: markdownlint - Markdown linter
+        args: [--fix]
+        exclude: |
+          (?x)^(
+            CHANGELOG\.md|
+            docs/spec/.*
+          )$
+
+  # =============================================================================
+  # Commit Message Hooks
+  # =============================================================================
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.6.0
+    hooks:
+      - id: conventional-pre-commit
+        name: conventional-pre-commit - Conventional commit message
+        stages: [commit-msg]
+        args: [feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert]
