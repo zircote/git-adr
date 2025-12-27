@@ -90,3 +90,21 @@ Successfully merged working directory changes, prioritizing committed history wh
 - .github/ISSUE_TEMPLATE/feature_request.yml (new, fixed)
 - .pre-commit-config.yaml (new, trimmed)
 - .gitleaks.toml (new, renamed)
+
+---
+type: progress
+timestamp: '2025-12-27T13:06:53.376975+00:00'
+summary: Created draft PR for pre-commit and security scanning
+---
+
+Created draft PR for pre-commit and security scanning
+## Summary
+Created draft PR #52 with all merged changes for testing before merge to main.
+
+## Changes Made
+- Created feature branch `feat/pre-commit-security-scanning`
+- Committed 5 files (532 additions)
+- Pushed and created draft PR
+
+## Related Files
+- PR: https://github.com/zircote/git-adr/pull/52
