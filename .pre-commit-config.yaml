@@ -67,6 +67,10 @@ repos:
         args: [--unsafe]
       - id: check-json
         name: check-json - Validate JSON syntax
+        exclude: |
+          (?x)^(
+            .*\.prompt-log\.json$
+          )$
       - id: check-toml
         name: check-toml - Validate TOML syntax
       - id: check-merge-conflict
@@ -103,11 +107,14 @@ repos:
         name: mypy - Python type checking
         additional_dependencies:
           - types-PyYAML>=6.0.0
+          - mistune>=3.0.0
         args: [--ignore-missing-imports]
         exclude: |
           (?x)^(
             tests/.*|
-            docs/.*
+            docs/.*|
+            \.github/.*|
+            scripts/.*
           )$
 
   # =============================================================================

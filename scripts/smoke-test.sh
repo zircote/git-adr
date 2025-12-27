@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034  # Variables used for exit status checking, not values
 # Smoke tests for git-adr standalone binary
 #
 # Usage:
@@ -105,7 +106,7 @@ fi
 # Test 3: Init command (in temp directory)
 echo "Test: init command"
 TEMP_DIR=$(mktemp -d)
-cd "$TEMP_DIR"
+cd "$TEMP_DIR" || exit 1
 
 # Initialize git repo with an initial commit (required for git notes)
 git init --quiet
@@ -206,7 +207,7 @@ else
 fi
 
 # Cleanup
-cd "$PROJECT_ROOT"
+cd "$PROJECT_ROOT" || exit 1
 rm -rf "$TEMP_DIR"
 
 # Summary

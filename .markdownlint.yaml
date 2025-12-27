@@ -4,6 +4,18 @@
 # Disable line length - documentation often has long lines
 MD013: false
 
+# Disable fenced code language requirement - many existing blocks lack language specifiers
+MD040: false
+
+# Disable first-line heading requirement - templates may start with ##
+MD041: false
+
+# Disable ordered list prefix style - allow 1. 2. 3. style
+MD029: false
+
+# Allow emphasis as heading - used for sub-items in documentation
+MD036: false
+
 # Allow duplicate headings in different sections
 MD024:
   siblings_only: true

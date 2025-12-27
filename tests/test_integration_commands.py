@@ -257,9 +257,9 @@ class TestInitInteractiveFlags:
         assert result.exit_code == 0, f"Init failed: {result.output}"
 
         # Verify installations succeeded
-        assert (
-            "hooks installed" in result.output.lower()
-        ), f"Hooks should be installed. Output: {result.output}"
+        assert "hooks installed" in result.output.lower(), (
+            f"Hooks should be installed. Output: {result.output}"
+        )
 
         # After "Next steps:", the hints for hooks and CI shouldn't appear
         # (since they were already installed)
