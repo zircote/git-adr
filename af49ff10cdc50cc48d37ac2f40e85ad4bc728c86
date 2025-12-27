@@ -1,0 +1,23 @@
+---
+type: decisions
+timestamp: '2025-12-27T13:12:55.187018+00:00'
+summary: Merge strategy for template-polluted files
+---
+
+Merge strategy for template-polluted files
+## Summary
+Files contain `{{package_name}}` template placeholders from a Python project skeleton. Must revert/fix to preserve git-adr functionality.
+
+## Rationale
+- `pyproject.toml`: Template would break the build entirely - REVERT
+- `.gitignore`: New patterns are mostly duplicates or inappropriate (e.g., ignoring `uv.lock`)
+- Issue templates: Fix placeholders, keep as `.yml` forms are better UX than existing `.md`
+- Pre-commit: Trim to Python-only hooks (remove Go, JS, Docker, Terraform)
+- Gitleaks: Keep, rename to `.gitleaks.toml` to match pre-commit config reference
+
+## Related Files
+- pyproject.toml
+- .gitignore
+- .github/ISSUE_TEMPLATE/*.yml
+- .pre-commit-config.yaml
+- gitleaks.toml
