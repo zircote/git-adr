@@ -58,23 +58,23 @@ If conflicts occur:
 
 Sync with default remote (origin):
 
-    $ git adr sync
+    git adr sync
 
 Push only:
 
-    $ git adr sync push
+    git adr sync push
 
 Pull from a specific remote:
 
-    $ git adr sync pull --remote upstream
+    git adr sync pull --remote upstream
 
 Force push (use with caution):
 
-    $ git adr sync push --force
+    git adr sync push --force
 
 See what would happen:
 
-    $ git adr sync --dry-run
+    git adr sync --dry-run
 
 ## NOTES
 

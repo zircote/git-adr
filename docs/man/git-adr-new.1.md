@@ -67,6 +67,7 @@ git-adr-new supports multiple input modes:
 The template includes standard sections based on the format:
 
 **MADR (default)**:
+
 - Context and Problem Statement
 - Decision Drivers
 - Considered Options
@@ -75,12 +76,14 @@ The template includes standard sections based on the format:
 - Consequences
 
 **Nygard**:
+
 - Status
 - Context
 - Decision
 - Consequences
 
 **y-statement**:
+
 - In the context of...
 - facing...
 - we decided...
@@ -91,15 +94,15 @@ The template includes standard sections based on the format:
 
 Create an ADR with editor:
 
-    $ git adr new "Use PostgreSQL for primary database"
+    git adr new "Use PostgreSQL for primary database"
 
 Create with specific status and tags:
 
-    $ git adr new "Adopt React" --status accepted --tags frontend --tags ui
+    git adr new "Adopt React" --status accepted --tags frontend --tags ui
 
 Create from file:
 
-    $ git adr new "API Design" --file api-decision.md
+    git adr new "API Design" --file api-decision.md
 
 Create from stdin:
 
@@ -113,11 +116,11 @@ Create from stdin:
 
 Preview template:
 
-    $ git adr new "Example" --preview --template nygard
+    git adr new "Example" --preview --template nygard
 
 Link to commit during creation:
 
-    $ git adr new "Database Migration" --link abc1234
+    git adr new "Database Migration" --link abc1234
 
 ## FRONTMATTER
 

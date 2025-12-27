@@ -46,6 +46,7 @@ Optional Services
 - Test naming: `test_<function>_<scenario>_<expected>`
 
 **Available fixtures:**
+
 - `temp_git_repo` - Empty git repository
 - `temp_git_repo_with_commit` - Git repo with initial commit
 - `initialized_adr_repo` - Git repo with ADR initialized (most common)
@@ -86,6 +87,7 @@ Escape brackets in package names like `pip install 'git-adr[ai]'` as `'git-adr\\
 ## ADR Format
 
 ADRs use YAML frontmatter with markdown body:
+
 - **Status**: Proposed, Accepted, Deprecated, Superseded
 - **Sections**: Context, Decision, Consequences
 

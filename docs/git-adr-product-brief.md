@@ -97,12 +97,14 @@ git adr init [--namespace <name>] [--template <madr|nygard|custom>]
 ```
 
 **Behavior:**
+
 - Creates `refs/notes/adr` namespace (or custom namespace)
 - Stores configuration note on repository root tree object
 - Creates initial ADR (0000-use-architecture-decision-records.md equivalent)
 - Configures local git to display ADR notes in log output
 
 **Configuration stored:**
+
 ```yaml
 git-adr:
   version: "1.0"
@@ -123,6 +125,7 @@ git adr new "Use PostgreSQL for persistence" [--status <proposed|accepted|deprec
 ```
 
 **Behavior:**
+
 1. Generates ADR ID (date-based: `20251214-use-postgresql-for-persistence` or sequential)
 2. Creates MADR-formatted markdown content
 3. Opens `$EDITOR` for completion (unless `--no-edit`)
@@ -130,6 +133,7 @@ git adr new "Use PostgreSQL for persistence" [--status <proposed|accepted|deprec
 5. Updates index note listing all ADRs
 
 **Generated MADR Template:**
+
 ```markdown
 ---
 status: proposed
@@ -199,6 +203,7 @@ git adr list [--status <status>] [--tag <tag>] [--since <date>] [--until <date>]
 ```
 
 **Output (default table format):**
+
 ```
 ID                                    Status     Date        Title
 ────────────────────────────────────────────────────────────────────────────
@@ -216,6 +221,7 @@ git adr show <adr-id> [--format <markdown|yaml|json>] [--metadata-only]
 ```
 
 **Behavior:**
+
 - Retrieves ADR from git notes
 - Renders with syntax highlighting (if terminal supports)
 - Shows linked commits and their messages
@@ -231,6 +237,7 @@ git adr search <query> [--context <lines>] [--status <status>] [--tag <tag>]
 ```
 
 **Behavior:**
+
 - Searches title, context, options, consequences
 - Returns matching ADRs with highlighted snippets
 - Supports fuzzy matching and regex patterns
@@ -245,6 +252,7 @@ git adr edit <adr-id> [--status <status>] [--add-tag <tag>] [--remove-tag <tag>]
 ```
 
 **Behavior:**
+
 - Opens ADR in `$EDITOR`
 - Updates git note with new content
 - Preserves modification history (git notes are versioned)
@@ -258,6 +266,7 @@ git adr link <adr-id> <commit>... [--unlink]
 ```
 
 **Behavior:**
+
 - Adds commit SHA to ADR's `linked-commits` metadata
 - Adds ADR reference note to the commit
 - Enables bidirectional discovery
@@ -271,6 +280,7 @@ git adr supersede <adr-id> "New approach to persistence"
 ```
 
 **Behavior:**
+
 - Creates new ADR with `supersedes: <adr-id>` metadata
 - Updates original ADR status to `superseded by <new-adr-id>`
 - Maintains full history chain
@@ -284,11 +294,13 @@ git adr log [<git-log-options>]
 ```
 
 **Behavior:**
+
 - Wraps `git log --show-notes=refs/notes/adr`
 - Formats ADR summaries inline with commits
 - Supports all standard git log options
 
 **Example output:**
+
 ```
 commit a1b2c3d4 (HEAD -> main)
 Author: Bob <bob@example.com>
@@ -317,6 +329,7 @@ git adr export [--format <markdown|html|json|docx>] [--output <path>]
 ```
 
 **Behavior:**
+
 - Generates static documentation from ADR notes
 - Supports log4brains-compatible HTML output
 - Creates index/table of contents
@@ -331,6 +344,7 @@ git adr import <path> [--format <madr|nygard|log4brains>] [--link-by-date]
 ```
 
 **Behavior:**
+
 - Reads ADRs from `docs/adr/` or specified path
 - Converts to git notes format
 - Optionally links to commits by matching dates
@@ -344,6 +358,7 @@ git adr sync [<remote>] [--push] [--pull] [--merge-strategy <ours|theirs|union|c
 ```
 
 **Behavior:**
+
 - Push: `git push <remote> refs/notes/adr`
 - Pull: `git fetch <remote> refs/notes/adr:refs/notes/adr`
 - Handles merge conflicts with configurable strategies
@@ -446,7 +461,7 @@ Status Breakdown:
 Supersession Chains:
   mongodb → postgresql (20230915 → 20251201)
   └─ "Migrated for ACID compliance and operational simplicity"
-  
+
   rest-api-v1 → graphql-gateway → rest-api-v2 (3-step evolution)
   └─ "API strategy evolved with team scaling"
 
@@ -480,7 +495,7 @@ New to this project? Read these ADRs in order:
 ─────────────────────────────────────────────────────────────────────────────────
   🟡 3 ADRs in "proposed" status > 7 days (may need decision)
      └─ 20251205-migrate-to-arm64, 20251130-add-redis-cache, 20251125-use-grpc
-  
+
   🟠 2 ADRs reference deprecated dependencies
      └─ 20240115-use-moment-js (moment.js deprecated upstream)
      └─ 20230801-use-node-14 (Node 14 EOL)
@@ -515,6 +530,7 @@ git adr report --interactive
 ```
 
 Launches a TUI (terminal user interface) with:
+
 - Arrow key navigation between ADRs
 - `Enter` to view full ADR content
 - `/` to search within report
@@ -529,6 +545,7 @@ git adr report --format html --output adr-report.html
 ```
 
 Generates a single-page dashboard with:
+
 - Interactive charts (Chart.js)
 - Filterable ADR table
 - Expandable decision details
@@ -580,6 +597,7 @@ git adr report --format json --output metrics.json
 **Team Mode (`--team`):**
 
 Adds collaboration-focused metrics:
+
 - Decisions per team member over time
 - Review participation rates
 - Cross-team decision involvement
@@ -626,13 +644,13 @@ Ready? Press [Enter] to begin or [q] to quit...
 # Use Architecture Decision Records
 
 ## Context and Problem Statement
-As our team grows, new members struggle to understand why certain 
+As our team grows, new members struggle to understand why certain
 technical choices were made. Tribal knowledge is being lost...
 
 [...full ADR content with syntax highlighting...]
 
 ─────────────────────────────────────────────────────────────────────────────────
-💡 Why this matters: This meta-decision explains the system you're using 
+💡 Why this matters: This meta-decision explains the system you're using
    right now. Understanding ADRs helps you contribute informed decisions.
 
 🔗 Related: This ADR has no dependencies—it's the foundation.
@@ -662,7 +680,7 @@ git adr onboard --status
 ```
 Onboarding Progress for @newdev:
   ████████████████░░░░  80% complete (8/10 ADRs)
-  
+
   ✓ 20231001-use-adrs
   ✓ 20231015-use-kubernetes  
   ✓ 20240301-event-sourcing
@@ -673,7 +691,7 @@ Onboarding Progress for @newdev:
   ✓ 20240801-testing-strategy
   ○ 20241001-security-baseline (next)
   ○ 20241115-ci-cd-pipeline
-  
+
   Resume with: git adr onboard --continue
 ```
 
@@ -703,6 +721,7 @@ git adr config [--list] [--get <key>] [--set <key> <value>] [--global]
 ```
 
 **Configuration options:**
+
 - `adr.namespace` — Notes ref path (default: `refs/notes/adr`)
 - `adr.template` — Default template (madr, nygard, custom file path)
 - `adr.editor` — Override `$EDITOR` for ADRs
@@ -780,6 +799,7 @@ For concurrent ADR creation:
 ### Command Ergonomics
 
 **Short aliases:**
+
 ```bash
 git adr n "title"     # new
 git adr l             # list  
@@ -788,10 +808,12 @@ git adr e <id>        # edit
 ```
 
 **Shell completion:**
+
 - Bash/Zsh/Fish completions for ADR IDs and options
 - Tab-complete `git adr show 2025<TAB>` → available ADRs
 
 **Output formatting:**
+
 - Colorized terminal output (respects `NO_COLOR`)
 - Machine-readable JSON/CSV for scripting
 - Pager integration for long output
@@ -813,6 +835,7 @@ git adr e <id>        # edit
 - **Type Checking:** `mypy`
 
 **AI Integration (optional, via extras):**
+
 - **LLM Abstraction:** `langchain-core`
 - **Providers:**
   - `langchain-anthropic` (Anthropic/Claude)
@@ -822,11 +845,13 @@ git adr e <id>        # edit
   - `langchain-ollama` (local models)
 
 **Wiki Integration:**
+
 - Standard git operations (clone, commit, push)
 - `PyGithub` (optional, for commit pointer comments)
 - `python-gitlab` (optional, for commit pointer comments)
 
 **Export/Visualization:**
+
 - `python-docx` (Word export)
 - `jinja2` (HTML templating)
 - `mermaid-py` (diagram rendering)
@@ -1023,11 +1048,13 @@ git adr --help    # Works because git finds 'git-adr' in PATH
 ### Phase 1: Core MVP (v0.5.0) — 6 weeks
 
 **Core Commands:**
+
 - [ ] `init`, `new`, `list`, `show`, `edit`, `search`
 - [ ] `link`, `supersede`, `log`
 - [ ] `sync` (push/pull notes to remotes)
 
 **Multi-Format Support:**
+
 - [ ] MADR 4.0 (default)
 - [ ] Nygard original template
 - [ ] Y-Statement compact format
@@ -1037,17 +1064,20 @@ git adr --help    # Works because git finds 'git-adr' in PATH
 - [ ] Custom template registration
 
 **Storage Architecture:**
+
 - [ ] Root tree attachment for ADRs
 - [ ] `refs/notes/adr-artifacts` for binary assets
 - [ ] Artifact attach/get/list/remove commands
 
 **Configuration:**
+
 - [ ] Git config-based settings
 - [ ] Per-repo and global config
 
 ### Phase 2: Intelligence & Integration (v0.8.0) — 4 weeks
 
 **AI Features (LangChain-based):**
+
 - [ ] Provider abstraction (Anthropic, OpenAI, Google, Azure, Ollama)
 - [ ] `git adr draft` — Generate ADR from commits/context
 - [ ] `git adr suggest` — Improve in-progress ADRs
@@ -1055,6 +1085,7 @@ git adr --help    # Works because git finds 'git-adr' in PATH
 - [ ] `git adr ask` — Query ADR knowledge base
 
 **Wiki Integration:**
+
 - [ ] GitHub wiki sync (clone, write, push)
 - [ ] GitLab wiki sync
 - [ ] Auto-generated indexes (all, by-status, by-tag)
@@ -1064,6 +1095,7 @@ git adr --help    # Works because git finds 'git-adr' in PATH
 - [ ] GitHub Actions / GitLab CI workflows
 
 **Analytics:**
+
 - [ ] `git adr report` full dashboard
 - [ ] `git adr report --team` collaboration metrics
 - [ ] `git adr metrics` export (JSON, Prometheus, CSV)
@@ -1105,6 +1137,7 @@ git adr --help    # Works because git finds 'git-adr' in PATH
 **Decision:** ADRs attach to the **repository root tree object**, with related commit SHAs stored in the ADR metadata.
 
 **Rationale:**
+
 - Root tree attachment ensures ADRs exist independently of any specific commit
 - ADRs often precede or span multiple implementing commits
 - Avoids orphaning ADRs if commits are rebased or amended
@@ -1112,6 +1145,7 @@ git adr --help    # Works because git finds 'git-adr' in PATH
 - Git notes on root tree survive branch operations
 
 **Implementation:**
+
 ```python
 # Get repository root tree SHA
 root_tree = repo.head.peel(pygit2.Tree).id
@@ -1134,12 +1168,14 @@ linked-commits: ["a1b2c3d", "e5f6g7h"]
 **Decision:** Store artifacts in a separate `refs/notes/adr-artifacts` namespace, with ADRs containing references by content hash.
 
 **Namespace Structure:**
+
 ```
 refs/notes/adr/              # ADR markdown content
 refs/notes/adr-artifacts/    # Binary blobs (diagrams, images)
 ```
 
 **ADR Artifact Reference Format:**
+
 ```yaml
 ---
 artifacts:
@@ -1154,12 +1190,14 @@ artifacts:
 ```
 
 **Visualization Options:**
+
 - **Terminal:** ASCII art rendering for simple diagrams; URL/path for complex images
 - **HTML export:** Inline base64 or extracted to `assets/` directory
 - **Mermaid support:** Render `.mermaid` files to SVG during export
 - **Interactive report:** Lightbox gallery for attached diagrams
 
 **Commands:**
+
 ```bash
 # Attach artifact to ADR
 git adr attach <adr-id> path/to/diagram.png --alt "Architecture overview"
@@ -1175,6 +1213,7 @@ git adr artifact-rm <adr-id> <artifact-name>
 ```
 
 **Size Considerations:**
+
 - Warn if artifact > 1MB
 - Refuse artifacts > 10MB by default (`--force` to override)
 - Recommend external links for large assets
@@ -1263,6 +1302,7 @@ git adr draft "Adopt Redis for session caching" \
 ```
 
 **Behavior:**
+
 1. Analyzes recent commits for relevant changes
 2. Reads related code files
 3. Generates MADR-formatted draft with:
@@ -1281,6 +1321,7 @@ git adr suggest 20251214-use-redis --aspect consequences
 ```
 
 **Aspects:**
+
 - `context`: Expand context with relevant technical details
 - `options`: Suggest additional alternatives to consider
 - `consequences`: Identify missing positive/negative outcomes
@@ -1308,6 +1349,7 @@ git adr ask "Show me all deprecated decisions and their replacements"
 ```
 
 **Behavior:**
+
 - Embeds question and ADR corpus
 - Returns relevant ADRs with contextual explanation
 - Cites specific ADR sections
@@ -1321,16 +1363,20 @@ Support multiple ADR templates beyond MADR, configurable per-repository.
 #### Supported Formats
 
 **1. MADR 4.0** (default)
+
 ```yaml
 format: madr
 version: "4.0"
 ```
+
 Full structured template with options analysis, consequences, confirmation.
 
 **2. Nygard (Original)**
+
 ```yaml
 format: nygard
 ```
+
 Minimal template: Title, Status, Context, Decision, Consequences.
 
 ```markdown
@@ -1350,9 +1396,11 @@ The resulting context...
 ```
 
 **3. Y-Statement**
+
 ```yaml
 format: y-statement
 ```
+
 Single-sentence format for simple decisions:
 
 ```markdown
@@ -1368,9 +1416,11 @@ because **our team has PostgreSQL expertise and compliance requirements mandate 
 ```
 
 **4. Alexandrian**
+
 ```yaml
 format: alexandrian
 ```
+
 Pattern-language inspired format with forces and resolution:
 
 ```markdown
@@ -1400,9 +1450,11 @@ The system now has...
 ```
 
 **5. Business Case**
+
 ```yaml
 format: business-case
 ```
+
 Extended template for decisions requiring business justification:
 
 ```markdown
@@ -1441,9 +1493,11 @@ Current on-premise infrastructure costs...
 ```
 
 **6. Planguage**
+
 ```yaml
 format: planguage
 ```
+
 Quality-focused format with measurable criteria:
 
 ```markdown
@@ -1533,6 +1587,7 @@ Neither GitHub nor GitLab display git notes in their web interfaces—notes are 
 #### How It Works
 
 GitHub and GitLab wikis are separate git repositories:
+
 - GitHub: `git@github.com:owner/repo.wiki.git`
 - GitLab: `git@gitlab.com:group/project.wiki.git`
 
@@ -1699,28 +1754,28 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: Fetch ADR notes
         run: git fetch origin refs/notes/adr:refs/notes/adr || true
-        
+
       - name: Checkout wiki
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository }}.wiki
           path: wiki
           token: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          
+
       - name: Install git-adr
         run: pip install git-adr
-        
+
       - name: Sync ADRs to wiki
         run: git adr wiki-sync --wiki-path ./wiki --verbose
-          
+
       - name: Push wiki changes
         run: |
           cd wiki
@@ -1741,17 +1796,17 @@ stages:
 adr-wiki-sync:
   stage: sync
   image: python:3.11-slim
-  
+
   variables:
     GIT_STRATEGY: clone
     GIT_DEPTH: 0
-    
+
   before_script:
     - pip install git-adr
     - git fetch origin refs/notes/adr:refs/notes/adr || true
     # Clone wiki repo
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.wiki.git" wiki
-    
+
   script:
     - git adr wiki-sync --wiki-path ./wiki
     - cd wiki
@@ -1760,7 +1815,7 @@ adr-wiki-sync:
     - git add .
     - git diff --staged --quiet || git commit -m "Sync ADRs"
     - git push
-    
+
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 ```
@@ -1775,6 +1830,7 @@ git adr wiki-sync --direction pull
 ```
 
 **Conflict handling:**
+
 - Git notes remain source of truth
 - Wiki edits are detected by comparing timestamps
 - Conflicts prompt for resolution (prefer notes, prefer wiki, or merge)
@@ -1788,18 +1844,21 @@ Decision velocity, participation metrics, and team collaboration insights.
 #### Metrics Captured
 
 **Velocity Metrics:**
+
 - Decisions per time period (week/month/quarter)
 - Average time from proposed → accepted
 - Decision throughput by category/tag
 - Trend analysis (accelerating/decelerating)
 
 **Participation Metrics:**
+
 - Decisions per team member
 - Consultation frequency (who gets consulted most)
 - Cross-team collaboration patterns
 - Review participation rates
 
 **Health Metrics:**
+
 - Stale proposal rate (proposed > N days)
 - Supersession frequency (how often decisions change)
 - ADR coverage (commits with linked ADRs vs total)
@@ -1832,7 +1891,7 @@ Participation Matrix
   @carol            3          15             9
   @dave             2          4              8
   @eve              1          3              5
-  
+
 Collaboration Network
   infrastructure ←→ security    (6 shared decisions)
   api-design ←→ frontend        (4 shared decisions)
@@ -1842,7 +1901,7 @@ Coverage Analysis
   Commits with linked ADRs:     67% (234/350)
   Orphan commits (no ADR):      33% (116/350)
   High-impact commits w/o ADR:  12 ⚠️
-  
+
 Category Distribution
   ████████████████  infrastructure (16)
   ███████████░░░░░  data-storage (11)
@@ -1867,6 +1926,7 @@ git adr metrics --format csv --period 1y --output adr-metrics.csv
 ```
 
 **Prometheus Metrics Example:**
+
 ```prometheus
 # HELP adr_total Total number of ADRs
 # TYPE adr_total gauge

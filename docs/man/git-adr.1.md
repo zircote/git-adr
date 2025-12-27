@@ -196,35 +196,35 @@ with examples and recipes, see docs/CONFIGURATION.md in the repository.
 
 Initialize git-adr in a repository:
 
-    $ git adr init
+    git adr init
 
 Create a new ADR:
 
-    $ git adr new "Use PostgreSQL for primary database"
+    git adr new "Use PostgreSQL for primary database"
 
 List all ADRs:
 
-    $ git adr list
+    git adr list
 
 List only accepted ADRs:
 
-    $ git adr list --status accepted
+    git adr list --status accepted
 
 Show a specific ADR:
 
-    $ git adr show 20250115-use-postgresql
+    git adr show 20250115-use-postgresql
 
 Link an ADR to a commit:
 
-    $ git adr link 20250115-use-postgresql abc123
+    git adr link 20250115-use-postgresql abc123
 
 Search ADRs:
 
-    $ git adr search "database"
+    git adr search "database"
 
 Sync ADRs with remote:
 
-    $ git adr sync push
+    git adr sync push
 
 ## TEMPLATE FORMATS
 

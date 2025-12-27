@@ -14,7 +14,7 @@ We take security vulnerabilities in git-adr seriously. If you discover a securit
 ### How to Report
 
 1. **Do NOT** create a public GitHub issue for security vulnerabilities
-2. Email the maintainers directly at: security@example.com (or use GitHub Security Advisories)
+2. Email the maintainers directly at: <security@example.com> (or use GitHub Security Advisories)
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
@@ -30,6 +30,7 @@ We take security vulnerabilities in git-adr seriously. If you discover a securit
 ### Disclosure Policy
 
 We follow coordinated disclosure:
+
 - We will work with you to understand and address the issue
 - We will credit researchers who report valid vulnerabilities (unless you prefer anonymity)
 - We request a 90-day disclosure window for fixes
@@ -39,6 +40,7 @@ We follow coordinated disclosure:
 ### Design Principles
 
 git-adr is designed as a **local git tool** that:
+
 - Runs with user-level filesystem permissions
 - Delegates authentication to git/gh CLI tools
 - Stores data in git notes (public metadata, not encrypted)
@@ -82,6 +84,7 @@ The following security rules are intentionally suppressed with justification:
 ## Secure Development Practices
 
 When contributing:
+
 - Never use `shell=True` in subprocess calls
 - Always validate output paths against cwd for write operations
 - Escape user content in HTML/template outputs

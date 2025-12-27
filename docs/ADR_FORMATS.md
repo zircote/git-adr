@@ -84,6 +84,7 @@ Is this a quick, low-impact decision?
 **Description**: MADR provides a comprehensive structure for documenting decisions that require evaluation of multiple options. It encourages systematic analysis by dedicating sections to decision drivers, options considered, and explicit decision outcomes with justification.
 
 **When to Use**:
+
 - Teams that need to evaluate and document multiple alternatives
 - Organizations requiring audit trails of option analysis
 - Decisions where stakeholders need to understand "why not" the alternatives
@@ -188,12 +189,14 @@ like full-text search and geolocation.
 ```
 
 **Pros**:
+
 - Structured option analysis encourages thorough evaluation
 - Clear decision outcome with explicit justification
 - Separated positive/negative/neutral consequences aid impact assessment
 - Well-suited for code review and async decision-making
 
 **Cons**:
+
 - Can feel heavy for simple or obvious decisions
 - Requires more time investment than simpler formats
 - Risk of "analysis paralysis" with too many options
@@ -207,6 +210,7 @@ like full-text search and geolocation.
 **Description**: The Nygard format is intentionally minimal, containing only the essential sections needed to capture a decision: Status, Context, Decision, and Consequences. Its simplicity makes it accessible and reduces barriers to adoption.
 
 **When to Use**:
+
 - Teams new to ADRs who want a gentle starting point
 - Quick decisions that don't require extensive option analysis
 - Small teams with high-bandwidth communication
@@ -247,12 +251,14 @@ of LaunchDarkly is approximately $500/month for our team size.
 ```
 
 **Pros**:
+
 - Extremely low barrier to entry
 - Fast to write (5-15 minutes)
 - Easy to read and review
 - Focuses on what matters: context and consequences
 
 **Cons**:
+
 - No structure for comparing options
 - May be too brief for complex decisions
 - Consequences aren't categorized (positive vs negative)
@@ -266,6 +272,7 @@ of LaunchDarkly is approximately $500/month for our team size.
 **Description**: The Y-Statement is an ultra-concise single-sentence format that captures a decision in one structured statement. It forces clarity by constraining the author to express the decision in a specific grammatical pattern.
 
 **When to Use**:
+
 - Rapid documentation of decisions during fast-moving development
 - Summary records when full documentation isn't practical
 - Index or catalog of decisions (with links to detailed docs elsewhere)
@@ -298,12 +305,14 @@ accepting the initial migration effort of approximately 2 weeks and ongoing type
 ```
 
 **Pros**:
+
 - Fastest format to write (2-5 minutes)
 - Forces clarity through constraint
 - Easy to scan when reviewing many decisions
 - Low documentation overhead encourages actual use
 
 **Cons**:
+
 - Limited space for nuance or detailed analysis
 - Can feel forced for complex, multi-faceted decisions
 - "More Information" section often becomes a catch-all
@@ -318,6 +327,7 @@ accepting the initial migration effort of approximately 2 weeks and ongoing type
 **Description**: The Alexandrian format uses a pattern-language style with rich context about competing forces. It's particularly suited for decisions that establish reusable patterns or address recurring architectural challenges. The format explicitly separates problem identification from solution and emphasizes the transformation of context.
 
 **When to Use**:
+
 - Establishing reusable architectural patterns
 - Complex systems with many competing constraints
 - Teams with strong architecture practices
@@ -389,6 +399,7 @@ fail fast even if the service has recovered, until the half-open test passes.
 ```
 
 **Pros**:
+
 - Rich context helps readers understand the full picture
 - Forces makes constraints explicit and visible
 - Problem/Solution separation clarifies thinking
@@ -396,6 +407,7 @@ fail fast even if the service has recovered, until the half-open test passes.
 - "Resulting Context" emphasizes transformation
 
 **Cons**:
+
 - Takes longer to write thoroughly
 - "Forces" section can be difficult to identify comprehensively
 - May feel overly formal for simple decisions
@@ -410,6 +422,7 @@ fail fast even if the service has recovered, until the half-open test passes.
 **Description**: The Business Case format extends technical ADRs with business-focused sections including executive summary, financial impact, risk assessment, and formal approval tracking. It bridges the gap between technical decisions and business governance.
 
 **When to Use**:
+
 - Decisions requiring budget approval
 - Changes with significant cost implications (infrastructure, licensing)
 - Enterprise environments with formal governance processes
@@ -563,6 +576,7 @@ Compared to data center expansion: $2,100K + ($420K * 3) = $3,360K
 ```
 
 **Pros**:
+
 - Bridges technical and business stakeholders
 - Explicit financial analysis supports budget requests
 - Risk assessment demonstrates due diligence
@@ -570,6 +584,7 @@ Compared to data center expansion: $2,100K + ($420K * 3) = $3,360K
 - Well-suited for governance-heavy environments
 
 **Cons**:
+
 - Heavyweight for routine technical decisions
 - Financial estimates may become outdated
 - Approval section can create bureaucratic delays
@@ -584,6 +599,7 @@ Compared to data center expansion: $2,100K + ($420K * 3) = $3,360K
 **Description**: Planguage focuses on quantified, measurable outcomes using a specific vocabulary: Scale (unit of measure), Meter (measurement method), Past (baseline), Must (minimum acceptable), Plan (target), and Wish (stretch goal). It's ideal for non-functional requirements and quality attributes.
 
 **When to Use**:
+
 - Performance and scalability decisions
 - SLA and reliability targets
 - Security and compliance requirements
@@ -685,6 +701,7 @@ pricing for API products.
 ```
 
 **Pros**:
+
 - Objective, measurable success criteria
 - Clear distinction between minimum acceptable and target outcomes
 - Excellent for tracking progress over time
@@ -692,6 +709,7 @@ pricing for API products.
 - Supports data-driven decision review
 
 **Cons**:
+
 - Requires ability to measure what you specify
 - Not suitable for qualitative or exploratory decisions
 - Learning curve for Planguage vocabulary

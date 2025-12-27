@@ -163,18 +163,21 @@ Cost: $80K/year + $150K risk. Consequences: Performance issues in 12 months, com
 ## Tips for Technical-Business Communication
 
 **For Technical Teams**:
+
 - Lead with business outcomes, not technical features
 - Translate: "99.99% uptime" = "less than 1 hour downtime per year"
 - Quantify engineering time in dollars
 - Connect technical debt to customer impact
 
 **For Business Stakeholders**:
+
 - Focus on Executive Summary, Financial Impact, Risk Assessment
 - Ask why alternatives were rejected
 - Verify success criteria are measurable
 - Ensure rollback plans exist
 
 **Common Pitfalls**:
+
 - Optimistic timelines (add 30% buffer)
 - Hidden costs (training, support, integration)
 - Assuming "do nothing" costs nothing

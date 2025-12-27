@@ -33,6 +33,7 @@ Running `git adr init` performs the following:
 
 2. **Remote refspecs**: For each configured remote, adds fetch and push
    refspecs for the ADR notes:
+
    ```
    remote.origin.fetch = +refs/notes/adr:refs/notes/adr
    remote.origin.push = refs/notes/adr
@@ -40,6 +41,7 @@ Running `git adr init` performs the following:
 
 3. **Notes rewrite behavior**: Configures git to preserve ADR notes during
    rebase and amend operations:
+
    ```
    notes.rewriteRef = refs/notes/adr
    notes.rewrite.rebase = true
@@ -53,16 +55,16 @@ Running `git adr init` performs the following:
 
 Basic initialization:
 
-    $ git adr init
+    git adr init
 
 Initialize with a specific template:
 
-    $ git adr init --template nygard
+    git adr init --template nygard
 
 Reinitialize after adding a new remote:
 
-    $ git remote add upstream https://github.com/org/repo.git
-    $ git adr init --force
+    git remote add upstream https://github.com/org/repo.git
+    git adr init --force
 
 ## NOTES
 

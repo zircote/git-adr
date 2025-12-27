@@ -167,10 +167,10 @@ def _import_markdown(path: Path) -> list[ADR]:
             date_val = metadata.get("date") or metadata.get("created")
             if isinstance(date_val, str):
                 adr_date = date_type.fromisoformat(date_val[:10])
-            elif isinstance(date_val, (date_type, datetime)):
-                adr_date = (
-                    date_val if isinstance(date_val, date_type) else date_val.date()
-                )
+            elif isinstance(date_val, datetime):
+                adr_date = date_val.date()
+            elif isinstance(date_val, date_type):
+                adr_date = date_val
             else:
                 adr_date = date_type.today()
 

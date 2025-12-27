@@ -52,6 +52,7 @@ See [workflows/decision-capture.md](workflows/decision-capture.md) for creation 
 ## What is git-adr?
 
 git-adr is a command-line tool that manages ADRs using **git notes** instead of files:
+
 - **Non-intrusive**: ADRs don't clutter the working tree
 - **Portable**: Travel with git history
 - **Linkable**: Associate decisions with commits
@@ -97,6 +98,7 @@ git notes --ref=adr list 2>/dev/null || echo "Not initialized"
 ### Error Handling
 
 If git-adr is not installed:
+
 ```
 git-adr is not installed. Install with:
   pip install git-adr
@@ -105,6 +107,7 @@ git-adr is not installed. Install with:
 ```
 
 If not in a git repository:
+
 ```
 git-adr requires a git repository. Initialize with:
   git init
@@ -112,6 +115,7 @@ git-adr requires a git repository. Initialize with:
 ```
 
 If ADRs not initialized:
+
 ```
 ADR tracking not initialized. Run:
   git adr init
@@ -223,6 +227,7 @@ For all configuration options, see [references/configuration.md](references/conf
 ### When to Write an ADR
 
 Write an ADR for decisions that are:
+
 - **Significant**: Affects architecture or design
 - **Structural**: Changes system organization
 - **Hard to reverse**: Would require substantial effort to change
@@ -274,6 +279,7 @@ When generating ADR content:
 ### Content Quality Checklist
 
 Before creating an ADR, ensure:
+
 - [ ] Context explains the situation clearly
 - [ ] Decision is explicitly stated
 - [ ] Consequences are categorized (positive/negative/neutral)
