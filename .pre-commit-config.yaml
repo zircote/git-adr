@@ -1,7 +1,12 @@
 # Pre-commit configuration for git-adr
 # https://pre-commit.com
 #
-# Install: pip install pre-commit && pre-commit install
+# Install:
+#   pip install pre-commit
+#   pre-commit install
+#   pre-commit install --hook-type pre-push
+#   pre-commit install --hook-type commit-msg
+#
 # Update: pre-commit autoupdate
 # Run all: pre-commit run --all-files
 
@@ -129,6 +134,18 @@ repos:
             CHANGELOG\.md|
             docs/spec/.*
           )$
+
+  # =============================================================================
+  # Dependency Security (pre-push only - slow but critical)
+  # =============================================================================
+  - repo: local
+    hooks:
+      - id: pip-audit
+        name: pip-audit - Check for vulnerable dependencies
+        entry: uv run pip-audit
+        language: system
+        pass_filenames: false
+        stages: [push]
 
   # =============================================================================
   # Commit Message Hooks
