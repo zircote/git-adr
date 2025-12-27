@@ -194,3 +194,28 @@ Created draft PR #52 with all merged changes for testing before merge to main.
 
 ## Related Files
 - PR: https://github.com/zircote/git-adr/pull/52
+
+---
+type: progress
+timestamp: '2025-12-27T13:26:35.510648+00:00'
+summary: Merged template-polluted files preserving git-adr functionality
+---
+
+Merged template-polluted files preserving git-adr functionality
+## Summary
+Successfully merged working directory changes, prioritizing committed history while retaining new capabilities that don't break existing functionality.
+
+## Changes Made
+- **pyproject.toml**: Reverted to committed version (template had `{{package_name}}` breaking placeholders)
+- **.gitignore**: Reverted + added useful security patterns (`.secrets/`, `.secrets.baseline`, type checker caches)
+- **bug_report.yml**: Fixed placeholders → `git_adr`, added `git-adr --version` hint
+- **feature_request.yml**: Fixed placeholders → `git_adr`, added CLI example
+- **.pre-commit-config.yaml**: Trimmed from 240→143 lines (removed Go, JS, Docker, Terraform hooks; kept Python, security, markdown)
+- **gitleaks.toml**: Renamed to `.gitleaks.toml` to match pre-commit config reference
+
+## Related Files
+- .gitignore (modified)
+- .github/ISSUE_TEMPLATE/bug_report.yml (new, fixed)
+- .github/ISSUE_TEMPLATE/feature_request.yml (new, fixed)
+- .pre-commit-config.yaml (new, trimmed)
+- .gitleaks.toml (new, renamed)
