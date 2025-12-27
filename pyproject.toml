@@ -189,8 +189,10 @@ show_missing = true
 [dependency-groups]
 dev = [
     "bandit>=1.9.2",
+    "detect-secrets>=1.5.0",
     "mypy>=1.19.0",
     "pip-audit>=2.10.0",
+    "pre-commit>=4.5.1",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     "ruff>=0.14.9",

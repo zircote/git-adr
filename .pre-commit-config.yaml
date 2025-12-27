@@ -10,7 +10,7 @@
 # Update: pre-commit autoupdate
 # Run all: pre-commit run --all-files
 
-default_stages: [commit]
+default_stages: [pre-commit]
 fail_fast: false
 
 repos:
@@ -23,7 +23,7 @@ repos:
       - id: gitleaks
         name: gitleaks - Detect secrets in code
         args: ["--config", ".gitleaks.toml"]
-        stages: [commit, push]
+        stages: [pre-commit, pre-push]
 
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
@@ -145,7 +145,7 @@ repos:
         entry: uv run pip-audit
         language: system
         pass_filenames: false
-        stages: [push]
+        stages: [pre-push]
 
   # =============================================================================
   # Commit Message Hooks

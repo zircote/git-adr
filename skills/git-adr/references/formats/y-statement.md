@@ -21,6 +21,7 @@ accepting [tradeoff].
 ```
 
 Each clause serves a purpose:
+
 - **Context**: The situation, project state, or architectural scope
 - **Problem**: The specific challenge or question being addressed
 - **Decision**: The choice made (use active voice: "we decided to use X")
@@ -30,20 +31,25 @@ Each clause serves a purpose:
 ## Examples
 
 ### Database Selection
+
 In the context of a new e-commerce platform with unpredictable traffic patterns, facing the need for horizontal scalability and flexible schema evolution, we decided to use MongoDB as the primary database, to achieve elastic scaling and rapid feature iteration, accepting eventual consistency and the learning curve for the team.
 
 ### API Design
+
 In the context of a public developer API with diverse client capabilities, facing the tension between bandwidth efficiency and client simplicity, we decided to implement GraphQL alongside REST endpoints, to achieve flexible data fetching for sophisticated clients while maintaining simplicity for basic integrations, accepting increased backend complexity and dual maintenance burden.
 
 ### Authentication
+
 In the context of a B2B SaaS product serving enterprise customers, facing requirements for SSO integration and compliance audit trails, we decided to adopt Auth0 as our identity provider, to achieve rapid SSO implementation and SOC2-ready audit logging, accepting vendor dependency and per-user pricing at scale.
 
 ### Deployment Strategy
+
 In the context of a monolithic application being migrated to microservices, facing the need for zero-downtime deployments with limited DevOps capacity, we decided to use blue-green deployments on Kubernetes, to achieve instant rollback capability and deployment confidence, accepting doubled infrastructure costs during deployment windows.
 
 ## More Information
 
 Expand a Y-Statement into a full ADR when:
+
 - Multiple stakeholders need detailed rationale
 - The decision requires formal approval
 - Alternatives analysis should be preserved

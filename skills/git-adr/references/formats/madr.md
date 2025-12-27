@@ -5,12 +5,14 @@ MADR is a lean template for capturing architectural decisions with structured op
 ## When to Use MADR
 
 **Best suited for:**
+
 - Decisions requiring explicit comparison of multiple options
 - Complex technical choices with significant trade-offs
 - Team decisions needing documented rationale for stakeholders
 - Situations where rejected alternatives should be preserved
 
 **Consider simpler formats when:**
+
 - Quick, obvious decisions with clear single choice
 - Minor implementation details
 - Time-sensitive documentation needs

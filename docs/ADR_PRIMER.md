@@ -60,6 +60,7 @@ ADRs exist because software projects accumulate decisions over time. Six months 
 When a new developer joins your team, they face a mountain of questions: Why is the code structured this way? Why did we pick this framework? Why not use that popular library everyone talks about?
 
 Without ADRs, new team members must either:
+
 - Interrupt senior developers with endless questions
 - Make assumptions that may be wrong
 - Repeat research that was already done
@@ -104,30 +105,35 @@ This saves enormous amounts of time and meeting fatigue. It also creates a clear
 Write an ADR when the decision is **significant**, **structural**, or **hard to reverse**. Here are common categories:
 
 **Technology Choices**
+
 - Which database to use (PostgreSQL vs. MongoDB vs. DynamoDB)
 - Which programming language for a new service
 - Which cloud provider (AWS vs. GCP vs. Azure)
 - Which web framework (Django vs. FastAPI vs. Flask)
 
 **Architecture Patterns**
+
 - Monolith vs. microservices
 - Event-driven vs. request-response
 - REST vs. GraphQL vs. gRPC
 - Serverless vs. containers vs. VMs
 
 **Design Decisions**
+
 - Authentication strategy (JWT vs. sessions vs. OAuth)
 - Caching approach (Redis vs. Memcached vs. in-memory)
 - How to handle file uploads
 - Multi-tenancy approach
 
 **Trade-off Decisions**
+
 - Consistency vs. availability (CAP theorem)
 - Build vs. buy for a component
 - Technical debt acceptance for deadline
 - Performance optimization vs. code simplicity
 
 **Standards and Conventions**
+
 - API versioning strategy
 - Error handling patterns
 - Logging and observability approach
@@ -197,6 +203,7 @@ A newer decision has replaced this one. The superseding ADR should link back to 
 ### When to Deprecate vs. Supersede
 
 **Use Deprecated when:**
+
 - The feature or technology no longer exists in your system
 - The decision became irrelevant due to external changes
 - You are not replacing it with a different decision
@@ -204,6 +211,7 @@ A newer decision has replaced this one. The superseding ADR should link back to 
 Example: "Use Flash for interactive components" becomes deprecated because Flash no longer exists.
 
 **Use Superseded when:**
+
 - You are making a new, different decision about the same topic
 - The old decision was valid but circumstances changed
 - You want to maintain a clear decision history
@@ -211,6 +219,7 @@ Example: "Use Flash for interactive components" becomes deprecated because Flash
 Example: "Use MySQL for database" is superseded by "Use PostgreSQL for database" when you migrate.
 
 When superseding, always:
+
 1. Create the new ADR first
 2. Update the old ADR's status to "Superseded by ADR-XXX"
 3. Include a link in the new ADR saying "Supersedes ADR-YYY"
@@ -228,6 +237,7 @@ When superseding, always:
 **Better approach**: Keep ADRs focused on the *decision* and its *rationale*. Save implementation details for design documents, code comments, or wikis. An ADR should typically be 1-2 pages.
 
 **Signs you are too detailed:**
+
 - The ADR takes more than 15 minutes to read
 - You are including code samples longer than 10 lines
 - You are documenting API endpoints or database columns
@@ -238,6 +248,7 @@ When superseding, always:
 **The problem**: The ADR states a decision but provides no context or reasoning.
 
 **Example of too brief:**
+
 ```markdown
 # Use Redis
 
@@ -250,6 +261,7 @@ We will use Redis.
 **Better approach**: Always include the context (what problem you were solving), alternatives considered, and why you chose this option over others.
 
 **Signs you are too brief:**
+
 - The Context section is one sentence
 - You have not mentioned any alternatives
 - Someone reading it would ask "But why?"
@@ -264,6 +276,7 @@ We will use Redis.
 **Better approach**: When you make architectural changes, check whether any existing ADRs need status updates. Include ADR review in your regular maintenance tasks. When decommissioning a system, find its related ADRs.
 
 With git-adr, you can easily search and update:
+
 ```bash
 # Find ADRs about the old system
 git adr search "legacy-service"
@@ -281,6 +294,7 @@ git adr edit 20230115-use-legacy-service
 **Better approach**: Write the ADR as part of making the decision. Use "Proposed" status to draft it before the decision is final. The act of writing often clarifies thinking and surfaces concerns.
 
 **Practical tips:**
+
 - Start the ADR when you start researching options
 - Use the ADR as the basis for decision meetings
 - Block time for documentation as part of the project
@@ -393,6 +407,7 @@ git adr supersede 20240115-use-postgresql "Migrate to CockroachDB for global dis
 ```
 
 This automatically:
+
 - Creates a new ADR
 - Links it to the old one
 - Updates the old ADR's status

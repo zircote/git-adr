@@ -32,6 +32,7 @@ Write an ADR when the decision is **significant**, **structural**, or **hard to 
 ### When NOT to Write an ADR
 
 Skip ADRs for decisions that are trivial, easily reversible, or temporary:
+
 - Variable naming or code formatting (use a linter)
 - Which utility package to use for minor tasks
 - Quick fixes you plan to replace soon
@@ -144,6 +145,7 @@ We will use Redis.
 *Example*: "Use MySQL" superseded by "Use PostgreSQL" during migration.
 
 **Supersession process**:
+
 1. Create new ADR
 2. Update old: "Superseded by ADR-XXX"
 3. New includes: "Supersedes ADR-YYY"
@@ -179,6 +181,7 @@ When helping users write ADRs:
 5. **Check completeness**: Run through quality checklist
 
 **Common questions**:
+
 - "What should I include?" - Quality checklist
 - "Is this too detailed?" - Focus on decision, not implementation
 - "Should I write an ADR?" - Apply the heuristic

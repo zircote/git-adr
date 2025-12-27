@@ -109,17 +109,20 @@ After installing the skill, try these in Claude Code:
 ### Creating ADRs
 
 **From conversation:**
+
 ```
 "We decided to containerize with Docker because our deployment
 environments vary and we need consistency."
 ```
 
 Claude will:
+
 1. Check your project's configured template
 2. Generate properly structured content
 3. Create the ADR with `git adr new`
 
 **With specific format:**
+
 ```
 "Create a business case ADR for migrating to AWS"
 ```

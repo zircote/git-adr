@@ -169,7 +169,9 @@ class AIService:
         for attempt in range(max_retries + 1):
             try:
                 response = llm.invoke(prompt)
-                return response.content if hasattr(response, "content") else str(response)
+                return (
+                    response.content if hasattr(response, "content") else str(response)
+                )
             except Exception as e:
                 last_error = e
                 if attempt < max_retries:
@@ -178,7 +180,9 @@ class AIService:
                     continue
                 break
 
-        raise AIServiceError(f"LLM invocation failed after {max_retries + 1} attempts: {last_error}") from last_error
+        raise AIServiceError(
+            f"LLM invocation failed after {max_retries + 1} attempts: {last_error}"
+        ) from last_error
 
     def draft_adr(
         self,

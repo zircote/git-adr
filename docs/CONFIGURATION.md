@@ -121,6 +121,7 @@ git adr config adr.namespace team-alpha-adr
 ```
 
 **Notes:**
+
 - Changing the namespace after ADRs exist will make existing ADRs invisible to git-adr
 - The namespace becomes part of the git notes ref: `refs/notes/<namespace>`
 - Keep namespace names simple (alphanumeric with hyphens)
@@ -151,6 +152,7 @@ git adr config adr.artifacts_namespace project-artifacts
 ```
 
 **Notes:**
+
 - Should be different from `adr.namespace` to keep ADRs and artifacts separate
 - Artifacts are compressed and stored as base64-encoded data in git notes
 - Changing this after artifacts exist will make them inaccessible
@@ -241,6 +243,7 @@ git adr config --global adr.editor "emacsclient -t"
 ```
 
 **Notes:**
+
 - For GUI editors, use the `--wait` or `-w` flag so git-adr waits for the editor to close
 - This setting is typically set globally for user preference
 - The command should block until editing is complete
@@ -276,6 +279,7 @@ git adr config adr.artifact_warn_size 999999999
 ```
 
 **Notes:**
+
 - Value is in bytes
 - The warning can be bypassed with `--force` flag on attachment commands
 - Consider that git notes are pushed/pulled with regular git operations
@@ -309,6 +313,7 @@ git adr config adr.artifact_max_size 52428800
 ```
 
 **Notes:**
+
 - Value is in bytes
 - This is a hard limit that cannot be bypassed
 - Consider repository cloning time when setting high limits
@@ -346,6 +351,7 @@ git adr config adr.sync.auto_push false
 ```
 
 **Notes:**
+
 - Requires remote repository to be configured
 - May slow down ADR operations due to network calls
 - Useful for teams that want immediate visibility of decisions
@@ -377,6 +383,7 @@ git adr config adr.sync.auto_pull false
 ```
 
 **Notes:**
+
 - Enabled by default to ensure teams see latest decisions
 - May slow down ADR operations due to network calls
 - Disable when working offline or on slow networks
@@ -424,6 +431,7 @@ git adr sync --pull --merge-strategy theirs
 ```
 
 **Notes:**
+
 - `union` is recommended for most teams as it preserves all changes
 - `ours` is useful when local edits should not be overwritten
 - `theirs` is useful when remote is the source of truth
@@ -479,6 +487,7 @@ export GOOGLE_API_KEY="..."
 ```
 
 **Notes:**
+
 - Provider must be set before using AI features
 - API keys should be set as environment variables (not in git config)
 - Ollama runs locally and does not require API keys
@@ -526,6 +535,7 @@ git adr config adr.ai.model mistral
 ```
 
 **Notes:**
+
 - Model availability depends on your API access and subscription
 - Newer models may provide better results but cost more
 - Local models (Ollama) have no API costs but require local resources
@@ -567,6 +577,7 @@ git adr config adr.ai.temperature 0.9
 ```
 
 **Notes:**
+
 - Lower temperatures are better for factual, technical content
 - Higher temperatures are better for brainstorming alternatives
 - Default of 0.7 works well for most ADR generation tasks
@@ -612,6 +623,7 @@ git adr config adr.wiki.platform gitlab
 ```
 
 **Notes:**
+
 - Auto-detection examines the remote URL to determine the platform
 - Explicit setting overrides auto-detection
 - Wiki export formats Markdown appropriately for each platform
@@ -642,6 +654,7 @@ git adr config adr.wiki.auto_sync false
 ```
 
 **Notes:**
+
 - Requires wiki to be configured for the repository
 - May require additional authentication for wiki access
 - Consider using manual wiki export for more control

@@ -77,6 +77,7 @@ If you need to release without creating a tag:
 3. Click "Run workflow"
 
 This will:
+
 - Build and publish to PyPI
 - Create a git tag
 - Create a GitHub release
@@ -95,6 +96,7 @@ Binaries are built using PyInstaller on GitHub Actions:
 ### Binary Structure (onedir mode)
 
 Each binary package contains:
+
 ```
 git-adr-{platform}/
 ├── git-adr           # Executable
@@ -115,10 +117,12 @@ The `onedir` mode is used for fast startup (<1 second) vs `onefile` which extrac
 ## Homebrew Formula
 
 The Homebrew formula is maintained at:
+
 - Repository: `zircote/homebrew-tap`
 - Formula: `Formula/git-adr.rb`
 
 The `release.yml` workflow automatically updates the formula with:
+
 - New version
 - Updated PyPI URL and SHA256
 - Dependency resources
@@ -149,6 +153,7 @@ Before each release, binaries are smoke tested:
 ```
 
 Tests include:
+
 - `--version` flag
 - `--help` flag
 - `init` command

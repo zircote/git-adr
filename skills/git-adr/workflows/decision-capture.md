@@ -63,14 +63,17 @@ Trigger Detected
 ### Format-Specific (based on adr.template)
 
 **MADR format:**
+
 - What options were evaluated?
 - What are the pros/cons of each?
 
 **Business Case format:**
+
 - Who are the stakeholders?
 - What is the estimated cost/benefit?
 
 **Alexandrian format:**
+
 - What forces led to this decision?
 - What is the resulting context?
 

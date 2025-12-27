@@ -118,5 +118,6 @@ Run `git adr init` to start tracking architecture decisions.
 This workflow runs automatically when the skill detects a git-adr repository. The summary provides awareness of existing decisions without consuming excessive context.
 
 For full ADR content, use the hydration pattern:
+
 - "Show me ADR {id}" → `git adr show {id}`
 - "What did we decide about X" → `git adr search "X"`

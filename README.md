@@ -350,6 +350,7 @@ Chosen option: "PostgreSQL", because...
 - **History preservation**: ADR history is preserved in git
 
 Notes are stored under:
+
 - `refs/notes/adr` - ADR content
 - `refs/notes/adr-index` - Search index
 - `refs/notes/adr-artifacts` - Binary attachments

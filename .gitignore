@@ -88,7 +88,7 @@ coverage/
 .secrets/
 secrets/
 credentials/
-.secrets.baseline
+# Note: .secrets.baseline is intentionally tracked for detect-secrets
 
 # Jupyter (if used for experiments)
 .ipynb_checkpoints/

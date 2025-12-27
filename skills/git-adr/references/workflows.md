@@ -28,6 +28,7 @@ git adr sync push
 ### First ADR Content Suggestion
 
 The first ADR should document the decision to use ADRs:
+
 - **Context**: Team needs to document architectural decisions
 - **Decision**: Use git-adr to store ADRs in git notes
 - **Consequences**: Decisions travel with code, no file clutter
@@ -172,12 +173,14 @@ Replace outdated decisions while preserving history.
 ### When to Supersede
 
 Supersede when:
+
 - Technology choice has changed
 - Requirements have significantly evolved
 - Original decision proved incorrect
 - Better alternatives have emerged
 
 Do NOT supersede when:
+
 - Making minor clarifications (use edit instead)
 - Adding implementation details
 

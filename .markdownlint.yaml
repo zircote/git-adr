@@ -1,0 +1,22 @@
+# Markdownlint configuration
+# https://github.com/DavidAnson/markdownlint
+
+# Disable line length - documentation often has long lines
+MD013: false
+
+# Allow duplicate headings in different sections
+MD024:
+  siblings_only: true
+
+# Allow trailing punctuation in headings (for questions)
+MD026:
+  punctuation: ".,;:!"
+
+# Allow inline HTML (needed for some formatting)
+MD033: false
+
+# Allow bare URLs
+MD034: false
+
+# Code block style - allow both fenced and indented
+MD046: false

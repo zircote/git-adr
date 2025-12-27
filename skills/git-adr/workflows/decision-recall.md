@@ -5,18 +5,21 @@ Find and hydrate past architecture decisions on demand.
 ## Trigger Phrases
 
 ### Direct Recall (by ID)
+
 - "Show me ADR {id}"
 - "What's in ADR {id}"
 - "Pull up {id}"
 - "Display ADR {id}"
 
 ### Topic Search
+
 - "What did we decide about {topic}"
 - "Find decisions about {topic}"
 - "Any ADRs for {topic}"
 - "Search ADRs for {topic}"
 
 ### Status-Based
+
 - "What decisions are proposed"
 - "Show accepted ADRs"
 - "List deprecated decisions"

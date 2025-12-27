@@ -133,16 +133,19 @@ git config --unset adr.hooks.skip
 ### Hook Not Executing
 
 1. **Check installation status**:
+
    ```bash
    git adr hooks status
    ```
 
 2. **Verify hook is executable**:
+
    ```bash
    ls -la .git/hooks/pre-push
    ```
 
 3. **Test manually**:
+
    ```bash
    .git/hooks/pre-push
    ```
@@ -150,20 +153,25 @@ git config --unset adr.hooks.skip
 ### Notes Not Syncing
 
 1. **Check remote configuration**:
+
    ```bash
    git config --get-all remote.origin.push
    ```
+
    Should include `refs/notes/adr:refs/notes/adr`
 
 2. **Manual sync test**:
+
    ```bash
    git adr sync --push --verbose
    ```
 
 3. **Check for fetch configuration**:
+
    ```bash
    git config --get-all remote.origin.fetch
    ```
+
    Should include `+refs/notes/adr:refs/notes/adr`
 
 ### Existing Hook Conflict
@@ -196,6 +204,7 @@ git adr ci github
 ```
 
 This provides:
+
 - **Local hooks**: Immediate sync from developers
 - **CI validation**: Catch issues in pull requests
 - **CI sync**: Authoritative sync on merge to main
