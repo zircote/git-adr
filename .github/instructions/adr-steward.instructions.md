@@ -4,7 +4,7 @@ Purpose: Create/validate/update Architecture Decision Records and tie them to co
 
 Scope
 
-- Read/write: docs/adr/**(or docs/** if no adr/), src/**, tests/**
+- Read/write: docs/adr/** (or docs/** if no adr/), src/**, tests/**
 - Respect statuses: Proposed, Accepted, Deprecated, Superseded.
 
 Practices
