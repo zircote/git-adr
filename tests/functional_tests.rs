@@ -746,7 +746,13 @@ mod end_to_end {
     fn test_all_template_formats() {
         let temp_dir = create_initialized_repo();
 
-        let formats = ["nygard", "madr", "y-statement", "alexandrian", "business-case"];
+        let formats = [
+            "nygard",
+            "madr",
+            "y-statement",
+            "alexandrian",
+            "business-case",
+        ];
 
         for (i, format) in formats.iter().enumerate() {
             if i > 0 {
@@ -756,7 +762,12 @@ mod end_to_end {
             Command::cargo_bin("git-adr")
                 .expect("Failed to find binary")
                 .current_dir(temp_dir.path())
-                .args(["new", &format!("Decision using {}", format), "--template", format])
+                .args([
+                    "new",
+                    &format!("Decision using {}", format),
+                    "--template",
+                    format,
+                ])
                 .assert()
                 .success();
         }

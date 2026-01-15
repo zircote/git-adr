@@ -46,7 +46,10 @@ pub fn run(args: Args) -> Result<()> {
     let adrs = notes.list()?;
 
     if adrs.is_empty() {
-        eprintln!("{} No ADRs found. Create your first ADR with: git adr new <title>", "→".yellow());
+        eprintln!(
+            "{} No ADRs found. Create your first ADR with: git adr new <title>",
+            "→".yellow()
+        );
         return Ok(());
     }
 
@@ -57,7 +60,9 @@ pub fn run(args: Args) -> Result<()> {
 
     for adr in &adrs {
         // Count by status
-        *status_counts.entry(adr.frontmatter.status.clone()).or_insert(0) += 1;
+        *status_counts
+            .entry(adr.frontmatter.status.clone())
+            .or_insert(0) += 1;
 
         // Count by tags
         for tag in &adr.frontmatter.tags {
@@ -73,8 +78,22 @@ pub fn run(args: Args) -> Result<()> {
 
     let report = match args.format.as_str() {
         "json" => generate_json_report(&adrs, &status_counts, &tag_counts, &monthly_counts)?,
-        "html" => generate_html_report(&adrs, &status_counts, &tag_counts, &monthly_counts, args.detailed, args.timeline),
-        _ => generate_markdown_report(&adrs, &status_counts, &tag_counts, &monthly_counts, args.detailed, args.timeline),
+        "html" => generate_html_report(
+            &adrs,
+            &status_counts,
+            &tag_counts,
+            &monthly_counts,
+            args.detailed,
+            args.timeline,
+        ),
+        _ => generate_markdown_report(
+            &adrs,
+            &status_counts,
+            &tag_counts,
+            &monthly_counts,
+            args.detailed,
+            args.timeline,
+        ),
     };
 
     if let Some(output_path) = args.output {
@@ -130,12 +149,20 @@ fn generate_markdown_report(
     let mut report = String::new();
 
     report.push_str("# Architecture Decision Records Report\n\n");
-    let _ = writeln!(report, "*Generated: {}*\n", Utc::now().format("%Y-%m-%d %H:%M UTC"));
+    let _ = writeln!(
+        report,
+        "*Generated: {}*\n",
+        Utc::now().format("%Y-%m-%d %H:%M UTC")
+    );
 
     // Summary
     report.push_str("## Summary\n\n");
     let _ = writeln!(report, "- **Total ADRs**: {}", adrs.len());
-    let _ = writeln!(report, "- **Acceptance Rate**: {:.1}%\n", calculate_acceptance_rate(status_counts));
+    let _ = writeln!(
+        report,
+        "- **Acceptance Rate**: {:.1}%\n",
+        calculate_acceptance_rate(status_counts)
+    );
 
     // Status breakdown
     report.push_str("## Status Breakdown\n\n");
@@ -194,10 +221,16 @@ fn generate_markdown_report(
         report.push_str("|-----|-------|--------|------|\n");
 
         for adr in adrs {
-            let date = adr.frontmatter.date.as_ref()
+            let date = adr
+                .frontmatter
+                .date
+                .as_ref()
                 .map_or_else(|| "-".to_string(), |d| d.0.format("%Y-%m-%d").to_string());
-            let _ = writeln!(report, "| {} | {} | {} | {} |",
-                adr.id, adr.frontmatter.title, adr.frontmatter.status, date);
+            let _ = writeln!(
+                report,
+                "| {} | {} | {} | {} |",
+                adr.id, adr.frontmatter.title, adr.frontmatter.status, date
+            );
         }
     }
 
@@ -245,15 +278,21 @@ fn generate_html_report(
 "#);
 
     html.push_str("<h1>Architecture Decision Records Report</h1>\n");
-    let _ = writeln!(html, "<p><em>Generated: {}</em></p>", Utc::now().format("%Y-%m-%d %H:%M UTC"));
+    let _ = writeln!(
+        html,
+        "<p><em>Generated: {}</em></p>",
+        Utc::now().format("%Y-%m-%d %H:%M UTC")
+    );
 
     // Summary stats
     html.push_str("<div>\n");
-    let _ = write!(html,
+    let _ = write!(
+        html,
         r#"<div class="stat"><div class="stat-value">{}</div><div class="stat-label">Total ADRs</div></div>"#,
         adrs.len()
     );
-    let _ = write!(html,
+    let _ = write!(
+        html,
         r#"<div class="stat"><div class="stat-value">{:.0}%</div><div class="stat-label">Acceptance Rate</div></div>"#,
         calculate_acceptance_rate(status_counts)
     );
@@ -261,11 +300,22 @@ fn generate_html_report(
 
     // Status breakdown
     html.push_str("<h2>Status Breakdown</h2>\n<table>\n<tr><th>Status</th><th>Count</th><th>Percentage</th></tr>\n");
-    for status in &[AdrStatus::Proposed, AdrStatus::Accepted, AdrStatus::Deprecated, AdrStatus::Superseded, AdrStatus::Rejected] {
+    for status in &[
+        AdrStatus::Proposed,
+        AdrStatus::Accepted,
+        AdrStatus::Deprecated,
+        AdrStatus::Superseded,
+        AdrStatus::Rejected,
+    ] {
         let count = status_counts.get(status).unwrap_or(&0);
-        let pct = if adrs.is_empty() { 0.0 } else { (*count as f64 / adrs.len() as f64) * 100.0 };
+        let pct = if adrs.is_empty() {
+            0.0
+        } else {
+            (*count as f64 / adrs.len() as f64) * 100.0
+        };
         let class = format!("status-{}", status.to_string().to_lowercase());
-        let _ = writeln!(html,
+        let _ = writeln!(
+            html,
             r#"<tr><td class="{}">{}</td><td>{}</td><td>{:.1}%</td></tr>"#,
             class, status, count, pct
         );
@@ -298,10 +348,17 @@ fn generate_html_report(
     if detailed {
         html.push_str("<h2>ADR List</h2>\n<table>\n<tr><th>ID</th><th>Title</th><th>Status</th><th>Date</th></tr>\n");
         for adr in adrs {
-            let date = adr.frontmatter.date.as_ref()
+            let date = adr
+                .frontmatter
+                .date
+                .as_ref()
                 .map_or_else(|| "-".to_string(), |d| d.0.format("%Y-%m-%d").to_string());
-            let class = format!("status-{}", adr.frontmatter.status.to_string().to_lowercase());
-            let _ = writeln!(html,
+            let class = format!(
+                "status-{}",
+                adr.frontmatter.status.to_string().to_lowercase()
+            );
+            let _ = writeln!(
+                html,
                 r#"<tr><td>{}</td><td>{}</td><td class="{}">{}</td><td>{}</td></tr>"#,
                 adr.id, adr.frontmatter.title, class, adr.frontmatter.status, date
             );

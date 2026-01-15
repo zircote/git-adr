@@ -67,25 +67,21 @@ pub fn run(args: Args) -> Result<()> {
                 })
             };
             println!("{}", serde_json::to_string_pretty(&output)?);
-        }
+        },
         "yaml" => {
             if args.metadata_only {
                 println!("{}", serde_yaml::to_string(&adr.frontmatter)?);
             } else {
                 println!("{}", adr.to_markdown()?);
             }
-        }
+        },
         _ => {
             if args.metadata_only {
                 println!("{} {}", "ID:".bold(), adr.id.cyan());
                 println!("{} {}", "Title:".bold(), adr.frontmatter.title);
                 println!("{} {}", "Status:".bold(), adr.frontmatter.status);
                 if let Some(date) = &adr.frontmatter.date {
-                    println!(
-                        "{} {}",
-                        "Date:".bold(),
-                        date.datetime().format("%Y-%m-%d")
-                    );
+                    println!("{} {}", "Date:".bold(), date.datetime().format("%Y-%m-%d"));
                 }
                 if !adr.frontmatter.tags.is_empty() {
                     println!("{} {}", "Tags:".bold(), adr.frontmatter.tags.join(", "));
@@ -94,7 +90,7 @@ pub fn run(args: Args) -> Result<()> {
             } else {
                 println!("{}", adr.to_markdown()?);
             }
-        }
+        },
     }
 
     Ok(())

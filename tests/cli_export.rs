@@ -346,7 +346,15 @@ fn main() {
 We decided to use Rust."#;
 
     StdCommand::new("git")
-        .args(["notes", "--ref=adr", "add", "-f", "-m", adr_content, &commit])
+        .args([
+            "notes",
+            "--ref=adr",
+            "add",
+            "-f",
+            "-m",
+            adr_content,
+            &commit,
+        ])
         .current_dir(path)
         .output()
         .expect("Failed to update note");
@@ -520,7 +528,15 @@ fn main() {
 "#;
 
     StdCommand::new("git")
-        .args(["notes", "--ref=adr", "add", "-f", "-m", adr_content, &commit])
+        .args([
+            "notes",
+            "--ref=adr",
+            "add",
+            "-f",
+            "-m",
+            adr_content,
+            &commit,
+        ])
         .current_dir(path)
         .output()
         .expect("Failed to update note");

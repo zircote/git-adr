@@ -68,52 +68,52 @@ pub fn run(args: Args) -> Result<()> {
         });
         println!("{}", serde_json::to_string_pretty(&stats)?);
     } else {
-            println!("{}", "ADR Statistics".bold().underline());
-            println!();
-            println!("{} {}", "Total ADRs:".bold(), total.to_string().cyan());
-            println!();
+        println!("{}", "ADR Statistics".bold().underline());
+        println!();
+        println!("{} {}", "Total ADRs:".bold(), total.to_string().cyan());
+        println!();
 
-            // Status breakdown
-            println!("{}", "By Status:".bold());
-            let statuses = [
-                AdrStatus::Proposed,
-                AdrStatus::Accepted,
-                AdrStatus::Rejected,
-                AdrStatus::Deprecated,
-                AdrStatus::Superseded,
-            ];
-            for status in &statuses {
-                let count = by_status.get(status).unwrap_or(&0);
-                let bar = "█".repeat(*count);
-                println!(
-                    "  {:12} {} {}",
-                    status.to_string(),
-                    count.to_string().cyan(),
-                    bar.green()
-                );
+        // Status breakdown
+        println!("{}", "By Status:".bold());
+        let statuses = [
+            AdrStatus::Proposed,
+            AdrStatus::Accepted,
+            AdrStatus::Rejected,
+            AdrStatus::Deprecated,
+            AdrStatus::Superseded,
+        ];
+        for status in &statuses {
+            let count = by_status.get(status).unwrap_or(&0);
+            let bar = "█".repeat(*count);
+            println!(
+                "  {:12} {} {}",
+                status.to_string(),
+                count.to_string().cyan(),
+                bar.green()
+            );
+        }
+        println!();
+
+        // Tag breakdown (top 10)
+        if !by_tag.is_empty() {
+            println!("{}", "Top Tags:".bold());
+            let mut tags: Vec<_> = by_tag.into_iter().collect();
+            tags.sort_by(|a, b| b.1.cmp(&a.1));
+            for (tag, count) in tags.iter().take(10) {
+                println!("  {} {}", tag.cyan(), count);
             }
             println!();
+        }
 
-            // Tag breakdown (top 10)
-            if !by_tag.is_empty() {
-                println!("{}", "Top Tags:".bold());
-                let mut tags: Vec<_> = by_tag.into_iter().collect();
-                tags.sort_by(|a, b| b.1.cmp(&a.1));
-                for (tag, count) in tags.iter().take(10) {
-                    println!("  {} {}", tag.cyan(), count);
-                }
-                println!();
-            }
-
-            // Date range
-            if let (Some(old), Some(new)) = (oldest, newest) {
-                println!("{}", "Date Range:".bold());
-                println!(
-                    "  {} {} to {}",
-                    "From:".dimmed(),
-                    old.datetime().format("%Y-%m-%d"),
-                    new.datetime().format("%Y-%m-%d")
-                );
+        // Date range
+        if let (Some(old), Some(new)) = (oldest, newest) {
+            println!("{}", "Date Range:".bold());
+            println!(
+                "  {} {} to {}",
+                "From:".dimmed(),
+                old.datetime().format("%Y-%m-%d"),
+                new.datetime().format("%Y-%m-%d")
+            );
         }
     }
 

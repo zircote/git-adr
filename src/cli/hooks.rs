@@ -4,8 +4,10 @@ use anyhow::Result;
 use clap::{Args as ClapArgs, Subcommand};
 use colored::Colorize;
 use std::fs;
-use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
+
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 
 use crate::core::Git;
 
@@ -201,10 +203,13 @@ fn install_hook(path: &Path, content: &str, force: bool) -> Result<bool> {
 
     fs::write(path, content)?;
 
-    // Make executable
-    let mut perms = fs::metadata(path)?.permissions();
-    perms.set_mode(0o755);
-    fs::set_permissions(path, perms)?;
+    // Make executable (Unix only)
+    #[cfg(unix)]
+    {
+        let mut perms = fs::metadata(path)?.permissions();
+        perms.set_mode(0o755);
+        fs::set_permissions(path, perms)?;
+    }
 
     Ok(true)
 }

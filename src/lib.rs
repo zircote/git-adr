@@ -332,7 +332,9 @@ mod tests {
 
     #[test]
     fn test_error_not_a_repository() {
-        let err = Error::NotARepository { path: Some("/tmp/test".to_string()) };
+        let err = Error::NotARepository {
+            path: Some("/tmp/test".to_string()),
+        };
         assert!(format!("{err}").contains("not a git repository"));
         assert!(format!("{err}").contains("/tmp/test"));
     }
@@ -346,13 +348,18 @@ mod tests {
 
     #[test]
     fn test_error_content_too_large() {
-        let err = Error::ContentTooLarge { size: 1024, max: 512 };
+        let err = Error::ContentTooLarge {
+            size: 1024,
+            max: 512,
+        };
         assert!(format!("{err}").contains("content too large"));
     }
 
     #[test]
     fn test_error_feature_not_available() {
-        let err = Error::FeatureNotAvailable { feature: "ai".to_string() };
+        let err = Error::FeatureNotAvailable {
+            feature: "ai".to_string(),
+        };
         assert!(format!("{err}").contains("feature not available"));
     }
 
@@ -367,13 +374,17 @@ mod tests {
 
     #[test]
     fn test_error_parse_error() {
-        let err = Error::ParseError { message: "parse failed".to_string() };
+        let err = Error::ParseError {
+            message: "parse failed".to_string(),
+        };
         assert!(format!("{err}").contains("parse error"));
     }
 
     #[test]
     fn test_error_template_not_found() {
-        let err = Error::TemplateNotFound { name: "custom".to_string() };
+        let err = Error::TemplateNotFound {
+            name: "custom".to_string(),
+        };
         assert!(format!("{err}").contains("template not found"));
     }
 

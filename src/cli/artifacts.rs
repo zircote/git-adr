@@ -104,10 +104,10 @@ pub fn run(args: Args) -> Result<()> {
                     }
                 }
             }
-        }
+        },
         None => {
             eprintln!("{} No artifacts found for ADR {}", "→".yellow(), adr.id);
-        }
+        },
     }
 
     Ok(())

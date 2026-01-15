@@ -432,15 +432,14 @@ mod tests {
         });
 
         let yaml = serde_yaml::to_string(&index).expect("Should serialize");
-        let deserialized: SearchIndex =
-            serde_yaml::from_str(&yaml).expect("Should deserialize");
+        let deserialized: SearchIndex = serde_yaml::from_str(&yaml).expect("Should deserialize");
         assert_eq!(deserialized.version, index.version);
         assert_eq!(deserialized.entries.len(), index.entries.len());
     }
 
+    use crate::core::{AdrConfig, NotesManager};
     use std::process::Command as StdCommand;
     use tempfile::TempDir;
-    use crate::core::{AdrConfig, NotesManager};
 
     fn setup_git_repo() -> TempDir {
         let temp_dir = TempDir::new().expect("Failed to create temp directory");

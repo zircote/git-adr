@@ -55,7 +55,14 @@ fn setup_test_repo_with_adr() -> TempDir {
     Command::cargo_bin("git-adr")
         .expect("Failed to find binary")
         .current_dir(path)
-        .args(["new", "Use PostgreSQL", "--tag", "database", "--status", "accepted"])
+        .args([
+            "new",
+            "Use PostgreSQL",
+            "--tag",
+            "database",
+            "--status",
+            "accepted",
+        ])
         .assert()
         .success();
 

@@ -50,9 +50,7 @@ pub fn run(args: Args) -> Result<()> {
 
     // Filter by status
     if let Some(status_str) = &args.status {
-        let status: AdrStatus = status_str
-            .parse()
-            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        let status: AdrStatus = status_str.parse().map_err(|e| anyhow::anyhow!("{}", e))?;
         adrs.retain(|a| a.frontmatter.status == status);
     }
 

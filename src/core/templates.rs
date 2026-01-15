@@ -365,7 +365,9 @@ mod tests {
         context.insert("title".to_string(), "Y Statement Test".to_string());
         context.insert("status".to_string(), "proposed".to_string());
 
-        let result = engine.render("y-statement", &context).expect("Should render");
+        let result = engine
+            .render("y-statement", &context)
+            .expect("Should render");
         assert!(result.contains("# Y Statement Test"));
         assert!(result.contains("In the context of"));
     }
@@ -377,7 +379,9 @@ mod tests {
         context.insert("title".to_string(), "Alexandrian Test".to_string());
         context.insert("status".to_string(), "proposed".to_string());
 
-        let result = engine.render("alexandrian", &context).expect("Should render");
+        let result = engine
+            .render("alexandrian", &context)
+            .expect("Should render");
         assert!(result.contains("# Alexandrian Test"));
         assert!(result.contains("Prologue"));
         assert!(result.contains("Forces"));
@@ -390,7 +394,9 @@ mod tests {
         context.insert("title".to_string(), "Business Case Test".to_string());
         context.insert("status".to_string(), "proposed".to_string());
 
-        let result = engine.render("business-case", &context).expect("Should render");
+        let result = engine
+            .render("business-case", &context)
+            .expect("Should render");
         assert!(result.contains("# Business Case Test"));
         assert!(result.contains("Executive Summary"));
         assert!(result.contains("Cost-Benefit Analysis"));
@@ -411,7 +417,9 @@ mod tests {
     fn test_add_custom_template() {
         let mut engine = TemplateEngine::new();
         let custom = "# {{ title }}\n\nCustom template content";
-        engine.add_template("custom", custom).expect("Should add template");
+        engine
+            .add_template("custom", custom)
+            .expect("Should add template");
         assert!(engine.has_template("custom"));
     }
 

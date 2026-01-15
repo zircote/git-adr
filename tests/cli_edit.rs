@@ -52,7 +52,14 @@ fn setup_test_repo_with_adr() -> TempDir {
     Command::cargo_bin("git-adr")
         .expect("Failed to find binary")
         .current_dir(path)
-        .args(["new", "Original Title", "--status", "proposed", "--tag", "original"])
+        .args([
+            "new",
+            "Original Title",
+            "--status",
+            "proposed",
+            "--tag",
+            "original",
+        ])
         .assert()
         .success();
 

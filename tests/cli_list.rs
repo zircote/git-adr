@@ -87,7 +87,9 @@ Test ADR content.
 
     // Add note
     StdCommand::new("git")
-        .args(["notes", "--ref", "adr", "add", "-f", "-m", &content, &commit])
+        .args([
+            "notes", "--ref", "adr", "add", "-f", "-m", &content, &commit,
+        ])
         .current_dir(path)
         .output()
         .expect("Failed to add ADR note");
@@ -266,7 +268,9 @@ Test ADR content.
     let commit = String::from_utf8_lossy(&output.stdout).trim().to_string();
 
     StdCommand::new("git")
-        .args(["notes", "--ref", "adr", "add", "-f", "-m", &content, &commit])
+        .args([
+            "notes", "--ref", "adr", "add", "-f", "-m", &content, &commit,
+        ])
         .current_dir(path)
         .output()
         .expect("Failed to add ADR note");
@@ -291,7 +295,13 @@ fn test_list_filter_by_tag() {
         .output()
         .expect("Failed to commit");
 
-    add_adr_note_with_tag(path, "ADR-0002", "Database Decision", "accepted", "database");
+    add_adr_note_with_tag(
+        path,
+        "ADR-0002",
+        "Database Decision",
+        "accepted",
+        "database",
+    );
 
     let mut cmd = Command::cargo_bin("git-adr").expect("Failed to find binary");
     cmd.current_dir(path)
@@ -406,7 +416,9 @@ Test ADR content.
     let commit = String::from_utf8_lossy(&output.stdout).trim().to_string();
 
     StdCommand::new("git")
-        .args(["notes", "--ref", "adr", "add", "-f", "-m", &content, &commit])
+        .args([
+            "notes", "--ref", "adr", "add", "-f", "-m", &content, &commit,
+        ])
         .current_dir(path)
         .output()
         .expect("Failed to add ADR note");
@@ -433,7 +445,13 @@ fn test_list_filter_since() {
         .expect("Failed to commit");
 
     // Create an ADR with a recent date
-    add_adr_note_with_date(path, "ADR-0002", "Recent Decision", "proposed", "2025-01-01");
+    add_adr_note_with_date(
+        path,
+        "ADR-0002",
+        "Recent Decision",
+        "proposed",
+        "2025-01-01",
+    );
 
     // Filter to only show ADRs since 2024
     let mut cmd = Command::cargo_bin("git-adr").expect("Failed to find binary");
@@ -466,7 +484,13 @@ fn test_list_filter_until() {
         .expect("Failed to commit");
 
     // Create an ADR with a recent date
-    add_adr_note_with_date(path, "ADR-0002", "Recent Decision", "proposed", "2025-01-01");
+    add_adr_note_with_date(
+        path,
+        "ADR-0002",
+        "Recent Decision",
+        "proposed",
+        "2025-01-01",
+    );
 
     // Filter to only show ADRs until 2022
     let mut cmd = Command::cargo_bin("git-adr").expect("Failed to find binary");
@@ -514,7 +538,8 @@ fn test_list_long_title_truncation() {
     let path = temp_dir.path();
 
     // Create an ADR with a very long title (more than 50 chars to trigger truncation)
-    let long_title = "This is a very very very very long title that should be truncated in table view";
+    let long_title =
+        "This is a very very very very long title that should be truncated in table view";
     add_adr_note(path, "ADR-0001", long_title, "proposed");
 
     let mut cmd = Command::cargo_bin("git-adr").expect("Failed to find binary");
@@ -591,7 +616,13 @@ fn test_list_filter_since_rfc3339() {
     let temp_dir = setup_test_repo();
     let path = temp_dir.path();
 
-    add_adr_note_with_date(path, "ADR-0001", "Recent Decision", "proposed", "2025-01-01");
+    add_adr_note_with_date(
+        path,
+        "ADR-0001",
+        "Recent Decision",
+        "proposed",
+        "2025-01-01",
+    );
 
     // Use RFC3339 format for --since
     let mut cmd = Command::cargo_bin("git-adr").expect("Failed to find binary");

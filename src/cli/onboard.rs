@@ -44,12 +44,18 @@ pub fn run(args: Args) -> Result<()> {
 
     if adrs.is_empty() {
         println!();
-        println!("{}", "Welcome to Architecture Decision Records!".bold().cyan());
+        println!(
+            "{}",
+            "Welcome to Architecture Decision Records!".bold().cyan()
+        );
         println!();
         println!("This repository doesn't have any ADRs yet.");
         println!();
         println!("Get started by creating your first ADR:");
-        println!("  {} git adr new \"Use git-adr for architecture decisions\"", "→".blue());
+        println!(
+            "  {} git adr new \"Use git-adr for architecture decisions\"",
+            "→".blue()
+        );
         println!();
         return Ok(());
     }
@@ -65,7 +71,10 @@ pub fn run(args: Args) -> Result<()> {
 
     println!();
     println!("{}", "═══════════════════════════════════════════".dimmed());
-    println!("{}", "  Architecture Decision Records - Onboarding".bold().cyan());
+    println!(
+        "{}",
+        "  Architecture Decision Records - Onboarding".bold().cyan()
+    );
     println!("{}", "═══════════════════════════════════════════".dimmed());
     println!();
 
@@ -87,7 +96,10 @@ pub fn run(args: Args) -> Result<()> {
     println!("{}", "Quick Reference:".bold());
     println!("  {} List all ADRs          ", "git adr list".cyan());
     println!("  {} View specific ADR      ", "git adr show <id>".cyan());
-    println!("  {} Search ADRs            ", "git adr search <query>".cyan());
+    println!(
+        "  {} Search ADRs            ",
+        "git adr search <query>".cyan()
+    );
     println!("  {} Create new ADR         ", "git adr new <title>".cyan());
     println!();
 
@@ -143,7 +155,13 @@ fn show_overview(adrs: &[&crate::core::Adr], args: &Args) -> Result<()> {
 
         // Show tags if present
         if !adr.frontmatter.tags.is_empty() {
-            let tags: Vec<&str> = adr.frontmatter.tags.iter().take(3).map(String::as_str).collect();
+            let tags: Vec<&str> = adr
+                .frontmatter
+                .tags
+                .iter()
+                .take(3)
+                .map(String::as_str)
+                .collect();
             println!("       Tags: {}", tags.join(", ").dimmed());
         }
     }
@@ -168,7 +186,10 @@ fn show_by_tag(adrs: &[&crate::core::Adr], _args: &Args) -> Result<()> {
 
     for adr in adrs {
         if adr.frontmatter.tags.is_empty() {
-            by_tag.entry("uncategorized".to_string()).or_default().push(adr);
+            by_tag
+                .entry("uncategorized".to_string())
+                .or_default()
+                .push(adr);
         } else {
             for tag in &adr.frontmatter.tags {
                 by_tag.entry(tag.clone()).or_default().push(adr);
@@ -192,7 +213,12 @@ fn show_by_tag(adrs: &[&crate::core::Adr], _args: &Args) -> Result<()> {
                 AdrStatus::Proposed => "○".yellow(),
                 _ => "·".dimmed(),
             };
-            println!("    {} {} {}", status, adr.id.dimmed(), adr.frontmatter.title);
+            println!(
+                "    {} {} {}",
+                status,
+                adr.id.dimmed(),
+                adr.frontmatter.title
+            );
         }
 
         if tag_adrs.len() > 3 {
@@ -223,9 +249,9 @@ fn interactive_browse(adrs: &[&crate::core::Adr], notes: &NotesManager) -> Resul
         }
 
         // Find matching ADR
-        let matching = adrs.iter().find(|a| {
-            a.id.eq_ignore_ascii_case(input) || a.id.contains(input)
-        });
+        let matching = adrs
+            .iter()
+            .find(|a| a.id.eq_ignore_ascii_case(input) || a.id.contains(input));
 
         match matching {
             Some(adr) => {
@@ -255,13 +281,9 @@ fn interactive_browse(adrs: &[&crate::core::Adr], notes: &NotesManager) -> Resul
                 }
 
                 println!();
-                println!(
-                    "  {} View full: git adr show {}",
-                    "→".blue(),
-                    adr.id.cyan()
-                );
+                println!("  {} View full: git adr show {}", "→".blue(), adr.id.cyan());
                 println!();
-            }
+            },
             None => {
                 // Try to get from notes manager directly
                 if let Ok(adr) = notes.get(input) {
@@ -272,7 +294,7 @@ fn interactive_browse(adrs: &[&crate::core::Adr], notes: &NotesManager) -> Resul
                 } else {
                     println!("  {} ADR not found: {}", "!".yellow(), input);
                 }
-            }
+            },
         }
     }
 

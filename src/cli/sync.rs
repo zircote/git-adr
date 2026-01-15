@@ -42,11 +42,7 @@ pub fn run(args: Args) -> Result<()> {
     let do_push = args.push || !args.pull;
     let do_fetch = args.pull || !args.push;
 
-    eprintln!(
-        "{} Syncing with remote: {}",
-        "→".blue(),
-        args.remote.cyan()
-    );
+    eprintln!("{} Syncing with remote: {}", "→".blue(), args.remote.cyan());
 
     if do_fetch {
         eprintln!("  Fetching notes...");
@@ -59,7 +55,7 @@ pub fn run(args: Args) -> Result<()> {
                     "!".yellow(),
                     e.to_string().lines().next().unwrap_or("unknown error")
                 );
-            }
+            },
         }
     }
 
@@ -75,7 +71,7 @@ pub fn run(args: Args) -> Result<()> {
                     e.to_string().lines().next().unwrap_or("unknown error")
                 );
                 return Err(e.into());
-            }
+            },
         }
     }
 

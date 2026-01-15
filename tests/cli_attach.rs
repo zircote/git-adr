@@ -83,8 +83,7 @@ fn test_attach_file_with_description() {
     let temp_dir = setup_test_repo_with_adr();
     let path = temp_dir.path();
 
-    std::fs::write(path.join("diagram.png"), b"\x89PNG\r\n\x1a\n")
-        .expect("Failed to write file");
+    std::fs::write(path.join("diagram.png"), b"\x89PNG\r\n\x1a\n").expect("Failed to write file");
 
     let mut cmd = Command::cargo_bin("git-adr").expect("Failed to find binary");
     cmd.current_dir(path)

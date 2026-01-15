@@ -66,7 +66,7 @@ pub fn run(args: Args) -> Result<()> {
                 eprintln!("{} Config key not set: adr.{}", "!".yellow(), key);
                 std::process::exit(1);
             }
-        }
+        },
         ConfigCommand::Set { key, value } => {
             // Validate known keys
             if !CONFIG_KEYS.iter().any(|(k, _)| *k == key) {
@@ -89,12 +89,12 @@ pub fn run(args: Args) -> Result<()> {
                 key.cyan(),
                 value.yellow()
             );
-        }
+        },
         ConfigCommand::Unset { key } => {
             // Use git directly to unset the key
             git.config_unset(&format!("adr.{key}"), false)?;
             eprintln!("{} Unset adr.{}", "✓".green(), key.cyan());
-        }
+        },
         ConfigCommand::List => {
             eprintln!("{} ADR Configuration:", "→".blue());
             eprintln!();
@@ -106,7 +106,7 @@ pub fn run(args: Args) -> Result<()> {
             println!("{} = {}", "adr.digits".cyan(), config.digits);
             println!("{} = {}", "adr.template".cyan(), config.template);
             println!("{} = {}", "adr.format".cyan(), config.format);
-        }
+        },
     }
 
     Ok(())

@@ -41,7 +41,12 @@ fn setup_test_repo_with_remote() -> (TempDir, TempDir) {
 
     // Add the remote
     StdCommand::new("git")
-        .args(["remote", "add", "origin", remote_dir.path().to_str().unwrap()])
+        .args([
+            "remote",
+            "add",
+            "origin",
+            remote_dir.path().to_str().unwrap(),
+        ])
         .current_dir(path)
         .output()
         .expect("Failed to add remote");
@@ -127,7 +132,12 @@ fn test_sync_custom_remote() {
 
     // Add another remote
     StdCommand::new("git")
-        .args(["remote", "add", "upstream", remote_dir.path().to_str().unwrap()])
+        .args([
+            "remote",
+            "add",
+            "upstream",
+            remote_dir.path().to_str().unwrap(),
+        ])
         .current_dir(local_dir.path())
         .output()
         .expect("Failed to add upstream remote");
