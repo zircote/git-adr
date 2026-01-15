@@ -3,7 +3,7 @@
 Architecture Decision Records (ADR) management for git repositories using git notes.
 
 [![CI](https://github.com/zircote/git-adr/actions/workflows/ci.yml/badge.svg)](https://github.com/zircote/git-adr/actions/workflows/ci.yml)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Crates.io](https://img.shields.io/crates/v/git-adr.svg)](https://crates.io/crates/git-adr)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
@@ -18,29 +18,18 @@ Architecture Decision Records (ADR) management for git repositories using git no
 
 ## Installation
 
-### Standalone Binary (Fastest)
+### Pre-built Binaries
 
-Pre-built binaries are available for all platforms - no Python required:
-
-```bash
-# macOS/Linux (auto-detects platform)
-curl -sSL https://raw.githubusercontent.com/zircote/git-adr/main/script/install-binary.sh | bash
-
-# Or install to ~/.local/bin (no sudo)
-curl -sSL https://raw.githubusercontent.com/zircote/git-adr/main/script/install-binary.sh | bash -s -- --local
-
-# Specific version
-curl -sSL https://raw.githubusercontent.com/zircote/git-adr/main/script/install-binary.sh | bash -s -- v0.1.0
-```
-
-Or download manually from [GitHub Releases](https://github.com/zircote/git-adr/releases):
+Download from [GitHub Releases](https://github.com/zircote/git-adr/releases):
 
 | Platform | Download |
 |----------|----------|
-| macOS ARM64 (M1/M2/M3) | `git-adr-macos-arm64.tar.gz` |
-| macOS Intel | `git-adr-macos-x86_64.tar.gz` |
-| Linux x86_64 | `git-adr-linux-x86_64.tar.gz` |
-| Windows x86_64 | `git-adr-windows-x86_64.zip` |
+| macOS ARM64 (M1/M2/M3/M4) | `git-adr-aarch64-apple-darwin.tar.gz` |
+| macOS Intel | `git-adr-x86_64-apple-darwin.tar.gz` |
+| Linux x86_64 | `git-adr-x86_64-unknown-linux-gnu.tar.gz` |
+| Linux x86_64 (musl) | `git-adr-x86_64-unknown-linux-musl.tar.gz` |
+| Linux ARM64 | `git-adr-aarch64-unknown-linux-gnu.tar.gz` |
+| Windows x86_64 | `git-adr-x86_64-pc-windows-msvc.zip` |
 
 ### Homebrew (macOS)
 
@@ -49,81 +38,42 @@ brew tap zircote/tap
 brew install git-adr
 ```
 
-This automatically installs shell completions and keeps git-adr updated with `brew upgrade`.
-
-### pip / uv
+### Cargo (Rust)
 
 ```bash
-pip install git-adr
-```
-
-Or with [uv](https://github.com/astral-sh/uv):
-
-```bash
-uv tool install git-adr
+cargo install git-adr
 ```
 
 ### With Optional Features
 
 ```bash
-# AI-powered features (drafting, suggestions, Q&A)
-pip install "git-adr[ai]"
+# AI-powered features (drafting, suggestions)
+cargo install git-adr --features ai
 
 # Wiki synchronization (GitHub/GitLab)
-pip install "git-adr[wiki]"
+cargo install git-adr --features wiki
 
 # Document export (DOCX format)
-pip install "git-adr[export]"
+cargo install git-adr --features export
 
 # All features
-pip install "git-adr[all]"
+cargo install git-adr --features all
 ```
 
-### Shell Completion
-
-Enable tab completion for your shell:
-
-```bash
-# Automatic installation (detects your shell)
-git-adr --install-completion
-
-# Or manually for specific shells
-git-adr --show-completion bash >> ~/.bashrc
-git-adr --show-completion zsh >> ~/.zshrc
-git-adr --show-completion fish > ~/.config/fish/completions/git-adr.fish
-```
-
-### Man Pages
-
-Man pages are included in [GitHub releases](https://github.com/zircote/git-adr/releases).
-Download and install:
-
-```bash
-# Download from release (replace VERSION)
-curl -L https://github.com/zircote/git-adr/releases/download/vVERSION/git-adr-man-pages-VERSION.tar.gz | \
-  sudo tar -xzf - -C /usr/local/share/man/
-
-# Then use
-man git-adr
-man git-adr-new
-```
-
-Or build from source:
+### From Source
 
 ```bash
 git clone https://github.com/zircote/git-adr.git
 cd git-adr
-make install-man  # Requires pandoc
+cargo build --release
+# Binary at target/release/git-adr
 ```
 
 ## Quick Start
 
 ```bash
-# Interactive setup (recommended) - prompts for template, hooks, and CI
+# Initialize ADR tracking in your repository
 git adr init
-
-# Or non-interactive with specific options
-git adr init --template madr --install-hooks --setup-github-ci
 
 # Create a new ADR (opens editor)
 git adr new "Use PostgreSQL for primary database"
@@ -132,26 +82,14 @@ git adr new "Use PostgreSQL for primary database"
 git adr list
 
 # Show a specific ADR
-git adr show 20240115-use-postgresql
+git adr show ADR-0001
 
 # Search ADRs
 git adr search "database"
 
-# ADRs sync automatically on push (if hooks installed)
-# Or sync manually:
+# Sync ADRs with remote
 git adr sync push
 ```
-
-### Init Options
-
-| Option | Description |
-|--------|-------------|
-| `--template <format>` | Set ADR format (madr, nygard, y-statement, structured-madr, etc.) |
-| `--install-hooks` | Install pre-push hooks for automatic sync |
-| `--setup-github-ci` | Generate GitHub Actions workflows |
-| `--no-input` | Skip all interactive prompts |
-
-See [Hooks Guide](docs/HOOKS_GUIDE.md) for detailed hooks documentation.
 
 ## Commands
 
@@ -164,6 +102,7 @@ See [Hooks Guide](docs/HOOKS_GUIDE.md) for detailed hooks documentation.
 | `git adr list` | List all ADRs with filtering options |
 | `git adr show <id>` | Display an ADR with formatting |
 | `git adr edit <id>` | Edit an existing ADR |
+| `git adr rm <id>` | Remove an ADR |
 | `git adr search <query>` | Full-text search across ADRs |
 | `git adr link <adr-id> <commit>` | Associate an ADR with commits |
 | `git adr supersede <old-id> <title>` | Create ADR that supersedes another |
@@ -175,31 +114,22 @@ See [Hooks Guide](docs/HOOKS_GUIDE.md) for detailed hooks documentation.
 |---------|-------------|
 | `git adr attach <adr-id> <file>` | Attach diagram/image to an ADR |
 | `git adr artifacts <adr-id>` | List artifacts attached to an ADR |
-| `git adr artifact-get <sha256>` | Extract an artifact to a file |
-| `git adr artifact-rm <adr-id> <sha256>` | Remove an artifact |
 
-### Analytics & Reporting
+### Analytics & Export
 
 | Command | Description |
 |---------|-------------|
 | `git adr stats` | Quick ADR statistics summary |
-| `git adr report` | Generate detailed analytics report |
-| `git adr metrics` | Export metrics for dashboards (JSON/Prometheus) |
-
-### Export & Import
-
-| Command | Description |
-|---------|-------------|
 | `git adr export` | Export ADRs to files (markdown, json, html, docx) |
-| `git adr import` | Import ADRs from file-based storage |
 | `git adr convert <id>` | Convert an ADR to different format |
 
 ### Synchronization
 
 | Command | Description |
 |---------|-------------|
-| `git adr sync push` | Push ADR notes to remote |
-| `git adr sync pull` | Pull ADR notes from remote |
+| `git adr sync` | Sync ADRs with remote (push & pull) |
+| `git adr sync --push` | Push ADR notes to remote |
+| `git adr sync --pull` | Pull ADR notes from remote |
 
 ### Configuration
 
@@ -209,80 +139,16 @@ See [Hooks Guide](docs/HOOKS_GUIDE.md) for detailed hooks documentation.
 | `git adr config <key> <value>` | Set configuration value |
 | `git adr config --get <key>` | Get configuration value |
 
-### Team Features
-
-| Command | Description |
-|---------|-------------|
-| `git adr onboard` | Interactive onboarding wizard for new team members |
-
-## AI Features
-
-> Requires `pip install "git-adr[ai]"`
-
-Configure your AI provider:
-
-```bash
-# Set provider (openai, anthropic, google, ollama)
-git adr config adr.ai.provider openai
-
-# Set API key (environment variable)
-export OPENAI_API_KEY="your-key"
-# or
-export ANTHROPIC_API_KEY="your-key"
-export GOOGLE_API_KEY="your-key"
-```
-
-### AI Commands
-
-| Command | Description |
-|---------|-------------|
-| `git adr ai draft` | AI-guided ADR creation with interactive elicitation |
-| `git adr ai suggest <id>` | Get AI suggestions to improve an ADR |
-| `git adr ai summarize` | Generate natural language summary of decisions |
-| `git adr ai ask "<question>"` | Ask questions about ADRs in natural language |
-
-### Examples
-
-```bash
-# AI-assisted drafting
-git adr ai draft "Choose a message queue"
-
-# Get improvement suggestions
-git adr ai suggest 20240115-use-postgresql
-
-# Summarize recent decisions
-git adr ai summarize --format slack
-
-# Ask questions
-git adr ai ask "Why did we choose PostgreSQL?"
-```
-
-## Wiki Synchronization
-
-> Requires `pip install "git-adr[wiki]"`
-
-Sync ADRs with GitHub or GitLab wikis:
-
-```bash
-# Initialize wiki sync
-git adr wiki init --provider github --repo owner/repo
-
-# Sync ADRs to wiki
-git adr wiki sync
-```
-
 ## Configuration Options
 
 Configuration is stored in git config (local or global):
 
 | Key | Description | Default |
 |-----|-------------|---------|
-| `adr.namespace` | Notes namespace | `adr` |
-| `adr.template` | Default template format | `madr` |
-| `adr.editor` | Editor command override | `$EDITOR` |
-| `adr.ai.provider` | AI provider (openai, anthropic, google, ollama) | - |
-| `adr.ai.model` | AI model name | Provider default |
-| `adr.ai.temperature` | AI temperature (0.0-1.0) | `0.7` |
+| `adr.prefix` | ADR ID prefix | `ADR-` |
+| `adr.digits` | Number of digits in ID | `4` |
+| `adr.template` | Default template format | `nygard` |
+| `adr.format` | ADR format (madr, nygard, etc.) | `nygard` |
 
 ### Examples
 
@@ -290,35 +156,61 @@ Configuration is stored in git config (local or global):
 # Set local config
 git adr config adr.template madr
 
-# Set global config
-git adr config --global adr.editor "code --wait"
+# Set format
+git adr config adr.format madr
 
 # List all config
 git adr config --list
 ```
 
-## ADR Format (MADR)
+## ADR Formats
 
-ADRs follow the [MADR](https://adr.github.io/madr/) format:
+git-adr supports multiple ADR formats:
+
+### Nygard (Default)
+
+The original ADR format by Michael Nygard.
 
 ```markdown
----
-id: 20240115-use-postgresql
-title: Use PostgreSQL for primary database
-date: 2024-01-15
-status: accepted
-tags: [database, infrastructure]
----
+# Use PostgreSQL for primary database
+
+## Status
+
+Accepted
+
+## Context
+
+We need to choose a database...
+
+## Decision
+
+We will use PostgreSQL...
+
+## Consequences
+
+- ACID compliance
+- Rich feature set
+```
+
+### MADR
+
+Markdown Architectural Decision Records format.
+
+```markdown
+# Use PostgreSQL for primary database
+
+## Status
+
+Accepted
 
 ## Context and Problem Statement
 
-We need to choose a database for our application...
+We need to choose a database...
 
 ## Decision Drivers
 
 * Performance requirements
 * Team expertise
-* Operational complexity
 
 ## Considered Options
 
@@ -329,16 +221,13 @@ We need to choose a database for our application...
 ## Decision Outcome
 
 Chosen option: "PostgreSQL", because...
-
-### Consequences
-
-#### Good
-- ACID compliance
-- Rich feature set
-
-#### Bad
-- Requires more operational expertise
 ```
+
+### Other Formats
+
+- **Y-Statement**: Concise one-sentence decision format
+- **Alexandrian**: Pattern-based format with forces
+- **Business Case**: MBA-style with cost-benefit analysis
 
 ## Git Notes Architecture
 
@@ -354,68 +243,96 @@ Notes are stored under:
 - `refs/notes/adr-index` - Search index
 - `refs/notes/adr-artifacts` - Binary attachments
 
+## AI Features
+
+> Requires installation with `--features ai`
+
+Configure your AI provider:
+
+```bash
+export ANTHROPIC_API_KEY="your-key"
+# or
+export OPENAI_API_KEY="your-key"
+# or
+export GOOGLE_API_KEY="your-key"
+# or
+export OLLAMA_HOST="http://localhost:11434"
+```
+
+## Wiki Synchronization
+
+> Requires installation with `--features wiki`
+
+Sync ADRs with GitHub or GitLab wikis:
+
+```bash
+# Configure wiki (GitHub)
+git adr config adr.wiki.provider github
+git adr config adr.wiki.repo owner/repo
+
+# Sync to wiki
+git adr sync --wiki
+```
+
 ## Development
 
 ### Setup
 
 ```bash
-# Clone the repository
 git clone https://github.com/zircote/git-adr.git
 cd git-adr
 
-# Install dependencies with uv
-uv sync --all-extras
+# Build
+cargo build
 
 # Run tests
-uv run pytest
+cargo test
 
-# Run with coverage
-uv run pytest --cov=src/git_adr --cov-report=term-missing
-```
+# Run with all features
+cargo test --all-features
 
-### Code Quality
+# Check lints
+cargo clippy --all-targets --all-features
 
-```bash
-# Format code
-uv run ruff format .
-
-# Lint and fix
-uv run ruff check . --fix
-
-# Type check
-uv run mypy src
-
-# Security scan
-uv run bandit -r src/
-
-# Dependency audit
-uv run pip-audit
+# Format
+cargo fmt
 ```
 
 ### Project Structure
 
 ```
-src/git_adr/
-├── __init__.py          # Package exports
-├── cli.py               # Main CLI entry point
-├── core/                # Core functionality
-│   ├── adr.py           # ADR data models
-│   ├── config.py        # Configuration management
-│   ├── git.py           # Git operations wrapper
-│   ├── notes.py         # Git notes management
-│   ├── index.py         # Search index
-│   └── templates.py     # ADR templates
-├── commands/            # CLI command implementations
-│   ├── basic.py         # Core commands (new, list, show, etc.)
-│   ├── ai_cmds.py       # AI-powered commands
-│   ├── wiki.py          # Wiki sync commands
-│   └── export.py        # Export/import commands
-├── ai/                  # AI service integration
-│   └── service.py       # LLM provider abstraction
-├── wiki/                # Wiki providers
-│   └── service.py       # GitHub/GitLab wiki sync
-└── formats/             # Format converters
-    └── docx.py          # DOCX export
+src/
+├── lib.rs           # Library entry point
+├── main.rs          # Binary entry point
+├── cli/             # CLI command implementations
+│   ├── mod.rs       # CLI definition
+│   ├── init.rs      # Initialize command
+│   ├── new.rs       # New ADR command
+│   └── ...          # Other commands
+├── core/            # Core business logic
+│   ├── adr.rs       # ADR data model
+│   ├── git.rs       # Git operations
+│   ├── notes.rs     # Git notes management
+│   ├── config.rs    # Configuration
+│   ├── index.rs     # Search index
+│   └── templates.rs # ADR templates
+├── ai/              # AI features (optional)
+├── wiki/            # Wiki sync (optional)
+└── export/          # Export formats (optional)
+```
+
+## Migration from v0.x (Python)
+
+Version 1.0 is a complete rewrite in Rust. The data format (git notes) is fully compatible, so your existing ADRs will work without changes. Some CLI flags may have changed - use `git adr --help` for current options.
+
+To access the Python version:
+
+```bash
+# Checkout the Python version
+git checkout python-final
+
+# Or install the last Python release
+pip install git-adr==0.3.0
 ```
 
 ## Contributing
@@ -423,7 +340,7 @@ src/git_adr/
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Run tests and linting (`uv run pytest && uv run ruff check .`)
+4. Run tests and linting (`cargo test && cargo clippy`)
 5. Commit your changes (`git commit -m 'Add amazing feature'`)
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
@@ -431,40 +348,6 @@ src/git_adr/
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
-
-## Claude Code Skill
-
-A Claude Code skill for AI-assisted ADR management. Turn natural language into properly formatted ADRs.
-
-### Why Use the Skill?
-
-- **Instant ADR creation**: Describe a decision, get a formatted ADR
-- **Six professional formats**: MADR, Nygard, Y-Statement, Alexandrian, Business Case, Planguage
-- **Git-native storage**: ADRs in git notes, not files cluttering your repo
-- **Direct execution**: Claude runs `git adr` commands, not just generates markdown
-
-### Installation
-
-```bash
-# Method 1: Copy from repository
-cp -r skills/git-adr ~/.claude/skills/
-
-# Method 2: Download from release
-curl -LO https://github.com/zircote/git-adr/releases/download/vX.Y.Z/git-adr-X.Y.Z.skill
-unzip git-adr-X.Y.Z.skill -d ~/.claude/skills/
-```
-
-### Quick Example
-
-```
-You: "We decided to use PostgreSQL because it has better JSON support"
-
-Claude: I'll create that ADR for you.
-> git adr new "Use PostgreSQL for primary database"
-Created ADR: 20251216-use-postgresql-for-primary-database
-```
-
-For full documentation, see **[docs/git-adr-skill.md](docs/git-adr-skill.md)**.
 
 ## Acknowledgments
 

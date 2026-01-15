@@ -6,9 +6,9 @@ Thank you for your interest in contributing to git-adr! This document provides g
 
 ### Prerequisites
 
-- Python 3.11 or higher
-- [uv](https://github.com/astral-sh/uv) (recommended) or pip
+- Rust 1.80 or higher
 - Git
+- Cargo (comes with Rust)
 
 ### Setting Up Your Development Environment
 
@@ -17,27 +17,30 @@ Thank you for your interest in contributing to git-adr! This document provides g
 git clone https://github.com/zircote/git-adr.git
 cd git-adr
 
-# Create virtual environment and install dependencies
-uv sync --all-extras
+# Build the project
+cargo build
 
 # Verify installation
-uv run git-adr --version
+cargo run -- --version
 ```
 
 ### Running Tests
 
 ```bash
 # Run all tests
-uv run pytest
+cargo test
 
-# Run with coverage
-uv run pytest --cov=src/git_adr --cov-report=term-missing
+# Run with verbose output
+cargo test -- --nocapture
 
-# Run specific test file
-uv run pytest tests/test_core.py
+# Run specific test
+cargo test test_name
 
-# Run tests matching a pattern
-uv run pytest -k "test_new"
+# Run tests with all features
+cargo test --all-features
+
+# Run specific test module
+cargo test core::adr
 ```
 
 ### Code Quality Checks
@@ -46,25 +49,24 @@ Before submitting a PR, ensure all checks pass:
 
 ```bash
 # Format code
-uv run ruff format .
+cargo fmt
 
-# Lint (with auto-fix)
-uv run ruff check . --fix
+# Check formatting without changes
+cargo fmt -- --check
 
-# Type check
-uv run mypy src
+# Run clippy lints
+cargo clippy --all-targets --all-features -- -D warnings
 
-# Security scan
-uv run bandit -r src/
+# Run security audit
+cargo deny check
 
-# Dependency audit
-uv run pip-audit
+# Generate docs and check for warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
 
 # Run all checks (as CI does)
-uv run ruff format --check . && \
-uv run ruff check . && \
-uv run mypy src && \
-uv run pytest
+cargo fmt -- --check && \
+cargo clippy --all-targets --all-features -- -D warnings && \
+cargo test --all-features
 ```
 
 ## Project Architecture
@@ -72,64 +74,84 @@ uv run pytest
 ### Directory Structure
 
 ```
-src/git_adr/
-├── __init__.py          # Package exports and version
-├── cli.py               # Typer CLI application setup
-├── core/                # Core business logic
-│   ├── __init__.py      # Core module exports
-│   ├── adr.py           # ADR dataclass and status enum
-│   ├── config.py        # Configuration management
-│   ├── git.py           # Git operations wrapper
-│   ├── notes.py         # Git notes CRUD operations
-│   ├── index.py         # Search index management
-│   └── templates.py     # ADR templates (MADR, etc.)
-├── commands/            # CLI command implementations
-│   ├── __init__.py
-│   ├── basic.py         # Core commands (new, list, show, edit, etc.)
-│   ├── ai_cmds.py       # AI-powered commands
-│   ├── wiki.py          # Wiki synchronization
-│   └── export.py        # Export/import functionality
-├── ai/                  # AI service layer
-│   └── service.py       # LLM provider abstraction
-├── wiki/                # Wiki providers
-│   └── service.py       # GitHub/GitLab wiki sync
-└── formats/             # Format converters
-    └── docx.py          # DOCX export
+src/
+├── lib.rs           # Library entry point, Error types
+├── main.rs          # Binary entry point
+├── cli/             # CLI command implementations
+│   ├── mod.rs       # CLI definition and Commands enum
+│   ├── init.rs      # Initialize command
+│   ├── new.rs       # New ADR command
+│   ├── list.rs      # List command
+│   ├── show.rs      # Show command
+│   ├── edit.rs      # Edit command
+│   └── ...          # Other commands
+├── core/            # Core business logic
+│   ├── mod.rs       # Module exports
+│   ├── adr.rs       # ADR struct and AdrStatus enum
+│   ├── config.rs    # Configuration management
+│   ├── git.rs       # Git operations wrapper
+│   ├── notes.rs     # Git notes CRUD operations
+│   ├── index.rs     # Search index management
+│   └── templates.rs # ADR templates
+├── ai/              # AI service layer (optional)
+│   ├── mod.rs       # Module exports
+│   ├── provider.rs  # Provider abstraction
+│   └── service.rs   # AI service implementation
+├── wiki/            # Wiki providers (optional)
+│   ├── mod.rs       # Module exports
+│   ├── github.rs    # GitHub wiki
+│   ├── gitlab.rs    # GitLab wiki
+│   └── service.rs   # Wiki service abstraction
+└── export/          # Format exporters (optional)
+    ├── mod.rs       # Module exports
+    ├── docx.rs      # DOCX export
+    ├── html.rs      # HTML export
+    └── json.rs      # JSON export
 ```
 
 ### Key Components
 
 #### Core Layer (`core/`)
 
-- **Git**: Low-level git operations wrapper
+- **Git**: Low-level git subprocess wrapper
 - **NotesManager**: CRUD operations for ADRs stored in git notes
 - **IndexManager**: Search index for fast full-text search
 - **ConfigManager**: Git config-based configuration
-- **ADR**: Dataclass representing an ADR with metadata
+- **Adr**: Struct representing an ADR with frontmatter metadata
 
-#### Command Layer (`commands/`)
+#### Command Layer (`cli/`)
 
-Commands are implemented as Typer commands that use core services:
+Commands are implemented using Clap derive:
 
-```python
-@app.command()
-def new(
-    title: Annotated[str, typer.Argument(help="ADR title")],
-    status: Annotated[str, typer.Option("--status", "-s")] = "proposed",
-):
-    """Create a new ADR."""
-    git = get_git()
-    config = ConfigManager(git).load()
-    notes = NotesManager(git, config)
-    # ... implementation
+```rust
+use clap::Args as ClapArgs;
+use anyhow::Result;
+
+#[derive(ClapArgs, Debug)]
+pub struct Args {
+    /// ADR title
+    pub title: String,
+
+    /// ADR status
+    #[arg(long, short, default_value = "proposed")]
+    pub status: String,
+}
+
+pub fn run(args: Args) -> Result<()> {
+    let git = Git::new();
+    let config = ConfigManager::new(git.clone()).load()?;
+    let notes = NotesManager::new(git, config);
+    // ... implementation
+    Ok(())
+}
 ```
 
 #### AI Layer (`ai/`)
 
-Abstracts LLM providers using LangChain:
+Abstracts LLM providers using langchain-rust:
 
-- OpenAI (GPT-4, GPT-4-mini)
 - Anthropic (Claude)
+- OpenAI (GPT-4)
 - Google (Gemini)
 - Ollama (local models)
 
@@ -160,118 +182,132 @@ chore: update dependencies
 
 ### Code Style
 
-- Follow PEP 8 (enforced by ruff)
-- Use type hints for all function signatures
-- Write docstrings for public functions
+- Follow Rust idioms and conventions
+- Use `#[must_use]` for functions that return values that shouldn't be ignored
+- Use `const fn` where possible
+- Write doc comments for all public items
 - Keep functions focused and small
-- Prefer composition over inheritance
+- Prefer borrowing over ownership when possible
+- Use `impl Into<String>` for flexible string parameters
 
 ### Testing Guidelines
 
 - Write tests for all new functionality
-- Use pytest fixtures from `conftest.py`
+- Use inline `#[cfg(test)]` modules for unit tests
+- Use `tests/` directory for integration tests
 - Test both success and error cases
 - Use meaningful test names: `test_<function>_<scenario>_<expected>`
 
 Example test structure:
 
-```python
-class TestNotesManager:
-    """Tests for NotesManager operations."""
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    def test_add_creates_note(self, initialized_adr_repo: Path) -> None:
-        """Test that add() creates a git note for the ADR."""
-        git = Git(cwd=initialized_adr_repo)
-        config = ConfigManager(git).load()
-        notes = NotesManager(git, config)
+    #[test]
+    fn test_adr_from_markdown_parses_frontmatter() {
+        let content = r#"---
+title: Test ADR
+status: proposed
+---
 
-        adr = ADR(
-            metadata=ADRMetadata(
-                id="test-adr",
-                title="Test",
-                date=date.today(),
-                status=ADRStatus.PROPOSED,
-            ),
-            content="## Context\n\nTest content.",
-        )
+## Context
 
-        notes.add(adr)
-        result = notes.get("test-adr")
+Test content.
+"#;
 
-        assert result is not None
-        assert result.metadata.title == "Test"
+        let adr = Adr::from_markdown(
+            "ADR-0001".to_string(),
+            "abc123".to_string(),
+            content,
+        ).unwrap();
+
+        assert_eq!(adr.title(), "Test ADR");
+        assert_eq!(*adr.status(), AdrStatus::Proposed);
+    }
+}
 ```
-
-### Available Fixtures
-
-From `tests/conftest.py`:
-
-- `temp_git_repo`: Empty git repository
-- `temp_git_repo_with_commit`: Git repo with initial commit
-- `initialized_adr_repo`: Git repo with ADR initialized
 
 ## Adding New Features
 
 ### Adding a New Command
 
-1. Add the command in appropriate file under `commands/`:
+1. Create a new file under `cli/`:
 
-```python
-# commands/basic.py
-@app.command()
-def mycommand(
-    arg: Annotated[str, typer.Argument(help="Description")],
-    option: Annotated[str, typer.Option("--option", "-o")] = "default",
-):
-    """Command description for help text."""
-    # Implementation
+```rust
+// cli/mycommand.rs
+use anyhow::Result;
+use clap::Args as ClapArgs;
+
+#[derive(ClapArgs, Debug)]
+pub struct Args {
+    /// Description of argument
+    pub arg: String,
+
+    /// Description of option
+    #[arg(long, short, default_value = "default")]
+    pub option: String,
+}
+
+pub fn run(args: Args) -> Result<()> {
+    // Implementation
+    Ok(())
+}
 ```
 
-2. Add tests in `tests/test_commands.py`
-3. Update README with documentation
+2. Register in `cli/mod.rs`:
+
+```rust
+pub mod mycommand;
+
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    // ... existing commands
+    MyCommand(mycommand::Args),
+}
+```
+
+3. Handle in `main.rs`:
+
+```rust
+Commands::MyCommand(args) => git_adr::cli::mycommand::run(args),
+```
+
+4. Add tests
+5. Update README with documentation
 
 ### Adding a New AI Provider
 
-1. Add provider to `ai/service.py`:
-
-```python
-class AIService:
-    PROVIDER_ENV_VARS = {
-        # ... existing
-        "newprovider": "NEWPROVIDER_API_KEY",
-    }
-
-    DEFAULT_MODELS = {
-        # ... existing
-        "newprovider": "default-model",
-    }
-
-    def _get_llm(self):
-        # ... existing
-        elif self.provider == "newprovider":
-            from langchain_newprovider import ChatNewProvider
-            self._llm = ChatNewProvider(
-                model=self.model,
-                temperature=self.temperature,
-            )
-```
-
-2. Add dependency to `pyproject.toml` under `[project.optional-dependencies].ai`
-3. Add tests with mocked provider
+1. Update `ai/provider.rs` to add the new provider variant
+2. Update `ai/service.rs` to handle the new provider
+3. Add any required dependencies to `Cargo.toml` under the `ai` feature
+4. Add tests with mocked provider
 
 ### Adding Export Format
 
-1. Create format module under `formats/`:
+1. Create format module under `export/`:
 
-```python
-# formats/newformat.py
-def export_newformat(adrs: list[ADR], output_path: Path) -> None:
-    """Export ADRs to new format."""
-    # Implementation
+```rust
+// export/newformat.rs
+use crate::core::Adr;
+use crate::Error;
+use std::path::Path;
+
+pub struct NewFormatExporter {
+    // configuration
+}
+
+impl NewFormatExporter {
+    pub fn export(&self, adr: &Adr, path: &Path) -> Result<(), Error> {
+        // Implementation
+    }
+}
 ```
 
-2. Register in `commands/export.py`
-3. Add to optional dependencies if needed
+2. Register in `export/mod.rs`
+3. Add to `ExportFormat` enum
+4. Add dependencies to `Cargo.toml` if needed
 
 ## Pull Request Process
 
