@@ -63,9 +63,7 @@ pub fn run(args: Args) -> Result<()> {
 
     // Apply quick edits
     if let Some(status_str) = &args.status {
-        let status: AdrStatus = status_str
-            .parse()
-            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        let status: AdrStatus = status_str.parse().map_err(|e| anyhow::anyhow!("{}", e))?;
         eprintln!("  Status: {} → {}", adr.frontmatter.status, status);
         adr.frontmatter.status = status;
         modified = true;

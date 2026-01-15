@@ -140,7 +140,11 @@ pub fn run(args: Args) -> Result<()> {
             }
         }
         fs::write(&output_path, &output)?;
-        eprintln!("{} Metrics exported to: {}", "✓".green(), output_path.cyan());
+        eprintln!(
+            "{} Metrics exported to: {}",
+            "✓".green(),
+            output_path.cyan()
+        );
     } else {
         println!("{output}");
     }

@@ -90,11 +90,7 @@ pub fn run(args: Args) -> Result<()> {
         // Just print the converted content
         println!("{}", adr.to_markdown()?);
         eprintln!();
-        eprintln!(
-            "{} Use {} to save changes",
-            "→".blue(),
-            "--in-place".cyan()
-        );
+        eprintln!("{} Use {} to save changes", "→".blue(), "--in-place".cyan());
     }
 
     Ok(())

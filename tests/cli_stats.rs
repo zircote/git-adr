@@ -53,7 +53,14 @@ fn setup_test_repo_with_adrs() -> TempDir {
     Command::cargo_bin("git-adr")
         .expect("Failed to find binary")
         .current_dir(path)
-        .args(["new", "First Decision", "--status", "accepted", "--tag", "api"])
+        .args([
+            "new",
+            "First Decision",
+            "--status",
+            "accepted",
+            "--tag",
+            "api",
+        ])
         .assert()
         .success();
 
@@ -73,7 +80,14 @@ fn setup_test_repo_with_adrs() -> TempDir {
     Command::cargo_bin("git-adr")
         .expect("Failed to find binary")
         .current_dir(path)
-        .args(["new", "Second Decision", "--status", "proposed", "--tag", "database"])
+        .args([
+            "new",
+            "Second Decision",
+            "--status",
+            "proposed",
+            "--tag",
+            "database",
+        ])
         .assert()
         .success();
 
@@ -93,7 +107,14 @@ fn setup_test_repo_with_adrs() -> TempDir {
     Command::cargo_bin("git-adr")
         .expect("Failed to find binary")
         .current_dir(path)
-        .args(["new", "Third Decision", "--status", "rejected", "--tag", "api"])
+        .args([
+            "new",
+            "Third Decision",
+            "--status",
+            "rejected",
+            "--tag",
+            "api",
+        ])
         .assert()
         .success();
 

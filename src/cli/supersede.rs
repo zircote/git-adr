@@ -62,7 +62,10 @@ pub fn run(args: Args) -> Result<()> {
     new_adr.frontmatter.format = Some(format.to_string());
 
     // Inherit tags from old ADR
-    new_adr.frontmatter.tags.clone_from(&old_adr.frontmatter.tags);
+    new_adr
+        .frontmatter
+        .tags
+        .clone_from(&old_adr.frontmatter.tags);
 
     // Add supersedes link
     new_adr.frontmatter.supersedes = Some(old_adr.id.clone());

@@ -62,9 +62,7 @@ pub fn run(args: Args) -> Result<()> {
 
     // Filter by status
     if let Some(status_str) = &args.status {
-        let status: AdrStatus = status_str
-            .parse()
-            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        let status: AdrStatus = status_str.parse().map_err(|e| anyhow::anyhow!("{}", e))?;
         adrs.retain(|a| a.frontmatter.status == status);
     }
 
@@ -100,8 +98,7 @@ pub fn run(args: Args) -> Result<()> {
         for (idx, line) in lines.iter().enumerate() {
             if pattern.is_match(line) {
                 // Collect context
-                let context_before: Vec<String> = lines
-                    [idx.saturating_sub(args.context)..idx]
+                let context_before: Vec<String> = lines[idx.saturating_sub(args.context)..idx]
                     .iter()
                     .map(|s| (*s).to_string())
                     .collect();

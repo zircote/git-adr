@@ -52,7 +52,14 @@ fn setup_test_repo_with_adr() -> TempDir {
     Command::cargo_bin("git-adr")
         .expect("Failed to find binary")
         .current_dir(path)
-        .args(["new", "Original Decision", "--status", "accepted", "--tag", "api"])
+        .args([
+            "new",
+            "Original Decision",
+            "--status",
+            "accepted",
+            "--tag",
+            "api",
+        ])
         .assert()
         .success();
 
@@ -84,7 +91,9 @@ fn test_supersede_creates_new_adr() {
         .success()
         .stderr(predicate::str::contains("Superseding ADR"))
         .stderr(predicate::str::contains("Created new ADR: ADR-0002"))
-        .stderr(predicate::str::contains("Updated ADR-0001 status to superseded"));
+        .stderr(predicate::str::contains(
+            "Updated ADR-0001 status to superseded",
+        ));
 
     // Verify old ADR is superseded
     let mut show_cmd = Command::cargo_bin("git-adr").expect("Failed to find binary");

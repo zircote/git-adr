@@ -53,9 +53,10 @@ pub fn run(args: Args) -> Result<()> {
 
     // Get file name
     let filename = args.name.clone().unwrap_or_else(|| {
-        file_path
-            .file_name()
-            .map_or_else(|| "attachment".to_string(), |s| s.to_string_lossy().to_string())
+        file_path.file_name().map_or_else(
+            || "attachment".to_string(),
+            |s| s.to_string_lossy().to_string(),
+        )
     });
 
     eprintln!(

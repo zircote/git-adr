@@ -85,16 +85,11 @@ pub fn run(args: Args) -> Result<()> {
                     );
                 }
                 imported += 1;
-            }
+            },
             Err(e) => {
-                eprintln!(
-                    "  {} Skipped {}: {}",
-                    "!".yellow(),
-                    file.display(),
-                    e
-                );
+                eprintln!("  {} Skipped {}: {}", "!".yellow(), file.display(), e);
                 skipped += 1;
-            }
+            },
         }
     }
 
@@ -203,9 +198,7 @@ fn import_json(content: &str) -> Result<Adr> {
         .ok_or_else(|| anyhow::anyhow!("Missing 'title' field"))?
         .to_string();
 
-    let status_str = data["status"]
-        .as_str()
-        .unwrap_or("proposed");
+    let status_str = data["status"].as_str().unwrap_or("proposed");
     let status: AdrStatus = status_str.parse().unwrap_or_default();
 
     let body = data["body"]
@@ -282,10 +275,7 @@ fn import_markdown(
             adr.id
         };
 
-        return Ok(Adr {
-            id,
-            ..adr
-        });
+        return Ok(Adr { id, ..adr });
     }
 
     // Fall back to simple markdown parsing
@@ -326,7 +316,14 @@ fn extract_status_from_content(content: &str) -> Option<String> {
                 continue;
             }
             // Common statuses
-            for status in &["accepted", "proposed", "deprecated", "superseded", "rejected", "draft"] {
+            for status in &[
+                "accepted",
+                "proposed",
+                "deprecated",
+                "superseded",
+                "rejected",
+                "draft",
+            ] {
                 if trimmed.contains(status) {
                     return Some((*status).to_string());
                 }

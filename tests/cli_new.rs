@@ -108,7 +108,14 @@ fn test_new_with_tags() {
 
     let mut cmd = Command::cargo_bin("git-adr").expect("Failed to find binary");
     cmd.current_dir(temp_dir.path())
-        .args(["new", "Tagged Decision", "--tag", "database", "--tag", "infrastructure"])
+        .args([
+            "new",
+            "Tagged Decision",
+            "--tag",
+            "database",
+            "--tag",
+            "infrastructure",
+        ])
         .assert()
         .success()
         .stderr(predicate::str::contains("Tags: database, infrastructure"));

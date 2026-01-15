@@ -67,10 +67,7 @@ pub fn run(args: Args) -> Result<()> {
     config_manager.save(&config)?;
 
     // Configure notes fetch/push refspecs for automatic sync
-    let _ = git.config_set(
-        "remote.origin.fetch",
-        "+refs/notes/*:refs/notes/*",
-    );
+    let _ = git.config_set("remote.origin.fetch", "+refs/notes/*:refs/notes/*");
 
     eprintln!("  Prefix: {}", config.prefix);
     eprintln!("  Digits: {}", config.digits);

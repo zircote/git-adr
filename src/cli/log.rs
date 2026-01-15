@@ -37,10 +37,11 @@ pub fn run(args: Args) -> Result<()> {
     // Get ADRs indexed by commit
     let adrs = notes.list()?;
     let adr_map: std::collections::HashMap<String, Vec<_>> =
-        adrs.into_iter().fold(std::collections::HashMap::new(), |mut acc, adr| {
-            acc.entry(adr.commit.clone()).or_default().push(adr);
-            acc
-        });
+        adrs.into_iter()
+            .fold(std::collections::HashMap::new(), |mut acc, adr| {
+                acc.entry(adr.commit.clone()).or_default().push(adr);
+                acc
+            });
 
     // Get recent commits
     let log_output = git.run_output(&[
