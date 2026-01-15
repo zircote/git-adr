@@ -261,6 +261,113 @@ PLANGUAGE_TEMPLATE = """# {title}
 <!-- Potential risks and mitigation -->
 """
 
+STRUCTURED_MADR_TEMPLATE = """# ADR-{id}: {title}
+
+## Status
+
+{status}
+
+## Context
+
+<!-- Background, problem statement, current limitations -->
+
+## Decision Drivers
+
+### Primary Drivers
+
+<!-- Main factors influencing the decision -->
+
+### Secondary Drivers
+
+<!-- Additional considerations -->
+
+## Considered Options
+
+### Option 1: [Name]
+
+<!-- Description of this option -->
+
+**Risk Assessment:**
+
+| Dimension | Level | Notes |
+|-----------|-------|-------|
+| Technical | Low/Medium/High | |
+| Schedule | Low/Medium/High | |
+| Ecosystem | Low/Medium/High | |
+
+### Option 2: [Name]
+
+<!-- Description of this option -->
+
+**Risk Assessment:**
+
+| Dimension | Level | Notes |
+|-----------|-------|-------|
+| Technical | Low/Medium/High | |
+| Schedule | Low/Medium/High | |
+| Ecosystem | Low/Medium/High | |
+
+## Decision
+
+<!-- Chosen approach and implementation specifics -->
+
+## Consequences
+
+### Positive
+
+<!-- List positive outcomes -->
+
+### Negative
+
+<!-- List negative outcomes -->
+
+### Neutral
+
+<!-- List neutral outcomes -->
+
+## Decision Outcome
+
+<!-- Summary and risk mitigation strategies -->
+
+## Related Decisions
+
+<!-- Typed links to connected ADRs -->
+<!-- - Supersedes: [ADR-ID] -->
+<!-- - Superseded by: [ADR-ID] -->
+<!-- - Related to: [ADR-ID] -->
+
+## Links
+
+<!-- External resources and references -->
+
+## More Information
+
+- **Created:** {date}
+- **Author:** {deciders}
+
+## Audit
+
+### Compliance Review
+
+| Date | Status | Reviewer |
+|------|--------|----------|
+| | | |
+
+### Findings
+
+| Finding | Files | Lines | Assessment |
+|---------|-------|-------|------------|
+| | | | |
+
+### Summary
+
+<!-- Audit summary -->
+
+### Required Actions
+
+<!-- Actions required based on audit -->
+"""
+
 
 # =============================================================================
 # Template Registry
@@ -273,6 +380,7 @@ TEMPLATES: dict[str, str] = {
     "alexandrian": ALEXANDRIAN_TEMPLATE,
     "business": BUSINESS_CASE_TEMPLATE,
     "planguage": PLANGUAGE_TEMPLATE,
+    "structured-madr": STRUCTURED_MADR_TEMPLATE,
 }
 
 TEMPLATE_DESCRIPTIONS: dict[str, str] = {
@@ -282,6 +390,7 @@ TEMPLATE_DESCRIPTIONS: dict[str, str] = {
     "alexandrian": "Alexandrian - Pattern-language inspired format",
     "business": "Business Case - Extended business justification",
     "planguage": "Planguage - Quality-focused measurable format",
+    "structured-madr": "Structured MADR - Extended MADR with audit trail and risk assessment",
 }
 
 
@@ -305,6 +414,16 @@ class TemplateContext:
     deciders: list[str]
     supersedes: str | None = None
 
+    # Structured MADR extended fields
+    description: str | None = None
+    adr_type: str | None = None
+    category: str | None = None
+    project: str | None = None
+    technologies: list[str] | None = None
+    audience: list[str] | None = None
+    related: list[str] | None = None
+    author: str | None = None
+
     def to_dict(self) -> dict[str, str]:
         """Convert to dictionary for template substitution.
 
@@ -319,6 +438,15 @@ class TemplateContext:
             "tags": ", ".join(self.tags) if self.tags else "",
             "deciders": ", ".join(self.deciders) if self.deciders else "",
             "supersedes": self.supersedes or "",
+            # Structured MADR extended fields
+            "description": self.description or "",
+            "type": self.adr_type or "adr",
+            "category": self.category or "",
+            "project": self.project or "",
+            "technologies": ", ".join(self.technologies) if self.technologies else "",
+            "audience": ", ".join(self.audience) if self.audience else "",
+            "related": ", ".join(self.related) if self.related else "",
+            "author": self.author or "",
         }
 
 
@@ -453,6 +581,17 @@ class TemplateEngine:
             Detected format name, or "unknown".
         """
         content_lower = content.lower()
+
+        # Check for structured-madr distinctive features (must check before madr)
+        # Structured MADR has audit section and decision drivers
+        if "## audit" in content_lower and "## decision drivers" in content_lower:
+            return "structured-madr"
+        # Also check for risk assessment tables (distinctive feature)
+        if "## decision drivers" in content_lower and "risk assessment" in content_lower:
+            return "structured-madr"
+        # ADR-{id}: title format in header
+        if content_lower.startswith("# adr-") and "## audit" in content_lower:
+            return "structured-madr"
 
         # Check for distinctive sections
         if "## options considered" in content_lower:

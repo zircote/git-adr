@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+import datetime as dt
 from datetime import date, datetime
 from enum import Enum
 from typing import Any
@@ -81,6 +82,17 @@ class ADRMetadata:
     # Format metadata
     format: str = "madr"
 
+    # Structured MADR extended fields
+    description: str | None = None
+    adr_type: str | None = None  # 'type' in YAML, renamed to avoid Python keyword
+    category: str | None = None
+    project: str | None = None
+    technologies: list[str] = field(default_factory=list)
+    audience: list[str] = field(default_factory=list)
+    related: list[str] = field(default_factory=list)
+    author: str | None = None
+    updated: dt.date | None = None
+
     # Internal tracking (not serialized to frontmatter)
     note_sha: str | None = field(default=None, repr=False)
 
@@ -115,6 +127,26 @@ class ADRMetadata:
         if self.format and self.format != "madr":
             data["format"] = self.format
 
+        # Structured MADR extended fields
+        if self.description:
+            data["description"] = self.description
+        if self.adr_type:
+            data["type"] = self.adr_type
+        if self.category:
+            data["category"] = self.category
+        if self.project:
+            data["project"] = self.project
+        if self.technologies:
+            data["technologies"] = self.technologies
+        if self.audience:
+            data["audience"] = self.audience
+        if self.related:
+            data["related"] = self.related
+        if self.author:
+            data["author"] = self.author
+        if self.updated:
+            data["updated"] = self.updated.isoformat()
+
         return data
 
     @classmethod
@@ -148,6 +180,17 @@ class ADRMetadata:
             except ValueError:
                 status = ADRStatus.PROPOSED
 
+        # Parse updated date if present
+        updated_value = data.get("updated")
+        parsed_updated: date | None = None
+        if updated_value:
+            if isinstance(updated_value, str):
+                parsed_updated = date.fromisoformat(updated_value[:10])
+            elif isinstance(updated_value, datetime):
+                parsed_updated = updated_value.date()
+            elif isinstance(updated_value, date):
+                parsed_updated = updated_value
+
         return cls(
             id=str(data.get("id", "")),
             title=str(data.get("title", "")),
@@ -166,6 +209,16 @@ class ADRMetadata:
             supersedes=data.get("supersedes"),
             superseded_by=data.get("superseded_by"),
             format=str(data.get("format", "madr")),
+            # Structured MADR extended fields
+            description=data.get("description"),
+            adr_type=data.get("type"),
+            category=data.get("category"),
+            project=data.get("project"),
+            technologies=ensure_list(data.get("technologies")),
+            audience=ensure_list(data.get("audience")),
+            related=ensure_list(data.get("related")),
+            author=data.get("author"),
+            updated=parsed_updated,
         )
 
 
