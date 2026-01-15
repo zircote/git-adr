@@ -180,17 +180,28 @@ impl IndexManager {
 
     /// Get the commit hash used to store the index.
     fn get_index_commit(&self) -> Result<String, Error> {
-        // Use the first commit in the repository
-        let output = self
+        // Try to get the first commit in the repository
+        // This may fail in empty repositories with no commits
+        match self
             .git
-            .run_output(&["rev-list", "--max-parents=0", "HEAD"])?;
-        let first_line = output.lines().next().unwrap_or("").trim();
-
-        if first_line.is_empty() {
-            // No commits yet, use HEAD
-            self.git.head()
-        } else {
-            Ok(first_line.to_string())
+            .run_output(&["rev-list", "--max-parents=0", "HEAD"])
+        {
+            Ok(output) => {
+                let first_line = output.lines().next().unwrap_or("").trim();
+                if first_line.is_empty() {
+                    // No commits yet, use HEAD (may also fail)
+                    self.git.head()
+                } else {
+                    Ok(first_line.to_string())
+                }
+            },
+            Err(_) => {
+                // Empty repository with no commits - try HEAD, then fall back to empty tree
+                self.git.head().or_else(|_| {
+                    // Use git's empty tree hash as fallback for truly empty repos
+                    Ok("4b825dc642cb6eb9a060e54bf8d69288fbee4904".to_string())
+                })
+            },
         }
     }
 }

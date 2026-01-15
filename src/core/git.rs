@@ -186,6 +186,37 @@ impl Git {
         self.run_silent(&["config", key, value])
     }
 
+    /// Unset a git config value.
+    ///
+    /// If `all` is true, removes all values for multi-valued keys.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the config cannot be unset.
+    pub fn config_unset(&self, key: &str, all: bool) -> Result<(), Error> {
+        let args: Vec<&str> = if all {
+            vec!["config", "--unset-all", key]
+        } else {
+            vec!["config", "--unset", key]
+        };
+
+        // Ignore error if the key doesn't exist (exit code 5)
+        let output = self.run(&args)?;
+        if output.status.success() || output.status.code() == Some(5) {
+            Ok(())
+        } else {
+            Err(Error::Git {
+                message: format!(
+                    "Failed to unset config {key}: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ),
+                command: args.iter().map(|s| (*s).to_string()).collect(),
+                exit_code: output.status.code().unwrap_or(-1),
+                stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+            })
+        }
+    }
+
     /// Get notes content for a commit.
     ///
     /// # Errors

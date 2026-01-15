@@ -1,14 +1,14 @@
 # git-adr Makefile
-# Build, test, and install git-adr following git extension conventions
+# Build, test, and install git-adr (Rust implementation)
 
-.PHONY: all clean test test-unit test-integration test-coverage lint format check \
-        build man-pages completions install install-bin install-man install-completions \
-        uninstall dist release help ci dev-install docs typecheck security audit \
-        binary binary-clean smoke-test \
-        version bump-patch bump-minor bump-major tag release-patch release-minor release-major
+.PHONY: all clean test test-unit lint format check build build-release \
+        install install-bin uninstall help ci dev docs \
+        version bump-patch bump-minor bump-major tag \
+        release-patch release-minor release-major \
+        clippy audit deny completions
 
 # ============================================================
-# Configuration (following gh CLI conventions)
+# Configuration
 # ============================================================
 
 DESTDIR ?=
@@ -23,23 +23,18 @@ ZSH_COMPLETION_DIR ?= $(datadir)/zsh/site-functions
 FISH_COMPLETION_DIR ?= $(datadir)/fish/vendor_completions.d
 
 # Project paths
-VENV := .venv
-VENV_BIN := $(VENV)/bin
-DIST_DIR := dist
-BUILD_DIR := build
+TARGET_DIR := target
 SHARE_DIR := share
-MAN_SRC_DIR := docs/man
-MAN_OUT_DIR := $(SHARE_DIR)/man/man1
 COMPLETION_DIR := $(SHARE_DIR)/completions
 
-# Test directories
-TEST_DIR := tests
-TEST_TMP_DIR := $(TEST_DIR)/.tmp
-COVERAGE_DIR := coverage
-COVERAGE_THRESHOLD := 95
+# Binary name
+BINARY := git-adr
 
-# Version from pyproject.toml
-VERSION := $(shell grep -m1 'version' pyproject.toml | cut -d'"' -f2)
+# Version from Cargo.toml
+VERSION := $(shell grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
+
+# Features
+FEATURES ?= all
 
 # ============================================================
 # Default target
@@ -55,34 +50,25 @@ help:
 	@echo "git-adr Makefile (v$(VERSION))"
 	@echo ""
 	@echo "Build:"
-	@echo "  make build          Build package and all artifacts"
-	@echo "  make man-pages      Generate man pages (requires pandoc)"
+	@echo "  make build          Build debug binary"
+	@echo "  make build-release  Build optimized release binary"
 	@echo "  make completions    Generate shell completion scripts"
-	@echo "  make dist           Build distribution packages"
 	@echo ""
 	@echo "Install (may require sudo):"
-	@echo "  make install        Install everything (bin, man, completions)"
-	@echo "  make install-bin    Install binary only"
-	@echo "  make install-man    Install man pages only"
-	@echo "  make install-completions  Install shell completions only"
+	@echo "  make install        Install binary to $(bindir)"
+	@echo "  make install-completions  Install shell completions"
 	@echo "  make uninstall      Remove installed files"
 	@echo ""
 	@echo "Development:"
-	@echo "  make dev-install    Install in development mode"
-	@echo "  make test           Run all tests with coverage"
-	@echo "  make test-quick     Quick test run (no coverage)"
-	@echo "  make lint           Run linter"
-	@echo "  make format         Format code"
-	@echo "  make typecheck      Run mypy type checking"
-	@echo "  make security       Run bandit security scan"
-	@echo "  make audit          Run pip-audit dependency check"
-	@echo "  make check          Run lint + format check"
+	@echo "  make test           Run all tests"
+	@echo "  make test-unit      Run unit tests only"
+	@echo "  make lint           Run clippy lints"
+	@echo "  make format         Format code with rustfmt"
+	@echo "  make check          Run format check + clippy"
+	@echo "  make audit          Run cargo audit (security)"
+	@echo "  make deny           Run cargo deny (licenses/advisories)"
 	@echo "  make ci             Full CI checks (mirrors GitHub Actions)"
-	@echo ""
-	@echo "Binary (standalone executable):"
-	@echo "  make binary         Build standalone binary with PyInstaller"
-	@echo "  make binary-clean   Clean and rebuild binary"
-	@echo "  make smoke-test     Run smoke tests against binary"
+	@echo "  make docs           Generate documentation"
 	@echo ""
 	@echo "Version:"
 	@echo "  make version        Show current version"
@@ -92,7 +78,6 @@ help:
 	@echo "  make tag            Create git tag for current version"
 	@echo ""
 	@echo "Release:"
-	@echo "  make release        Build release tarball with all artifacts"
 	@echo "  make release-patch  Bump patch, tag, ready to push"
 	@echo "  make release-minor  Bump minor, tag, ready to push"
 	@echo "  make release-major  Bump major, tag, ready to push"
@@ -101,55 +86,34 @@ help:
 	@echo "Configuration:"
 	@echo "  prefix=$(prefix)"
 	@echo "  DESTDIR=$(DESTDIR)"
+	@echo "  FEATURES=$(FEATURES)"
 
 # ============================================================
 # Build targets
 # ============================================================
 
-build: man-pages completions
-	@echo "Build complete. Run 'make install' to install."
+build:
+	cargo build --features $(FEATURES)
 
-# Generate man pages from markdown (requires pandoc)
-man-pages:
-	@echo "Generating man pages..."
-	@mkdir -p $(MAN_OUT_DIR)
-	@if command -v pandoc >/dev/null 2>&1; then \
-		for md in $(MAN_SRC_DIR)/*.md; do \
-			name=$$(basename $$md .md); \
-			echo "  $$name"; \
-			pandoc -s -t man $$md -o $(MAN_OUT_DIR)/$$name 2>/dev/null || true; \
-		done; \
-	else \
-		echo "Warning: pandoc not installed, skipping man page generation"; \
-		echo "Install with: brew install pandoc"; \
-	fi
+build-release:
+	cargo build --release --features $(FEATURES)
 
 # Generate shell completion scripts
-completions:
+completions: build
 	@echo "Generating shell completions..."
 	@mkdir -p $(COMPLETION_DIR)
-	@if [ -x "$(VENV_BIN)/git-adr" ]; then \
-		$(VENV_BIN)/git-adr completion bash > $(COMPLETION_DIR)/git-adr.bash 2>/dev/null || true; \
-		$(VENV_BIN)/git-adr completion zsh > $(COMPLETION_DIR)/_git-adr 2>/dev/null || true; \
-		$(VENV_BIN)/git-adr completion fish > $(COMPLETION_DIR)/git-adr.fish 2>/dev/null || true; \
-		echo "  bash: $(COMPLETION_DIR)/git-adr.bash"; \
-		echo "  zsh:  $(COMPLETION_DIR)/_git-adr"; \
-		echo "  fish: $(COMPLETION_DIR)/git-adr.fish"; \
-	else \
-		echo "Warning: git-adr not installed in venv, run 'make dev-install' first"; \
-	fi
-
-# Build distribution packages
-dist: build
-	@echo "Building distribution packages..."
-	uv build
-	@echo "Distribution packages in $(DIST_DIR)/"
+	@$(TARGET_DIR)/debug/$(BINARY) completion bash > $(COMPLETION_DIR)/git-adr.bash 2>/dev/null || \
+		echo "  (bash completion generation not yet implemented)"
+	@$(TARGET_DIR)/debug/$(BINARY) completion zsh > $(COMPLETION_DIR)/_git-adr 2>/dev/null || \
+		echo "  (zsh completion generation not yet implemented)"
+	@$(TARGET_DIR)/debug/$(BINARY) completion fish > $(COMPLETION_DIR)/git-adr.fish 2>/dev/null || \
+		echo "  (fish completion generation not yet implemented)"
 
 # ============================================================
-# Installation targets (following gh CLI conventions)
+# Installation targets
 # ============================================================
 
-install: install-bin install-man install-completions
+install: install-bin
 	@echo ""
 	@echo "git-adr $(VERSION) installed successfully!"
 	@echo ""
@@ -157,34 +121,12 @@ install: install-bin install-man install-completions
 	@echo "  git adr init              # Initialize in a repository"
 	@echo "  git adr new 'Title'       # Create an ADR"
 	@echo "  git adr list              # List all ADRs"
-	@echo ""
-	@echo "Enable completion (if not auto-loaded):"
-	@echo "  source $(DESTDIR)$(BASH_COMPLETION_DIR)/git-adr"
 
-install-bin:
+install-bin: build-release
 	@echo "Installing git-adr binary..."
-	@if [ -x "$(VENV_BIN)/git-adr" ]; then \
-		install -d $(DESTDIR)$(bindir); \
-		install -m 755 $(VENV_BIN)/git-adr $(DESTDIR)$(bindir)/git-adr; \
-		echo "Installed to $(DESTDIR)$(bindir)/git-adr"; \
-	else \
-		echo "Error: git-adr not found in venv. Run 'make dev-install' first."; \
-		echo ""; \
-		echo "Alternative: Install directly with:"; \
-		echo "  uv tool install git-adr"; \
-		echo "  # or: pipx install git-adr"; \
-		exit 1; \
-	fi
-
-install-man: man-pages
-	@echo "Installing man pages..."
-	@if [ -d "$(MAN_OUT_DIR)" ] && [ -n "$$(ls -A $(MAN_OUT_DIR) 2>/dev/null)" ]; then \
-		install -d $(DESTDIR)$(mandir)/man1; \
-		install -m 644 $(MAN_OUT_DIR)/* $(DESTDIR)$(mandir)/man1/; \
-		echo "Installed to $(DESTDIR)$(mandir)/man1/"; \
-	else \
-		echo "No man pages found. Run 'make man-pages' first (requires pandoc)."; \
-	fi
+	install -d $(DESTDIR)$(bindir)
+	install -m 755 $(TARGET_DIR)/release/$(BINARY) $(DESTDIR)$(bindir)/$(BINARY)
+	@echo "Installed to $(DESTDIR)$(bindir)/$(BINARY)"
 
 install-completions: completions
 	@echo "Installing shell completions..."
@@ -206,173 +148,119 @@ install-completions: completions
 
 uninstall:
 	@echo "Uninstalling git-adr..."
-	rm -f $(DESTDIR)$(bindir)/git-adr
-	rm -f $(DESTDIR)$(mandir)/man1/git-adr*.1
+	rm -f $(DESTDIR)$(bindir)/$(BINARY)
 	rm -f $(DESTDIR)$(BASH_COMPLETION_DIR)/git-adr
 	rm -f $(DESTDIR)$(ZSH_COMPLETION_DIR)/_git-adr
 	rm -f $(DESTDIR)$(FISH_COMPLETION_DIR)/git-adr.fish
 	@echo "Uninstall complete."
 
 # ============================================================
-# Release target (creates tarball with all artifacts)
-# ============================================================
-
-RELEASE_NAME := git-adr-$(VERSION)
-RELEASE_DIR := $(BUILD_DIR)/$(RELEASE_NAME)
-
-release: build
-	@echo "Building release tarball..."
-	@rm -rf $(RELEASE_DIR)
-	@mkdir -p $(RELEASE_DIR)
-	# Copy artifacts
-	cp -r $(SHARE_DIR)/* $(RELEASE_DIR)/ 2>/dev/null || true
-	cp README.md $(RELEASE_DIR)/
-	cp LICENSE $(RELEASE_DIR)/ 2>/dev/null || true
-	cp script/install.sh $(RELEASE_DIR)/ 2>/dev/null || true
-	# Create tarball
-	@mkdir -p $(DIST_DIR)
-	tar -czf $(DIST_DIR)/$(RELEASE_NAME).tar.gz -C $(BUILD_DIR) $(RELEASE_NAME)
-	@echo "Created $(DIST_DIR)/$(RELEASE_NAME).tar.gz"
-
-# ============================================================
-# Version management
-# ============================================================
-
-# Show current version
-version:
-	@python3 scripts/bump-version.py --show
-
-# Bump patch version (0.2.3 -> 0.2.4)
-bump-patch:
-	@python3 scripts/bump-version.py patch
-
-# Bump minor version (0.2.3 -> 0.3.0)
-bump-minor:
-	@python3 scripts/bump-version.py minor
-
-# Bump major version (0.2.3 -> 1.0.0)
-bump-major:
-	@python3 scripts/bump-version.py major
-
-# Create git tag for current version
-tag:
-	@version=$$(python3 scripts/bump-version.py --show) && \
-	git tag -a "v$$version" -m "Release v$$version" && \
-	echo "Created tag: v$$version"
-
-# Bump patch and create tag
-release-patch: bump-patch tag
-	@echo "Release ready. Run 'git push --follow-tags' to publish."
-
-# Bump minor and create tag
-release-minor: bump-minor tag
-	@echo "Release ready. Run 'git push --follow-tags' to publish."
-
-# Bump major and create tag
-release-major: bump-major tag
-	@echo "Release ready. Run 'git push --follow-tags' to publish."
-
-# ============================================================
-# Binary targets (standalone executable with PyInstaller)
-# ============================================================
-
-BINARY_DIR := dist/git-adr
-BINARY := $(BINARY_DIR)/git-adr
-
-binary:
-	@echo "Building standalone binary with PyInstaller..."
-	@chmod +x scripts/build-binary.sh
-	./scripts/build-binary.sh
-	@echo ""
-	@echo "Binary built: $(BINARY)"
-	@echo "Run 'make smoke-test' to verify."
-
-binary-clean:
-	@echo "Cleaning and rebuilding binary..."
-	@chmod +x scripts/build-binary.sh
-	./scripts/build-binary.sh --clean
-
-smoke-test:
-	@if [ ! -f "$(BINARY)" ]; then \
-		echo "Error: Binary not found at $(BINARY)"; \
-		echo "Run 'make binary' first."; \
-		exit 1; \
-	fi
-	@echo "Running smoke tests..."
-	@chmod +x scripts/smoke-test.sh
-	./scripts/smoke-test.sh $(BINARY)
-
-# ============================================================
-# Development targets
-# ============================================================
-
-dev-install:
-	uv sync --all-extras
-	@echo "Development environment ready."
-
-# ============================================================
 # Testing targets
 # ============================================================
 
-$(TEST_TMP_DIR):
-	@mkdir -p $(TEST_TMP_DIR)
-
-test: $(TEST_TMP_DIR)
-	@echo "Running all tests with coverage..."
-	GIT_ADR_TEST_TMP=$(TEST_TMP_DIR) uv run pytest $(TEST_DIR) -v \
-		--cov=src/git_adr \
-		--cov-report=term-missing \
-		--cov-report=html:$(COVERAGE_DIR) \
-		--cov-fail-under=$(COVERAGE_THRESHOLD) \
-		--tb=short
-	@rm -rf $(TEST_TMP_DIR)/*
+test:
+	cargo test --all-features
 
 test-unit:
-	uv run pytest $(TEST_DIR) -v -m "not integration" --tb=short
-
-test-integration: $(TEST_TMP_DIR)
-	GIT_ADR_TEST_TMP=$(TEST_TMP_DIR) uv run pytest $(TEST_DIR) -v -m "integration" --tb=short
-	@rm -rf $(TEST_TMP_DIR)/*
-
-test-coverage: $(TEST_TMP_DIR)
-	GIT_ADR_TEST_TMP=$(TEST_TMP_DIR) uv run pytest $(TEST_DIR) -v \
-		--cov=src/git_adr \
-		--cov-report=term-missing \
-		--cov-report=html:$(COVERAGE_DIR) \
-		--cov-report=xml:$(COVERAGE_DIR)/coverage.xml \
-		--tb=short
-	@rm -rf $(TEST_TMP_DIR)/*
-
-test-quick:
-	uv run pytest $(TEST_DIR) -v --tb=short -x
+	cargo test --all-features --lib
 
 # ============================================================
 # Code quality targets
 # ============================================================
 
-lint:
-	uv run ruff check .
+lint: clippy
+
+clippy:
+	cargo clippy --all-targets --all-features -- -D warnings
 
 format:
-	uv run ruff format .
+	cargo fmt
 
 format-check:
-	uv run ruff format --check .
+	cargo fmt -- --check
 
-check: lint format-check
+check: format-check clippy
 	@echo "All quality checks passed!"
 
-typecheck:
-	uv run mypy .
-
-security:
-	uv run bandit -r src/
-
 audit:
-	uv run pip-audit
+	@if command -v cargo-audit >/dev/null 2>&1; then \
+		cargo audit; \
+	else \
+		echo "cargo-audit not installed. Install with: cargo install cargo-audit"; \
+	fi
 
-ci: clean check typecheck security audit test
+deny:
+	@if command -v cargo-deny >/dev/null 2>&1; then \
+		cargo deny check; \
+	else \
+		echo "cargo-deny not installed. Install with: cargo install cargo-deny"; \
+	fi
+
+# Full CI check (mirrors GitHub Actions)
+ci: check test
 	@echo "CI checks passed!"
+
+# ============================================================
+# Documentation
+# ============================================================
+
+docs:
+	cargo doc --all-features --open
+
+# ============================================================
+# Version management
+# ============================================================
+
+version:
+	@echo "$(VERSION)"
+
+# Bump patch version (0.2.3 -> 0.2.4)
+bump-patch:
+	@current=$(VERSION) && \
+	major=$$(echo $$current | cut -d. -f1) && \
+	minor=$$(echo $$current | cut -d. -f2) && \
+	patch=$$(echo $$current | cut -d. -f3) && \
+	new_patch=$$((patch + 1)) && \
+	new_version="$$major.$$minor.$$new_patch" && \
+	sed -i.bak "s/^version = \"$$current\"/version = \"$$new_version\"/" Cargo.toml && \
+	rm -f Cargo.toml.bak && \
+	echo "Bumped version: $$current -> $$new_version"
+
+# Bump minor version (0.2.3 -> 0.3.0)
+bump-minor:
+	@current=$(VERSION) && \
+	major=$$(echo $$current | cut -d. -f1) && \
+	minor=$$(echo $$current | cut -d. -f2) && \
+	new_minor=$$((minor + 1)) && \
+	new_version="$$major.$$new_minor.0" && \
+	sed -i.bak "s/^version = \"$$current\"/version = \"$$new_version\"/" Cargo.toml && \
+	rm -f Cargo.toml.bak && \
+	echo "Bumped version: $$current -> $$new_version"
+
+# Bump major version (0.2.3 -> 1.0.0)
+bump-major:
+	@current=$(VERSION) && \
+	major=$$(echo $$current | cut -d. -f1) && \
+	new_major=$$((major + 1)) && \
+	new_version="$$new_major.0.0" && \
+	sed -i.bak "s/^version = \"$$current\"/version = \"$$new_version\"/" Cargo.toml && \
+	rm -f Cargo.toml.bak && \
+	echo "Bumped version: $$current -> $$new_version"
+
+# Create git tag for current version
+tag:
+	git tag -a "v$(VERSION)" -m "Release v$(VERSION)"
+	@echo "Created tag: v$(VERSION)"
+
+# Bump and tag shortcuts
+release-patch: bump-patch tag
+	@echo "Release ready. Run 'git push --follow-tags' to publish."
+
+release-minor: bump-minor tag
+	@echo "Release ready. Run 'git push --follow-tags' to publish."
+
+release-major: bump-major tag
+	@echo "Release ready. Run 'git push --follow-tags' to publish."
 
 # ============================================================
 # Clean target
@@ -380,26 +268,6 @@ ci: clean check typecheck security audit test
 
 clean:
 	@echo "Cleaning build artifacts..."
-	rm -rf $(BUILD_DIR)
-	rm -rf $(DIST_DIR)
+	cargo clean
 	rm -rf $(SHARE_DIR)
-	rm -rf $(TEST_TMP_DIR)
-	rm -rf $(COVERAGE_DIR)
-	rm -rf .pytest_cache
-	rm -rf .coverage
-	rm -rf htmlcov
-	rm -rf man/
-	rm -rf .venv-build
-	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
 	@echo "Clean complete."
-
-# ============================================================
-# Documentation (alias for man-pages)
-# ============================================================
-
-docs: man-pages completions
-	@echo ""
-	@echo "Documentation built:"
-	@echo "  Man pages:   $(MAN_OUT_DIR)/"
-	@echo "  Completions: $(COMPLETION_DIR)/"
