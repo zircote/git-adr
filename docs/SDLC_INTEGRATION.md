@@ -98,8 +98,8 @@ git adr ci github --sync
 # Generate only PR validation
 git adr ci github --validate
 
-# Customize options
-git adr ci github --main-branch main --wiki-sync --export-format markdown
+# Customize output directory
+git adr ci github --output .github/workflows --force
 ```
 
 ### Sync Workflow
@@ -134,7 +134,8 @@ jobs:
 
       - name: Setup git-adr
         run: |
-          pip install git-adr
+          curl -sSL https://github.com/zircote/git-adr/releases/latest/download/git-adr-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          sudo mv git-adr /usr/local/bin/
           git fetch origin 'refs/notes/*:refs/notes/*' || true
 
       - name: Sync ADR notes
@@ -172,7 +173,8 @@ jobs:
 
       - name: Setup git-adr
         run: |
-          pip install git-adr
+          curl -sSL https://github.com/zircote/git-adr/releases/latest/download/git-adr-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          sudo mv git-adr /usr/local/bin/
           git fetch origin 'refs/notes/*:refs/notes/*' || true
 
       - name: Validate ADRs
@@ -186,12 +188,10 @@ jobs:
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--sync` | Generate sync workflow | Both if neither specified |
-| `--validate` | Generate validation workflow | Both if neither specified |
-| `--output PATH` | Output directory | `.github/workflows` |
-| `--main-branch NAME` | Main branch for triggers | `main` |
-| `--wiki-sync` | Enable wiki synchronization | Disabled |
-| `--export-format FORMAT` | Export format (markdown/json/html) | None |
+| `--sync` | Include ADR sync on push | Disabled |
+| `--validation` | Include ADR validation in PR checks | Disabled |
+| `-o, --output PATH` | Output directory | `.github/workflows` |
+| `-f, --force` | Force overwrite existing files | Disabled |
 
 ## GitLab CI/CD
 
@@ -222,7 +222,8 @@ variables:
 
 .adr-setup:
   before_script:
-    - pip install git-adr
+    - curl -sSL https://github.com/zircote/git-adr/releases/latest/download/git-adr-x86_64-unknown-linux-gnu.tar.gz | tar xz
+    - mv git-adr /usr/local/bin/
     - git fetch origin 'refs/notes/*:refs/notes/*' || true
 
 adr-validate:

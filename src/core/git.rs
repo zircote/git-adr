@@ -308,10 +308,232 @@ impl Git {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile::TempDir;
 
     #[test]
     fn test_git_new() {
         let git = Git::new();
         assert!(git.work_dir().exists() || git.work_dir() == Path::new("."));
+    }
+
+    #[test]
+    fn test_git_default() {
+        let git = Git::default();
+        assert!(git.work_dir().exists() || git.work_dir() == Path::new("."));
+    }
+
+    #[test]
+    fn test_git_with_work_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let git = Git::with_work_dir(temp_dir.path());
+        assert_eq!(git.work_dir(), temp_dir.path());
+    }
+
+    #[test]
+    fn test_git_work_dir() {
+        let git = Git::new();
+        let _ = git.work_dir();
+    }
+
+    #[test]
+    fn test_check_repository_not_a_repo() {
+        let temp_dir = TempDir::new().unwrap();
+        let git = Git::with_work_dir(temp_dir.path());
+        let result = git.check_repository();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_run_success() {
+        let git = Git::new();
+        let output = git.run(&["--version"]).expect("git --version should work");
+        assert!(output.status.success());
+    }
+
+    #[test]
+    fn test_run_output_success() {
+        let git = Git::new();
+        let output = git
+            .run_output(&["--version"])
+            .expect("git --version should work");
+        assert!(output.contains("git version"));
+    }
+
+    #[test]
+    fn test_run_output_failure() {
+        let temp_dir = TempDir::new().unwrap();
+        let git = Git::with_work_dir(temp_dir.path());
+        // rev-parse HEAD fails outside a git repo
+        let result = git.run_output(&["rev-parse", "HEAD"]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_run_silent_failure() {
+        let temp_dir = TempDir::new().unwrap();
+        let git = Git::with_work_dir(temp_dir.path());
+        // This will fail because we're not in a git repo
+        let result = git.run_silent(&["status"]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_notes_list_empty() {
+        let temp_dir = TempDir::new().unwrap();
+        let git = Git::with_work_dir(temp_dir.path());
+        // Initialize git repo but no notes
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["init"])
+            .output()
+            .unwrap();
+        let result = git.notes_list("adr");
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_config_get_nonexistent() {
+        let temp_dir = TempDir::new().unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["init"])
+            .output()
+            .unwrap();
+        let git = Git::with_work_dir(temp_dir.path());
+        let result = git.config_get("nonexistent.key");
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    #[test]
+    fn test_config_set_and_get() {
+        let temp_dir = TempDir::new().unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["init"])
+            .output()
+            .unwrap();
+        let git = Git::with_work_dir(temp_dir.path());
+        git.config_set("test.key", "test_value").unwrap();
+        let result = git.config_get("test.key").unwrap();
+        assert_eq!(result, Some("test_value".to_string()));
+    }
+
+    #[test]
+    fn test_config_unset() {
+        let temp_dir = TempDir::new().unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["init"])
+            .output()
+            .unwrap();
+        let git = Git::with_work_dir(temp_dir.path());
+        git.config_set("test.key", "value").unwrap();
+        git.config_unset("test.key", false).unwrap();
+        let result = git.config_get("test.key").unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_config_unset_nonexistent() {
+        let temp_dir = TempDir::new().unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["init"])
+            .output()
+            .unwrap();
+        let git = Git::with_work_dir(temp_dir.path());
+        // Unsetting a key that doesn't exist should not error (exit code 5)
+        let result = git.config_unset("nonexistent.key", false);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_notes_show_nonexistent() {
+        let temp_dir = TempDir::new().unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["init"])
+            .output()
+            .unwrap();
+        // Create initial commit
+        std::fs::write(temp_dir.path().join("file.txt"), "content").unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["add", "."])
+            .output()
+            .unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["config", "user.email", "test@example.com"])
+            .output()
+            .unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["config", "user.name", "Test"])
+            .output()
+            .unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["commit", "-m", "Initial"])
+            .output()
+            .unwrap();
+
+        let git = Git::with_work_dir(temp_dir.path());
+        let result = git.notes_show("adr", "HEAD");
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    #[test]
+    fn test_repo_root() {
+        let temp_dir = TempDir::new().unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["init"])
+            .output()
+            .unwrap();
+        let git = Git::with_work_dir(temp_dir.path());
+        let root = git.repo_root();
+        assert!(root.is_ok());
+    }
+
+    #[test]
+    fn test_head_and_short_hash() {
+        let temp_dir = TempDir::new().unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["init"])
+            .output()
+            .unwrap();
+        std::fs::write(temp_dir.path().join("file.txt"), "content").unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["add", "."])
+            .output()
+            .unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["config", "user.email", "test@example.com"])
+            .output()
+            .unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["config", "user.name", "Test"])
+            .output()
+            .unwrap();
+        Command::new("git")
+            .current_dir(temp_dir.path())
+            .args(["commit", "-m", "Initial"])
+            .output()
+            .unwrap();
+
+        let git = Git::with_work_dir(temp_dir.path());
+        let head = git.head().unwrap();
+        assert_eq!(head.len(), 40); // Full SHA
+
+        let short = git.short_hash(&head).unwrap();
+        assert!(short.len() < head.len());
     }
 }

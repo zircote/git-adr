@@ -326,6 +326,12 @@ mod tests {
     }
 
     #[test]
+    fn test_template_engine_default() {
+        let engine = TemplateEngine::default();
+        assert!(engine.has_template("nygard"));
+    }
+
+    #[test]
     fn test_render_nygard() {
         let engine = TemplateEngine::new();
         let mut context = HashMap::new();
@@ -341,10 +347,102 @@ mod tests {
     }
 
     #[test]
+    fn test_render_madr() {
+        let engine = TemplateEngine::new();
+        let mut context = HashMap::new();
+        context.insert("title".to_string(), "MADR Test".to_string());
+        context.insert("status".to_string(), "accepted".to_string());
+
+        let result = engine.render("madr", &context).expect("Should render");
+        assert!(result.contains("# MADR Test"));
+        assert!(result.contains("Context and Problem Statement"));
+    }
+
+    #[test]
+    fn test_render_y_statement() {
+        let engine = TemplateEngine::new();
+        let mut context = HashMap::new();
+        context.insert("title".to_string(), "Y Statement Test".to_string());
+        context.insert("status".to_string(), "proposed".to_string());
+
+        let result = engine.render("y-statement", &context).expect("Should render");
+        assert!(result.contains("# Y Statement Test"));
+        assert!(result.contains("In the context of"));
+    }
+
+    #[test]
+    fn test_render_alexandrian() {
+        let engine = TemplateEngine::new();
+        let mut context = HashMap::new();
+        context.insert("title".to_string(), "Alexandrian Test".to_string());
+        context.insert("status".to_string(), "proposed".to_string());
+
+        let result = engine.render("alexandrian", &context).expect("Should render");
+        assert!(result.contains("# Alexandrian Test"));
+        assert!(result.contains("Prologue"));
+        assert!(result.contains("Forces"));
+    }
+
+    #[test]
+    fn test_render_business_case() {
+        let engine = TemplateEngine::new();
+        let mut context = HashMap::new();
+        context.insert("title".to_string(), "Business Case Test".to_string());
+        context.insert("status".to_string(), "proposed".to_string());
+
+        let result = engine.render("business-case", &context).expect("Should render");
+        assert!(result.contains("# Business Case Test"));
+        assert!(result.contains("Executive Summary"));
+        assert!(result.contains("Cost-Benefit Analysis"));
+    }
+
+    #[test]
     fn test_list_templates() {
         let engine = TemplateEngine::new();
         let templates = engine.list_templates();
         assert!(templates.contains(&"nygard".to_string()));
         assert!(templates.contains(&"madr".to_string()));
+        assert!(templates.contains(&"y-statement".to_string()));
+        assert!(templates.contains(&"alexandrian".to_string()));
+        assert!(templates.contains(&"business-case".to_string()));
+    }
+
+    #[test]
+    fn test_add_custom_template() {
+        let mut engine = TemplateEngine::new();
+        let custom = "# {{ title }}\n\nCustom template content";
+        engine.add_template("custom", custom).expect("Should add template");
+        assert!(engine.has_template("custom"));
+    }
+
+    #[test]
+    fn test_get_template() {
+        let engine = TemplateEngine::new();
+        let nygard = engine.get_template("nygard").expect("Should get template");
+        assert!(nygard.contains("## Context"));
+    }
+
+    #[test]
+    fn test_get_template_not_found() {
+        let engine = TemplateEngine::new();
+        let result = engine.get_template("nonexistent");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_render_nonexistent_template() {
+        let engine = TemplateEngine::new();
+        let context = HashMap::new();
+        let result = engine.render("nonexistent", &context);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_add_template_invalid() {
+        let mut engine = TemplateEngine::new();
+        // Invalid Tera template syntax
+        let invalid = "{% for item in items %}{{ item }}{% endwith %}";
+        let result = engine.add_template("invalid", invalid);
+        assert!(result.is_err());
     }
 }

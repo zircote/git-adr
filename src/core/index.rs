@@ -228,6 +228,23 @@ mod tests {
     }
 
     #[test]
+    fn test_index_entry_from_adr() {
+        let mut adr = Adr::new("ADR-0001".to_string(), "Test Title".to_string());
+        adr.commit = "abc123".to_string();
+        adr.frontmatter.tags = vec!["rust".to_string(), "cli".to_string()];
+        adr.body = "This is the body content.".to_string();
+
+        let entry = IndexEntry::from_adr(&adr);
+        assert_eq!(entry.id, "ADR-0001");
+        assert_eq!(entry.commit, "abc123");
+        assert_eq!(entry.title, "Test Title");
+        assert_eq!(entry.status, "proposed");
+        assert_eq!(entry.tags, vec!["rust", "cli"]);
+        assert!(entry.text.contains("test title"));
+        assert!(entry.text.contains("this is the body content"));
+    }
+
+    #[test]
     fn test_search_index() {
         let mut index = SearchIndex::new();
         index.upsert(IndexEntry {
@@ -250,5 +267,323 @@ mod tests {
         assert_eq!(index.search("rust").len(), 1);
         assert_eq!(index.search("use").len(), 2);
         assert_eq!(index.search("java").len(), 0);
+    }
+
+    #[test]
+    fn test_search_index_remove() {
+        let mut index = SearchIndex::new();
+        index.upsert(IndexEntry {
+            id: "ADR-0001".to_string(),
+            commit: "abc123".to_string(),
+            title: "Use Rust".to_string(),
+            status: "proposed".to_string(),
+            tags: vec![],
+            text: "use rust".to_string(),
+        });
+
+        assert_eq!(index.entries.len(), 1);
+        index.remove("ADR-0001");
+        assert_eq!(index.entries.len(), 0);
+    }
+
+    #[test]
+    fn test_search_index_all() {
+        let mut index = SearchIndex::new();
+        index.upsert(IndexEntry {
+            id: "ADR-0001".to_string(),
+            commit: "abc123".to_string(),
+            title: "First".to_string(),
+            status: "proposed".to_string(),
+            tags: vec![],
+            text: "first".to_string(),
+        });
+        index.upsert(IndexEntry {
+            id: "ADR-0002".to_string(),
+            commit: "def456".to_string(),
+            title: "Second".to_string(),
+            status: "accepted".to_string(),
+            tags: vec![],
+            text: "second".to_string(),
+        });
+
+        let all = index.all();
+        assert_eq!(all.len(), 2);
+    }
+
+    #[test]
+    fn test_search_index_upsert_updates() {
+        let mut index = SearchIndex::new();
+        index.upsert(IndexEntry {
+            id: "ADR-0001".to_string(),
+            commit: "abc123".to_string(),
+            title: "Original".to_string(),
+            status: "proposed".to_string(),
+            tags: vec![],
+            text: "original".to_string(),
+        });
+
+        index.upsert(IndexEntry {
+            id: "ADR-0001".to_string(),
+            commit: "abc123".to_string(),
+            title: "Updated".to_string(),
+            status: "accepted".to_string(),
+            tags: vec![],
+            text: "updated".to_string(),
+        });
+
+        assert_eq!(index.entries.len(), 1);
+        assert_eq!(index.entries.get("ADR-0001").unwrap().title, "Updated");
+    }
+
+    #[test]
+    fn test_search_index_new() {
+        let index = SearchIndex::new();
+        assert_eq!(index.version, 1);
+        assert!(index.entries.is_empty());
+    }
+
+    #[test]
+    fn test_search_index_default() {
+        let index = SearchIndex::default();
+        assert_eq!(index.version, 0); // Default doesn't set version to 1
+        assert!(index.entries.is_empty());
+    }
+
+    #[test]
+    fn test_index_entry_matches_by_id() {
+        let entry = IndexEntry {
+            id: "ADR-0001".to_string(),
+            commit: "abc123".to_string(),
+            title: "Something Else".to_string(),
+            status: "proposed".to_string(),
+            tags: vec![],
+            text: "something else".to_string(),
+        };
+        // Should match by ID
+        assert!(entry.matches("ADR-0001"));
+        assert!(entry.matches("adr-0001"));
+    }
+
+    #[test]
+    fn test_index_entry_matches_by_title() {
+        let entry = IndexEntry {
+            id: "ADR-0001".to_string(),
+            commit: "abc123".to_string(),
+            title: "Use PostgreSQL for Database".to_string(),
+            status: "proposed".to_string(),
+            tags: vec![],
+            text: "some text".to_string(),
+        };
+        // Should match by title
+        assert!(entry.matches("PostgreSQL"));
+        assert!(entry.matches("POSTGRESQL"));
+    }
+
+    #[test]
+    fn test_index_manager_new() {
+        let git = Git::new();
+        let _manager = IndexManager::new(git);
+        // Just verify it creates without panic
+    }
+
+    #[test]
+    fn test_search_index_clone() {
+        let mut index = SearchIndex::new();
+        index.upsert(IndexEntry {
+            id: "ADR-0001".to_string(),
+            commit: "abc123".to_string(),
+            title: "Test".to_string(),
+            status: "proposed".to_string(),
+            tags: vec!["test".to_string()],
+            text: "test".to_string(),
+        });
+        let cloned = index.clone();
+        assert_eq!(cloned.entries.len(), 1);
+        assert_eq!(cloned.version, index.version);
+    }
+
+    #[test]
+    fn test_index_entry_clone() {
+        let entry = IndexEntry {
+            id: "ADR-0001".to_string(),
+            commit: "abc123".to_string(),
+            title: "Test".to_string(),
+            status: "proposed".to_string(),
+            tags: vec!["test".to_string()],
+            text: "test content".to_string(),
+        };
+        let cloned = entry.clone();
+        assert_eq!(cloned.id, entry.id);
+        assert_eq!(cloned.commit, entry.commit);
+        assert_eq!(cloned.title, entry.title);
+        assert_eq!(cloned.tags, entry.tags);
+    }
+
+    #[test]
+    fn test_search_index_serialization() {
+        let mut index = SearchIndex::new();
+        index.upsert(IndexEntry {
+            id: "ADR-0001".to_string(),
+            commit: "abc123".to_string(),
+            title: "Test".to_string(),
+            status: "proposed".to_string(),
+            tags: vec!["tag1".to_string()],
+            text: "test".to_string(),
+        });
+
+        let yaml = serde_yaml::to_string(&index).expect("Should serialize");
+        let deserialized: SearchIndex =
+            serde_yaml::from_str(&yaml).expect("Should deserialize");
+        assert_eq!(deserialized.version, index.version);
+        assert_eq!(deserialized.entries.len(), index.entries.len());
+    }
+
+    use std::process::Command as StdCommand;
+    use tempfile::TempDir;
+    use crate::core::{AdrConfig, NotesManager};
+
+    fn setup_git_repo() -> TempDir {
+        let temp_dir = TempDir::new().expect("Failed to create temp directory");
+        let path = temp_dir.path();
+
+        StdCommand::new("git")
+            .args(["init"])
+            .current_dir(path)
+            .output()
+            .expect("Failed to init git repo");
+
+        StdCommand::new("git")
+            .args(["config", "user.email", "test@example.com"])
+            .current_dir(path)
+            .output()
+            .expect("Failed to set git user email");
+
+        StdCommand::new("git")
+            .args(["config", "user.name", "Test User"])
+            .current_dir(path)
+            .output()
+            .expect("Failed to set git user name");
+
+        std::fs::write(path.join("README.md"), "# Test Repo\n").expect("Failed to write README");
+        StdCommand::new("git")
+            .args(["add", "."])
+            .current_dir(path)
+            .output()
+            .expect("Failed to stage files");
+        StdCommand::new("git")
+            .args(["commit", "-m", "Initial commit"])
+            .current_dir(path)
+            .output()
+            .expect("Failed to create initial commit");
+
+        temp_dir
+    }
+
+    #[test]
+    fn test_index_manager_load_empty() {
+        let temp_dir = setup_git_repo();
+        let git = Git::with_work_dir(temp_dir.path());
+        let manager = IndexManager::new(git);
+
+        // Load should return empty index when none exists
+        let index = manager.load().expect("Should load");
+        assert!(index.entries.is_empty());
+    }
+
+    #[test]
+    fn test_index_manager_save_and_load() {
+        let temp_dir = setup_git_repo();
+        let git = Git::with_work_dir(temp_dir.path());
+        let manager = IndexManager::new(git);
+
+        // Create and save an index
+        let mut index = SearchIndex::new();
+        index.upsert(IndexEntry {
+            id: "ADR-0001".to_string(),
+            commit: "abc123".to_string(),
+            title: "Test".to_string(),
+            status: "proposed".to_string(),
+            tags: vec!["tag1".to_string()],
+            text: "test".to_string(),
+        });
+
+        manager.save(&index).expect("Should save");
+
+        // Load it back
+        let loaded = manager.load().expect("Should load");
+        assert_eq!(loaded.entries.len(), 1);
+        assert!(loaded.entries.contains_key("ADR-0001"));
+    }
+
+    #[test]
+    fn test_index_manager_rebuild() {
+        let temp_dir = setup_git_repo();
+        let git = Git::with_work_dir(temp_dir.path());
+        let config = AdrConfig::default();
+        let notes = NotesManager::new(git.clone(), config);
+        let index_manager = IndexManager::new(git);
+
+        // Create an ADR
+        let adr = Adr::new("ADR-0001".to_string(), "Test Decision".to_string());
+        notes.create(&adr).expect("Should create ADR");
+
+        // Rebuild index
+        let index = index_manager.rebuild(&notes).expect("Should rebuild");
+        assert_eq!(index.entries.len(), 1);
+        assert!(index.entries.contains_key("ADR-0001"));
+    }
+
+    #[test]
+    fn test_index_manager_search() {
+        let temp_dir = setup_git_repo();
+        let git = Git::with_work_dir(temp_dir.path());
+        let config = AdrConfig::default();
+        let notes = NotesManager::new(git.clone(), config);
+        let index_manager = IndexManager::new(git);
+
+        // Create ADRs
+        let adr1 = Adr::new("ADR-0001".to_string(), "Use Rust for CLI".to_string());
+        notes.create(&adr1).expect("Should create ADR");
+
+        // Create another commit for second ADR
+        std::fs::write(temp_dir.path().join("file1.txt"), "content").expect("Failed to write");
+        StdCommand::new("git")
+            .args(["add", "."])
+            .current_dir(temp_dir.path())
+            .output()
+            .expect("Failed to stage");
+        StdCommand::new("git")
+            .args(["commit", "-m", "Second commit"])
+            .current_dir(temp_dir.path())
+            .output()
+            .expect("Failed to commit");
+
+        let adr2 = Adr::new("ADR-0002".to_string(), "Use Python for Scripts".to_string());
+        notes.create(&adr2).expect("Should create ADR");
+
+        // Rebuild index
+        index_manager.rebuild(&notes).expect("Should rebuild");
+
+        // Search
+        let results = index_manager.search("Rust").expect("Should search");
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].id, "ADR-0001");
+
+        // Search for both
+        let results = index_manager.search("Use").expect("Should search");
+        assert_eq!(results.len(), 2);
+    }
+
+    #[test]
+    fn test_index_manager_get_index_commit() {
+        let temp_dir = setup_git_repo();
+        let git = Git::with_work_dir(temp_dir.path());
+        let manager = IndexManager::new(git);
+
+        // get_index_commit is private, but we can test it indirectly via save/load
+        let mut index = SearchIndex::new();
+        manager.save(&index).expect("Should save");
+        index = manager.load().expect("Should load");
+        assert_eq!(index.version, 1);
     }
 }

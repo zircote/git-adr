@@ -277,3 +277,109 @@ impl Error {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_error_git() {
+        let err = Error::git(
+            "command failed",
+            vec!["git".to_string(), "status".to_string()],
+            1,
+            "error output",
+        );
+        assert!(matches!(err, Error::Git { .. }));
+        assert!(format!("{err}").contains("git error"));
+    }
+
+    #[test]
+    fn test_error_adr_not_found() {
+        let err = Error::adr_not_found("ADR-0001");
+        assert!(format!("{err}").contains("ADR not found"));
+    }
+
+    #[test]
+    fn test_error_invalid_adr() {
+        let err = Error::invalid_adr("invalid content");
+        assert!(format!("{err}").contains("invalid ADR format"));
+    }
+
+    #[test]
+    fn test_error_config() {
+        let err = Error::config("config error");
+        assert!(format!("{err}").contains("configuration error"));
+    }
+
+    #[test]
+    fn test_error_validation() {
+        let err = Error::validation("validation failed");
+        assert!(format!("{err}").contains("validation error"));
+    }
+
+    #[test]
+    fn test_error_not_initialized() {
+        let err = Error::NotInitialized;
+        assert!(format!("{err}").contains("not initialized"));
+    }
+
+    #[test]
+    fn test_error_git_not_found() {
+        let err = Error::GitNotFound;
+        assert!(format!("{err}").contains("git executable not found"));
+    }
+
+    #[test]
+    fn test_error_not_a_repository() {
+        let err = Error::NotARepository { path: Some("/tmp/test".to_string()) };
+        assert!(format!("{err}").contains("not a git repository"));
+        assert!(format!("{err}").contains("/tmp/test"));
+    }
+
+    #[test]
+    fn test_error_not_a_repository_no_path() {
+        let err = Error::NotARepository { path: None };
+        let msg = format!("{err}");
+        assert!(msg.contains("not a git repository"));
+    }
+
+    #[test]
+    fn test_error_content_too_large() {
+        let err = Error::ContentTooLarge { size: 1024, max: 512 };
+        assert!(format!("{err}").contains("content too large"));
+    }
+
+    #[test]
+    fn test_error_feature_not_available() {
+        let err = Error::FeatureNotAvailable { feature: "ai".to_string() };
+        assert!(format!("{err}").contains("feature not available"));
+    }
+
+    #[test]
+    fn test_error_invalid_status() {
+        let err = Error::InvalidStatus {
+            status: "invalid".to_string(),
+            valid: vec!["proposed".to_string(), "accepted".to_string()],
+        };
+        assert!(format!("{err}").contains("invalid status"));
+    }
+
+    #[test]
+    fn test_error_parse_error() {
+        let err = Error::ParseError { message: "parse failed".to_string() };
+        assert!(format!("{err}").contains("parse error"));
+    }
+
+    #[test]
+    fn test_error_template_not_found() {
+        let err = Error::TemplateNotFound { name: "custom".to_string() };
+        assert!(format!("{err}").contains("template not found"));
+    }
+
+    #[test]
+    fn test_error_other() {
+        let err = Error::Other("generic error".to_string());
+        assert!(format!("{err}").contains("generic error"));
+    }
+}

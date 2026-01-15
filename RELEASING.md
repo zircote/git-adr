@@ -1,42 +1,43 @@
 # Releasing git-adr
 
-This document describes the release process for git-adr.
+This document describes the release process for git-adr (Rust implementation).
 
 ## Release Artifacts
 
 Each release produces:
 
-1. **Python Package** (PyPI)
-   - Source distribution (`.tar.gz`)
-   - Wheel distribution (`.whl`)
+1. **Rust Crate** (crates.io)
+   - `git-adr` crate published to crates.io
 
-2. **Standalone Binaries** (GitHub Releases)
-   - `git-adr-macos-arm64.tar.gz` - macOS Apple Silicon
-   - `git-adr-macos-x86_64.tar.gz` - macOS Intel
-   - `git-adr-linux-x86_64.tar.gz` - Linux x86_64
-   - `git-adr-windows-x86_64.zip` - Windows x86_64
+2. **Pre-built Binaries** (GitHub Releases)
+   - `git-adr-aarch64-apple-darwin.tar.gz` - macOS Apple Silicon (M1/M2/M3/M4)
+   - `git-adr-x86_64-apple-darwin.tar.gz` - macOS Intel
+   - `git-adr-x86_64-unknown-linux-gnu.tar.gz` - Linux x86_64 (glibc)
+   - `git-adr-x86_64-unknown-linux-musl.tar.gz` - Linux x86_64 (musl/Alpine)
+   - `git-adr-aarch64-unknown-linux-gnu.tar.gz` - Linux ARM64
+   - `git-adr-x86_64-pc-windows-msvc.zip` - Windows x86_64
    - `checksums.txt` - SHA256 checksums for all binaries
 
-3. **Release Tarball** (GitHub Releases)
-   - Man pages
-   - Shell completions
-   - Install script
+3. **Homebrew Formula** (via tap)
+   - Updated automatically in `zircote/homebrew-tap`
 
 ## How to Release
 
 ### Prerequisites
 
 - Push access to `zircote/git-adr`
+- `CARGO_REGISTRY_TOKEN` secret configured (for crates.io publishing)
 - `HOMEBREW_TAP_TOKEN` secret configured (for Homebrew formula updates)
-- `PYPI_API_TOKEN` secret configured (for PyPI publishing)
 
 ### Release Steps
 
 1. **Update Version**
 
-   Update the version in:
-   - `pyproject.toml` → `version = "X.Y.Z"`
-   - `src/git_adr/__init__.py` → `__version__ = "X.Y.Z"`
+   Update the version in `Cargo.toml`:
+   ```toml
+   [package]
+   version = "X.Y.Z"
+   ```
 
 2. **Update CHANGELOG**
 
@@ -45,8 +46,8 @@ Each release produces:
 3. **Create Release Tag**
 
    ```bash
-   git add pyproject.toml src/git_adr/__init__.py CHANGELOG.md
-   git commit -m "Release vX.Y.Z"
+   git add Cargo.toml Cargo.lock CHANGELOG.md
+   git commit -m "chore(release): bump version to vX.Y.Z"
    git tag -a vX.Y.Z -m "Release vX.Y.Z"
    git push origin main --tags
    ```
@@ -57,60 +58,41 @@ Each release produces:
 
    | Workflow | Action |
    |----------|--------|
-   | `release.yml` | Builds Python package, publishes to PyPI |
-   | `build-binaries.yml` | Builds standalone binaries for all platforms |
-   | `release.yml` (Homebrew) | Updates Homebrew formula in tap |
+   | `release.yml` | Builds binaries for all platforms |
+   | `release.yml` | Publishes to crates.io |
+   | `release.yml` | Creates GitHub Release with assets |
+   | `release.yml` | Updates Homebrew formula in tap |
 
 5. **Verify Release**
 
    - Check [GitHub Releases](https://github.com/zircote/git-adr/releases) for all assets
-   - Verify [PyPI](https://pypi.org/project/git-adr/) package
-   - Test binary installation: `curl -sSL .../install-binary.sh | bash`
+   - Verify [crates.io](https://crates.io/crates/git-adr) package
+   - Test `cargo install git-adr`
    - Test Homebrew: `brew upgrade git-adr` (after tap updates)
 
-### Manual Release (workflow_dispatch)
+## Build Process
 
-If you need to release without creating a tag:
+Binaries are built using `cargo build --release` on GitHub Actions with cross-compilation:
 
-1. Go to Actions → Release → Run workflow
-2. Enter the version (e.g., `0.1.1`)
-3. Click "Run workflow"
-
-This will:
-- Build and publish to PyPI
-- Create a git tag
-- Create a GitHub release
-
-## Binary Build Process
-
-Binaries are built using PyInstaller on GitHub Actions:
-
-| Platform | Runner | Notes |
-|----------|--------|-------|
-| macOS ARM64 | `macos-14` | Apple Silicon (M1/M2/M3) |
-| macOS x86_64 | `macos-13` | Intel Macs |
-| Linux x86_64 | `ubuntu-22.04` | glibc-based |
-| Windows x86_64 | `windows-2022` | Windows 10/11 |
-
-### Binary Structure (onedir mode)
-
-Each binary package contains:
-```
-git-adr-{platform}/
-├── git-adr           # Executable
-└── _internal/        # Bundled Python + dependencies
-```
-
-The `onedir` mode is used for fast startup (<1 second) vs `onefile` which extracts on each run.
+| Platform | Target Triple | Runner |
+|----------|---------------|--------|
+| macOS ARM64 | `aarch64-apple-darwin` | `macos-14` |
+| macOS Intel | `x86_64-apple-darwin` | `macos-13` |
+| Linux x86_64 (glibc) | `x86_64-unknown-linux-gnu` | `ubuntu-22.04` |
+| Linux x86_64 (musl) | `x86_64-unknown-linux-musl` | `ubuntu-22.04` |
+| Linux ARM64 | `aarch64-unknown-linux-gnu` | `ubuntu-22.04` |
+| Windows x86_64 | `x86_64-pc-windows-msvc` | `windows-2022` |
 
 ### Expected Binary Sizes
 
 | Platform | Size |
 |----------|------|
-| macOS ARM64 | ~70-80 MB |
-| macOS x86_64 | ~70-80 MB |
-| Linux x86_64 | ~80-90 MB |
-| Windows x86_64 | ~70-80 MB |
+| macOS ARM64 | ~3-5 MB |
+| macOS Intel | ~3-5 MB |
+| Linux x86_64 | ~4-6 MB |
+| Windows x86_64 | ~4-6 MB |
+
+Note: Rust binaries are significantly smaller than the previous Python+PyInstaller binaries (~70-80 MB).
 
 ## Homebrew Formula
 
@@ -118,10 +100,9 @@ The Homebrew formula is maintained at:
 - Repository: `zircote/homebrew-tap`
 - Formula: `Formula/git-adr.rb`
 
-The `release.yml` workflow automatically updates the formula with:
+The release workflow automatically updates the formula with:
 - New version
-- Updated PyPI URL and SHA256
-- Dependency resources
+- Updated tarball URL and SHA256
 
 ### Manual Formula Update
 
@@ -132,65 +113,94 @@ If automatic update fails:
 git clone https://github.com/zircote/homebrew-tap.git
 cd homebrew-tap
 
-# Get new SHA256
-curl -L https://pypi.org/pypi/git-adr/X.Y.Z/json | jq '.urls[] | select(.packagetype=="sdist") | .digests.sha256'
+# Get new SHA256 from release assets
+curl -sL https://github.com/zircote/git-adr/releases/download/vX.Y.Z/git-adr-x86_64-apple-darwin.tar.gz | shasum -a 256
 
 # Update Formula/git-adr.rb
 # Commit and push
 ```
 
-## Smoke Tests
+## Feature Flags
 
-Before each release, binaries are smoke tested:
+Optional features can be enabled at build time:
 
 ```bash
-# Run locally
-./scripts/smoke-test.sh dist/git-adr/git-adr
+# Build with AI features
+cargo build --release --features ai
+
+# Build with wiki sync
+cargo build --release --features wiki
+
+# Build with all features
+cargo build --release --features all
+```
+
+Features:
+- `ai` - AI integration via langchain-rust (Anthropic, OpenAI, etc.)
+- `wiki` - GitHub/GitLab wiki synchronization
+- `export` - Extended export formats (DOCX)
+- `all` - All optional features
+
+## Smoke Tests
+
+Before each release, binaries are tested:
+
+```bash
+# Build and test locally
+cargo build --release
+./target/release/git-adr --version
+./target/release/git-adr --help
+
+# Run test suite
+cargo test --all-features
 ```
 
 Tests include:
-- `--version` flag
-- `--help` flag
-- `init` command
-- `list` command
-- `show` command
-- `search` command
-- `stats` command
-- `config` command
-- `issue` command (template bundling)
+- `--version` and `--help` flags
+- All core commands (init, new, list, show, edit, rm, search)
+- Sync operations
+- Config management
 - Shell completion generation
 
 ## Troubleshooting
 
-### PyPI Publish Fails
+### crates.io Publish Fails
 
-1. Check `PYPI_API_TOKEN` secret is valid
-2. Ensure version number is unique (can't republish same version)
+1. Check `CARGO_REGISTRY_TOKEN` secret is valid
+2. Ensure version number is unique
+3. Verify `cargo publish --dry-run` works locally
 
 ### Binary Build Fails
 
 1. Check GitHub Actions logs for specific error
 2. Common issues:
-   - Missing hidden imports → Update `pyinstaller/git-adr.spec`
-   - Native library issues → Check system dependencies in workflow
+   - Missing system dependencies for cross-compilation
+   - Linker errors for musl builds
 
 ### Homebrew Update Fails
 
 1. Check `HOMEBREW_TAP_TOKEN` has write access to tap repo
-2. Verify PyPI package is available before formula update
-
-### Binary Too Large
-
-Target: <100 MB per platform. If exceeded:
-
-1. Check `excludes` in `pyinstaller/git-adr.spec`
-2. Add unnecessary packages to exclude list
-3. Verify no large data files are bundled
+2. Verify release assets are available
 
 ### Slow Startup
 
-Target: <1 second (subsequent runs). If slow:
+Rust binaries should start instantly (<100ms). If slow:
 
-1. Ensure using `onedir` mode (not `onefile`)
-2. First run may be slower due to OS verification (macOS Gatekeeper)
-3. Check for filesystem-intensive operations at startup
+1. Check for filesystem-intensive operations at startup
+2. Verify no debug symbols in release build
+3. Ensure using `--release` flag
+
+## Migration from Python (v0.3.0)
+
+The project was rewritten in Rust starting with v1.0.0. The last Python version was v0.3.0.
+
+To access the legacy Python version:
+```bash
+# Install last Python release
+pip install git-adr==0.3.0
+
+# Or checkout the archived Python code
+git checkout python-final
+```
+
+ADR data stored in git notes is fully compatible between Python and Rust versions.

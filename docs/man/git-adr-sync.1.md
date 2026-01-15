@@ -2,7 +2,7 @@
 
 ## SYNOPSIS
 
-`git adr sync` [push|pull|both] [OPTIONS]
+`git adr sync` [OPTIONS] [REMOTE]
 
 ## DESCRIPTION
 
@@ -12,35 +12,37 @@ separate from regular git operations.
 
 ## ARGUMENTS
 
-`DIRECTION`
-: Sync direction: `push`, `pull`, or `both` (default: both).
+`REMOTE`
+: Remote name (default: origin).
 
 ## OPTIONS
 
-`--remote`, `-r` TEXT
-: Remote name (default: origin).
+`--push`
+: Push only (do not pull).
+
+`--pull`
+: Pull only (do not push).
 
 `--force`, `-f`
-: Force push/pull (overwrites remote notes).
-
-`--dry-run`
-: Show what would be done without making changes.
+: Force push (overwrites remote notes). Use with caution.
 
 `-h`, `--help`
 : Show help message and exit.
 
 ## OPERATIONS
 
-**push**
+By default (without `--push` or `--pull`), sync performs both pull and push:
+
+1. First pulls remote ADR notes (fetch and merge)
+2. Then pushes local ADR notes to remote
+
+**--push**
 : Push local ADR notes to the remote. This makes your ADRs available
   to team members after they fetch.
 
-**pull**
+**--pull**
 : Fetch and merge ADR notes from the remote. Git automatically merges
   notes using a union strategy by default.
-
-**both**
-: Perform both pull and push operations.
 
 ## CONFLICT HANDLING
 
@@ -62,19 +64,19 @@ Sync with default remote (origin):
 
 Push only:
 
-    $ git adr sync push
+    $ git adr sync --push
 
-Pull from a specific remote:
+Pull only:
 
-    $ git adr sync pull --remote upstream
+    $ git adr sync --pull
+
+Sync with a specific remote:
+
+    $ git adr sync upstream
 
 Force push (use with caution):
 
-    $ git adr sync push --force
-
-See what would happen:
-
-    $ git adr sync --dry-run
+    $ git adr sync --push --force
 
 ## NOTES
 

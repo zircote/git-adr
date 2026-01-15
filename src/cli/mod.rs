@@ -6,21 +6,28 @@ use clap::{Parser, Subcommand};
 
 pub mod artifacts;
 pub mod attach;
+pub mod ci;
 pub mod config;
 pub mod convert;
 pub mod edit;
 pub mod export;
+pub mod hooks;
+pub mod import;
 pub mod init;
 pub mod link;
 pub mod list;
 pub mod log;
+pub mod metrics;
 pub mod new;
+pub mod onboard;
+pub mod report;
 pub mod rm;
 pub mod search;
 pub mod show;
 pub mod stats;
 pub mod supersede;
 pub mod sync;
+pub mod templates;
 
 #[cfg(feature = "ai")]
 pub mod ai;
@@ -99,6 +106,27 @@ pub enum Commands {
 
     /// Export ADRs to various formats.
     Export(export::Args),
+
+    /// Import ADRs from files.
+    Import(import::Args),
+
+    /// Manage git hooks for ADR workflows.
+    Hooks(hooks::Args),
+
+    /// Generate CI/CD workflows for ADR integration.
+    Ci(ci::Args),
+
+    /// Generate project templates with ADR integration.
+    Templates(templates::Args),
+
+    /// Generate ADR analytics report.
+    Report(report::Args),
+
+    /// Export ADR metrics as JSON.
+    Metrics(metrics::Args),
+
+    /// Interactive onboarding wizard for new team members.
+    Onboard(onboard::Args),
 
     /// AI-assisted ADR operations.
     #[cfg(feature = "ai")]

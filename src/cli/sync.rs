@@ -2,6 +2,9 @@
 
 use anyhow::Result;
 use clap::Args as ClapArgs;
+use colored::Colorize;
+
+use crate::core::{ConfigManager, Git, NotesManager};
 
 /// Arguments for the sync command.
 #[derive(ClapArgs, Debug)]
@@ -18,13 +21,9 @@ pub struct Args {
     #[arg(long)]
     pub push: bool,
 
-    /// Force push.
+    /// Force push (use with caution).
     #[arg(long, short)]
     pub force: bool,
-
-    /// Timeout in seconds.
-    #[arg(long, default_value = "60")]
-    pub timeout: u64,
 }
 
 /// Run the sync command.
@@ -33,13 +32,52 @@ pub struct Args {
 ///
 /// Returns an error if sync fails.
 pub fn run(args: Args) -> Result<()> {
-    use colored::Colorize;
+    let git = Git::new();
+    git.check_repository()?;
 
-    eprintln!("{} Syncing with remote: {}", "→".blue(), args.remote);
+    let config = ConfigManager::new(git.clone()).load()?;
+    let notes = NotesManager::new(git, config);
 
-    // TODO: Implement sync logic
-    // 1. Pull notes (if not --push)
-    // 2. Push notes (if not --pull)
+    // Determine what operations to perform
+    let do_push = args.push || !args.pull;
+    let do_fetch = args.pull || !args.push;
+
+    eprintln!(
+        "{} Syncing with remote: {}",
+        "→".blue(),
+        args.remote.cyan()
+    );
+
+    if do_fetch {
+        eprintln!("  Fetching notes...");
+        match notes.sync(&args.remote, false, true) {
+            Ok(()) => eprintln!("    {} Fetched ADR notes", "✓".green()),
+            Err(e) => {
+                // Fetch failures are often non-fatal (remote might not have notes yet)
+                eprintln!(
+                    "    {} Could not fetch notes: {}",
+                    "!".yellow(),
+                    e.to_string().lines().next().unwrap_or("unknown error")
+                );
+            }
+        }
+    }
+
+    if do_push {
+        eprintln!("  Pushing notes...");
+        match notes.sync(&args.remote, true, false) {
+            Ok(()) => eprintln!("    {} Pushed ADR notes", "✓".green()),
+            Err(e) => {
+                // Push failures are more serious
+                eprintln!(
+                    "    {} Failed to push notes: {}",
+                    "✗".red(),
+                    e.to_string().lines().next().unwrap_or("unknown error")
+                );
+                return Err(e.into());
+            }
+        }
+    }
 
     eprintln!("{} Sync complete", "✓".green());
 

@@ -15,9 +15,9 @@ mod index;
 mod notes;
 mod templates;
 
-pub use adr::{Adr, AdrStatus};
+pub use adr::{Adr, AdrStatus, FlexibleDate};
 pub use config::{AdrConfig, ConfigManager};
 pub use git::Git;
 pub use index::IndexManager;
-pub use notes::NotesManager;
+pub use notes::{NotesManager, ADR_NOTES_REF, ARTIFACTS_NOTES_REF};
 pub use templates::TemplateEngine;

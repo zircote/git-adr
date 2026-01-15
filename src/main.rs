@@ -39,6 +39,13 @@ fn main() -> Result<()> {
         Commands::Attach(args) => git_adr::cli::attach::run(args),
         Commands::Artifacts(args) => git_adr::cli::artifacts::run(args),
         Commands::Export(args) => git_adr::cli::export::run(args),
+        Commands::Import(args) => git_adr::cli::import::run(args),
+        Commands::Hooks(args) => git_adr::cli::hooks::run(args),
+        Commands::Ci(args) => git_adr::cli::ci::run(args),
+        Commands::Templates(args) => git_adr::cli::templates::run(args),
+        Commands::Report(args) => git_adr::cli::report::run(args),
+        Commands::Metrics(args) => git_adr::cli::metrics::run(args),
+        Commands::Onboard(args) => git_adr::cli::onboard::run(args),
         #[cfg(feature = "ai")]
         Commands::Ai(args) => git_adr::cli::ai::run(args),
         #[cfg(feature = "wiki")]

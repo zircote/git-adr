@@ -64,8 +64,8 @@ git adr init
 # Non-interactive - install hooks automatically
 git adr init --install-hooks
 
-# Full automation with all features
-git adr init --no-input --install-hooks --setup-github-ci
+# Non-interactive initialization
+git adr init --no-prompt --install-hooks
 ```
 
 ### Method 2: Standalone Command
@@ -83,37 +83,16 @@ git adr hooks status
 
 ### Method 3: Manual Integration
 
-If you have complex existing hooks, get integration snippets:
-
-```bash
-git adr hooks install --manual
-```
-
-This outputs shell code to add to your existing hook scripts:
+If you have complex existing hooks, add this snippet to your existing hook scripts:
 
 ```bash
 # Add to your existing .git/hooks/pre-push:
 if command -v git-adr >/dev/null 2>&1; then
-    git adr hook pre-push "$@" || exit $?
+    git-adr sync --push || exit $?
 fi
 ```
 
 ## Configuration
-
-### Block on Failure
-
-By default, if notes sync fails, the push continues. To require successful sync:
-
-```bash
-# Block push if sync fails
-git adr hooks config --block-on-failure
-
-# Allow push even if sync fails (default)
-git adr hooks config --no-block-on-failure
-
-# View current settings
-git adr hooks config --show
-```
 
 ### Skip Hooks
 
@@ -238,7 +217,6 @@ repos:
 | `git adr hooks install` | Install pre-push hooks |
 | `git adr hooks uninstall` | Remove hooks and restore backups |
 | `git adr hooks status` | Check hook installation status |
-| `git adr hooks config` | Configure hook behavior |
 | `git adr sync` | Manually sync notes with remote |
 | `git adr ci github` | Generate CI/CD workflows |
 

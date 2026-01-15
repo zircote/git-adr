@@ -228,7 +228,7 @@ Ensure ADR notes are automatically synchronized with remote repositories without
 
 ### References
 
-- [Research Report](/Users/AllenR1_1/Projects/zircote/git-adr/docs/research/RESEARCH_REPORT.md)
+- Research Notes (archived during planning phase)
 - [Git Hooks Documentation](https://git-scm.com/docs/githooks)
 - [git-lfs Hook Implementation](https://github.com/git-lfs/git-lfs/blob/main/lfs/hook.go)
 - [git-adr CLI Spec](../2025-12-15-git-adr-cli/README.md)
