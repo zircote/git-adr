@@ -13,6 +13,7 @@ This guide documents all built-in ADR (Architecture Decision Record) formats sup
   - [Alexandrian](#alexandrian)
   - [Business Case](#business-case)
   - [Planguage](#planguage)
+  - [Structured MADR](#structured-madr)
 - [Custom Templates](#custom-templates)
 - [References](#references)
 
@@ -43,6 +44,7 @@ git-adr supports six built-in formats, each designed for different contexts and 
 | **Alexandrian** | Design patterns, complex systems | High | Medium-Large | Design/Architecture | 30-60 min |
 | **Business Case** | Stakeholder approval, budget requests | Medium-High | Enterprise | Business/Technical | 30-60 min |
 | **Planguage** | Performance, SLA, quality requirements | High | Enterprise | Non-functional | 20-45 min |
+| **Structured MADR** | Audit compliance, enterprise governance | High | Enterprise | Architecture/Compliance | 30-60 min |
 
 ### Decision Tree
 
@@ -64,7 +66,11 @@ Is this a quick, low-impact decision?
                                     |
                                     +-- NO --> Are you evaluating multiple options?
                                                     |
-                                                    +-- YES --> MADR
+                                                    +-- YES --> Does it need audit trail/compliance tracking?
+                                                                    |
+                                                                    +-- YES --> Structured MADR
+                                                                    |
+                                                                    +-- NO --> MADR
                                                     |
                                                     +-- NO --> Is it a recurring pattern?
                                                                     |
@@ -697,6 +703,237 @@ pricing for API products.
 - Learning curve for Planguage vocabulary
 - Can feel overly formal for small teams
 - Metrics must be maintained and validated
+
+---
+
+### Structured MADR
+
+**Origin**: Developed at [zircote/structured-madr](https://github.com/zircote/structured-madr) on GitHub as an extension of MADR for enterprise environments requiring audit trails and compliance documentation.
+
+**Description**: Structured MADR extends the standard MADR format with machine-readable YAML frontmatter metadata, a comprehensive risk assessment framework, and formal audit trail sections. It is designed for organizations with governance requirements, compliance audits, or regulatory oversight of architectural decisions.
+
+**When to Use**:
+- Enterprise governance environments requiring formal decision documentation
+- Compliance-driven organizations (SOC 2, ISO 27001, HIPAA, etc.)
+- Projects requiring audit trails for architectural decisions
+- Risk assessment is a formal part of the decision process
+- Multiple stakeholders need to review and approve decisions
+- Regulatory or legal requirements mandate decision traceability
+
+**Example**:
+
+```markdown
+---
+description: Migration from monolithic architecture to microservices
+type: adr
+category: architecture
+project: platform-modernization
+technologies: [kubernetes, docker, istio]
+audience: [engineering, architecture-board, compliance]
+related: [ADR-2024-015, ADR-2024-023]
+author: Jane Smith
+updated: 2025-01-15
+---
+
+# Migrate to Microservices Architecture
+
+## Status
+
+proposed
+
+## Context
+
+Our monolithic application has reached scaling limits. Deployment cycles take
+2 weeks due to coupling, and team autonomy is constrained by shared codebase
+ownership. The platform handles 50M daily transactions with 99.9% SLA requirements.
+
+## Decision Drivers
+
+### Primary Drivers
+
+- **Scalability**: Individual services must scale independently to handle 3x growth
+- **Team Autonomy**: Engineering teams need to deploy without cross-team coordination
+- **Reliability**: Failures must be isolated to prevent cascading outages
+
+### Secondary Drivers
+
+- Time to market for new features
+- Technology stack flexibility per service
+- Cost optimization through targeted scaling
+
+## Considered Options
+
+### Option 1: Microservices with Kubernetes (Recommended)
+
+Decompose the monolith into domain-bounded services deployed on Kubernetes.
+
+**Pros:**
+- Independent scaling per service
+- Technology flexibility per team
+- Isolated failure domains
+- Industry-standard orchestration
+
+**Cons:**
+- Significant migration effort
+- Increased operational complexity
+- Requires platform team investment
+- Network latency between services
+
+#### Risk Assessment
+
+| Dimension | Level | Rationale |
+|-----------|-------|-----------|
+| Technical | Medium | Team has moderate container experience; training required |
+| Schedule | High | 18-month migration timeline with dependencies |
+| Ecosystem | Low | Kubernetes is mature with extensive tooling |
+
+### Option 2: Modular Monolith
+
+Restructure the existing application into well-defined modules with clear boundaries.
+
+**Pros:**
+- Lower migration risk
+- Simpler operational model
+- No distributed systems complexity
+- Faster initial implementation
+
+**Cons:**
+- Does not address independent scaling
+- Deployment coupling remains
+- Limited technology flexibility
+- May require future re-architecture
+
+#### Risk Assessment
+
+| Dimension | Level | Rationale |
+|-----------|-------|-----------|
+| Technical | Low | Familiar patterns with existing stack |
+| Schedule | Low | 6-month timeline with incremental delivery |
+| Ecosystem | Low | No new infrastructure dependencies |
+
+### Option 3: Serverless Functions
+
+Decompose into cloud provider serverless functions (AWS Lambda, Azure Functions).
+
+**Pros:**
+- Zero infrastructure management
+- Pay-per-execution cost model
+- Automatic scaling
+- Fast individual deployments
+
+**Cons:**
+- Vendor lock-in concerns
+- Cold start latency issues
+- Limited execution duration
+- Debugging complexity
+
+#### Risk Assessment
+
+| Dimension | Level | Rationale |
+|-----------|-------|-----------|
+| Technical | High | Requires complete architectural redesign |
+| Schedule | High | Unknown unknowns with new paradigm |
+| Ecosystem | High | Deep vendor dependency |
+
+## Decision
+
+We will adopt **Option 1: Microservices with Kubernetes** as our target architecture.
+
+## Consequences
+
+### Positive
+
+- Independent scaling enables cost-efficient resource allocation
+- Team autonomy improves developer productivity and morale
+- Failure isolation improves overall system reliability
+- Technology flexibility allows best-tool-for-job decisions
+
+### Negative
+
+- 18-month migration timeline delays other initiatives
+- Platform team investment required (3 FTE)
+- Increased monitoring and observability requirements
+- Service mesh adds operational complexity
+
+### Neutral
+
+- Cloud costs shift from compute to networking
+- Testing strategy evolution from integration to contract tests
+- Documentation requirements increase
+
+## Decision Outcome
+
+Chosen option: "Microservices with Kubernetes" because it addresses all primary
+decision drivers while accepting manageable technical and schedule risks. The
+modular monolith option was rejected as it does not solve the independent scaling
+requirement. Serverless was rejected due to unacceptable vendor lock-in and
+technical risk.
+
+## Related Decisions
+
+- ADR-2024-015: Adopt Kubernetes for container orchestration
+- ADR-2024-023: Implement service mesh with Istio
+- Pending: Database per service strategy
+
+## Links
+
+- [Kubernetes Documentation](https://kubernetes.io/docs/)
+- [Domain-Driven Design Reference](https://www.domainlanguage.com/ddd/)
+- Internal: Platform Modernization RFC (Confluence)
+
+## More Information
+
+- Migration roadmap available in project wiki
+- Architecture board presentation scheduled for 2025-01-22
+- Contact: Jane Smith (jane.smith@company.com)
+
+## Audit
+
+### Compliance Review
+
+| Framework | Requirement | Status | Notes |
+|-----------|-------------|--------|-------|
+| SOC 2 | Change management | Pending | Requires CAB approval |
+| ISO 27001 | A.12.1.2 Change management | Pending | Impact assessment required |
+| Internal | Architecture Review Board | Pending | Scheduled 2025-01-22 |
+
+### Findings
+
+| ID | Type | Description | Remediation | Status |
+|----|------|-------------|-------------|--------|
+| F-001 | Risk | Schedule risk rated High | Add 3-month buffer to timeline | Open |
+| F-002 | Compliance | Data residency requirements | Confirm EU region deployment | Open |
+| F-003 | Security | Service-to-service auth | Implement mTLS via Istio | Planned |
+
+### Summary
+
+This ADR proposes a significant architectural change with material compliance
+implications. The decision requires Architecture Review Board approval and
+updated risk register entries before implementation may begin.
+
+### Required Actions
+
+1. Architecture Review Board presentation and approval
+2. Update enterprise risk register with migration risks
+3. Complete data residency impact assessment
+4. Obtain CAB approval for production changes
+```
+
+**Pros**:
+- Comprehensive audit trail satisfies compliance requirements
+- Risk assessment framework ensures due diligence
+- Machine-readable frontmatter enables automated tooling
+- Structured findings tracking prevents issues from being forgotten
+- Clear approval workflow integrates with governance processes
+- Detailed option analysis supports informed decision-making
+
+**Cons**:
+- Significant time investment (30-60 minutes) per ADR
+- May be excessive for routine or low-impact decisions
+- Requires familiarity with compliance frameworks
+- Audit sections add maintenance overhead
+- Risk assessment requires cross-functional input
+- Not suitable for rapid iteration or experimental decisions
 
 ---
 

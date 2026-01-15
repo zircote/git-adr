@@ -146,7 +146,7 @@ git adr sync push
 
 | Option | Description |
 |--------|-------------|
-| `--template <format>` | Set ADR format (madr, nygard, y-statement, etc.) |
+| `--template <format>` | Set ADR format (madr, nygard, y-statement, structured-madr, etc.) |
 | `--install-hooks` | Install pre-push hooks for automatic sync |
 | `--setup-github-ci` | Generate GitHub Actions workflows |
 | `--no-input` | Skip all interactive prompts |

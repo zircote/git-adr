@@ -17,7 +17,7 @@ the man pages: `git adr <command> --help` or read `docs/man/git-adr-*.1.md`.
 
 | Option | Description |
 |--------|-------------|
-| `--template <format>` | Set ADR format (madr, nygard, y-statement, alexandrian, business, planguage) |
+| `--template <format>` | Set ADR format (madr, nygard, y-statement, alexandrian, business, planguage, structured-madr) |
 | `--namespace <name>` | Custom notes namespace (default: adr) |
 | `--install-hooks` | Install pre-push hooks for automatic sync |
 | `--no-install-hooks` | Skip hooks installation |
