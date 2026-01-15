@@ -53,3 +53,8 @@ cobertura.xml
 # Temporary files
 *.tmp
 *.bak
+
+# Generated build artifacts
+/share/
+/build/
+/dist/
