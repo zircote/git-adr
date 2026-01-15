@@ -5,6 +5,20 @@ use crate::export::{ExportResult, Exporter};
 use crate::Error;
 use std::path::Path;
 
+/// Escape HTML special characters to prevent XSS attacks.
+fn html_escape(s: &str) -> String {
+    s.chars()
+        .map(|c| match c {
+            '&' => "&amp;".to_string(),
+            '<' => "&lt;".to_string(),
+            '>' => "&gt;".to_string(),
+            '"' => "&quot;".to_string(),
+            '\'' => "&#x27;".to_string(),
+            _ => c.to_string(),
+        })
+        .collect()
+}
+
 /// HTML exporter.
 #[derive(Debug, Default)]
 pub struct HtmlExporter {
@@ -46,17 +60,17 @@ impl HtmlExporter {
             .lines()
             .map(|line| {
                 if let Some(rest) = line.strip_prefix("# ") {
-                    format!("<h1>{rest}</h1>")
+                    format!("<h1>{}</h1>", html_escape(rest))
                 } else if let Some(rest) = line.strip_prefix("## ") {
-                    format!("<h2>{rest}</h2>")
+                    format!("<h2>{}</h2>", html_escape(rest))
                 } else if let Some(rest) = line.strip_prefix("### ") {
-                    format!("<h3>{rest}</h3>")
+                    format!("<h3>{}</h3>", html_escape(rest))
                 } else if let Some(rest) = line.strip_prefix("- ") {
-                    format!("<li>{rest}</li>")
+                    format!("<li>{}</li>", html_escape(rest))
                 } else if line.is_empty() {
                     String::new()
                 } else {
-                    format!("<p>{line}</p>")
+                    format!("<p>{}</p>", html_escape(line))
                 }
             })
             .collect::<Vec<_>>()
@@ -105,7 +119,11 @@ h3 { color: #7f8c8d; }
 
 impl Exporter for HtmlExporter {
     fn export(&self, adr: &Adr, path: &Path) -> Result<(), Error> {
-        let status_class = format!("status-{}", adr.frontmatter.status);
+        // Escape all user-controlled content to prevent XSS
+        let escaped_id = html_escape(&adr.id);
+        let escaped_title = html_escape(&adr.frontmatter.title);
+        let escaped_status = html_escape(&adr.frontmatter.status.to_string());
+        let status_class = format!("status-{}", escaped_status);
         let body_html = self.markdown_to_html(&adr.body);
 
         let tags_html = if adr.frontmatter.tags.is_empty() {
@@ -115,7 +133,7 @@ impl Exporter for HtmlExporter {
                 .frontmatter
                 .tags
                 .iter()
-                .map(|t| format!("<span class=\"tag\">{t}</span>"))
+                .map(|t| format!("<span class=\"tag\">{}</span>", html_escape(t)))
                 .collect();
             format!("<div class=\"tags\">{}</div>", tags.join(""))
         };
@@ -132,14 +150,14 @@ impl Exporter for HtmlExporter {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{} - {}</title>
+    <title>{escaped_id} - {escaped_title}</title>
     {style}
 </head>
 <body>
     <article>
         <header>
-            <h1>{}</h1>
-            <span class="status {status_class}">{}</span>
+            <h1>{escaped_title}</h1>
+            <span class="status {status_class}">{escaped_status}</span>
             {tags_html}
         </header>
         <main>
@@ -147,8 +165,7 @@ impl Exporter for HtmlExporter {
         </main>
     </article>
 </body>
-</html>"#,
-            adr.id, adr.frontmatter.title, adr.frontmatter.title, adr.frontmatter.status
+</html>"#
         );
 
         std::fs::write(path, html).map_err(|e| Error::IoError {
@@ -202,14 +219,17 @@ impl HtmlExporter {
         let rows: Vec<String> = adrs
             .iter()
             .map(|adr| {
-                let status_class = format!("status-{}", adr.frontmatter.status);
+                // Escape all user-controlled content to prevent XSS
+                let escaped_id = html_escape(&adr.id);
+                let escaped_title = html_escape(&adr.frontmatter.title);
+                let escaped_status = html_escape(&adr.frontmatter.status.to_string());
+                let status_class = format!("status-{}", escaped_status);
                 format!(
                     r#"<tr>
-                <td><a href="{}.html">{}</a></td>
-                <td>{}</td>
-                <td><span class="status {status_class}">{}</span></td>
-            </tr>"#,
-                    adr.id, adr.id, adr.frontmatter.title, adr.frontmatter.status
+                <td><a href="{escaped_id}.html">{escaped_id}</a></td>
+                <td>{escaped_title}</td>
+                <td><span class="status {status_class}">{escaped_status}</span></td>
+            </tr>"#
                 )
             })
             .collect();
