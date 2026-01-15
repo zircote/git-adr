@@ -2,6 +2,9 @@
 
 use anyhow::Result;
 use clap::Args as ClapArgs;
+use colored::Colorize;
+
+use crate::core::{ConfigManager, Git};
 
 /// Arguments for the init command.
 #[derive(ClapArgs, Debug)]
@@ -14,21 +17,17 @@ pub struct Args {
     #[arg(long, short, default_value = "madr")]
     pub template: String,
 
+    /// ADR ID prefix.
+    #[arg(long, default_value = "ADR-")]
+    pub prefix: String,
+
+    /// Number of digits in ADR ID.
+    #[arg(long, default_value = "4")]
+    pub digits: u8,
+
     /// Force reinitialization.
     #[arg(long, short)]
     pub force: bool,
-
-    /// Skip interactive prompts.
-    #[arg(long)]
-    pub no_input: bool,
-
-    /// Install git hooks.
-    #[arg(long)]
-    pub install_hooks: bool,
-
-    /// Setup GitHub CI workflow.
-    #[arg(long)]
-    pub setup_github_ci: bool,
 }
 
 /// Run the init command.
@@ -37,17 +36,45 @@ pub struct Args {
 ///
 /// Returns an error if initialization fails.
 pub fn run(args: Args) -> Result<()> {
-    use colored::Colorize;
+    let git = Git::new();
+
+    // Verify we're in a git repository
+    git.check_repository()?;
+
+    let config_manager = ConfigManager::new(git.clone());
+
+    // Check if already initialized
+    if config_manager.is_initialized()? && !args.force {
+        eprintln!(
+            "{} git-adr is already initialized. Use --force to reinitialize.",
+            "!".yellow()
+        );
+        return Ok(());
+    }
 
     eprintln!("{} Initializing git-adr...", "→".blue());
-    eprintln!("  Namespace: {}", args.namespace);
-    eprintln!("  Template: {}", args.template);
 
-    // TODO: Implement initialization logic
-    // 1. Verify git repository
-    // 2. Configure notes fetch/push refspecs
-    // 3. Set adr.initialized = true
-    // 4. Create initial ADR-0000
+    // Build configuration
+    let config = crate::core::AdrConfig {
+        prefix: args.prefix,
+        digits: args.digits,
+        template: args.template.clone(),
+        format: args.template,
+        initialized: true,
+    };
+
+    // Save configuration
+    config_manager.save(&config)?;
+
+    // Configure notes fetch/push refspecs for automatic sync
+    let _ = git.config_set(
+        "remote.origin.fetch",
+        "+refs/notes/*:refs/notes/*",
+    );
+
+    eprintln!("  Prefix: {}", config.prefix);
+    eprintln!("  Digits: {}", config.digits);
+    eprintln!("  Template: {}", config.template);
 
     eprintln!("{} git-adr initialized successfully!", "✓".green());
     eprintln!();

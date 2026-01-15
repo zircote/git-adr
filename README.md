@@ -88,7 +88,7 @@ git adr show ADR-0001
 git adr search "database"
 
 # Sync ADRs with remote
-git adr sync push
+git adr sync --push
 ```
 
 ## Commands
@@ -127,17 +127,17 @@ git adr sync push
 
 | Command | Description |
 |---------|-------------|
-| `git adr sync` | Sync ADRs with remote (push & pull) |
-| `git adr sync --push` | Push ADR notes to remote |
-| `git adr sync --pull` | Pull ADR notes from remote |
+| `git adr sync` | Sync ADRs with remote (push & fetch) |
+| `git adr sync --push` | Push ADR notes to remote only |
+| `git adr sync --pull` | Fetch ADR notes from remote only |
 
 ### Configuration
 
 | Command | Description |
 |---------|-------------|
-| `git adr config --list` | List all configuration |
-| `git adr config <key> <value>` | Set configuration value |
-| `git adr config --get <key>` | Get configuration value |
+| `git adr config list` | List all configuration |
+| `git adr config set <key> <value>` | Set configuration value |
+| `git adr config get <key>` | Get configuration value |
 
 ## Configuration Options
 
@@ -146,21 +146,21 @@ Configuration is stored in git config (local or global):
 | Key | Description | Default |
 |-----|-------------|---------|
 | `adr.prefix` | ADR ID prefix | `ADR-` |
-| `adr.digits` | Number of digits in ID | `4` |
-| `adr.template` | Default template format | `nygard` |
-| `adr.format` | ADR format (madr, nygard, etc.) | `nygard` |
+| `adr.digits` | Number of digits in ADR ID | `4` |
+| `adr.template` | Default template format | `madr` |
+| `adr.format` | ADR format (nygard, madr, etc.) | `nygard` |
 
 ### Examples
 
 ```bash
-# Set local config
-git adr config adr.template madr
+# Set configuration
+git adr config set template madr
 
-# Set format
-git adr config adr.format madr
+# Get configuration
+git adr config get template
 
 # List all config
-git adr config --list
+git adr config list
 ```
 
 ## ADR Formats
@@ -243,36 +243,17 @@ Notes are stored under:
 - `refs/notes/adr-index` - Search index
 - `refs/notes/adr-artifacts` - Binary attachments
 
-## AI Features
+## AI Features (Planned)
 
 > Requires installation with `--features ai`
+>
+> **Note:** AI features are not yet implemented in the Rust version. They are planned for a future release.
 
-Configure your AI provider:
-
-```bash
-export ANTHROPIC_API_KEY="your-key"
-# or
-export OPENAI_API_KEY="your-key"
-# or
-export GOOGLE_API_KEY="your-key"
-# or
-export OLLAMA_HOST="http://localhost:11434"
-```
-
-## Wiki Synchronization
+## Wiki Synchronization (Planned)
 
 > Requires installation with `--features wiki`
-
-Sync ADRs with GitHub or GitLab wikis:
-
-```bash
-# Configure wiki (GitHub)
-git adr config adr.wiki.provider github
-git adr config adr.wiki.repo owner/repo
-
-# Sync to wiki
-git adr sync --wiki
-```
+>
+> **Note:** Wiki synchronization is not yet implemented in the Rust version. It is planned for a future release.
 
 ## Development
 

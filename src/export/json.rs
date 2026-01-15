@@ -49,7 +49,7 @@ impl<'a> AdrJson<'a> {
             commit: &adr.commit,
             title: &adr.frontmatter.title,
             status: adr.frontmatter.status.to_string(),
-            date: adr.frontmatter.date.map(|d| d.to_rfc3339()),
+            date: adr.frontmatter.date.as_ref().map(|d| d.datetime().to_rfc3339()),
             tags: &adr.frontmatter.tags,
             authors: &adr.frontmatter.authors,
             deciders: &adr.frontmatter.deciders,

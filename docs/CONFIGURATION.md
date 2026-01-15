@@ -2,6 +2,8 @@
 
 This document provides a comprehensive reference for all configuration options available in git-adr.
 
+> **Note:** This documentation covers the full planned feature set. The Rust version (v1.x) currently implements a subset of these options. Options marked with ⚠️ are planned for future releases. Run `git adr config list` to see currently supported options.
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -92,9 +94,25 @@ git config --global --unset adr.ai.provider
 
 ---
 
-## Core Settings
+## Core Settings (Implemented)
 
-### adr.namespace
+The following settings are available in the Rust version:
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `adr.prefix` | string | `ADR-` | ADR ID prefix |
+| `adr.digits` | integer | `4` | Number of digits in ADR ID |
+| `adr.template` | string | `madr` | Default ADR template format |
+| `adr.format` | string | `nygard` | Default ADR format |
+| `adr.initialized` | boolean | `false` | Whether repo is initialized |
+
+---
+
+## Additional Settings (Planned)
+
+The following settings are documented for the full feature set but are not yet implemented in the Rust version.
+
+### ⚠️ adr.namespace
 
 The git notes namespace used to store ADR content.
 
@@ -127,7 +145,7 @@ git adr config adr.namespace team-alpha-adr
 
 ---
 
-### adr.artifacts_namespace
+### ⚠️ adr.artifacts_namespace
 
 The git notes namespace used to store ADR artifacts (attached files).
 
@@ -200,7 +218,7 @@ git adr new "Use Redis for caching" --template nygard
 
 ---
 
-### adr.editor
+### ⚠️ adr.editor
 
 The editor command used when editing ADRs.
 
@@ -247,9 +265,9 @@ git adr config --global adr.editor "emacsclient -t"
 
 ---
 
-## Artifact Settings
+## ⚠️ Artifact Settings (Planned)
 
-### adr.artifact_warn_size
+### ⚠️ adr.artifact_warn_size
 
 Size threshold (in bytes) at which git-adr warns before attaching a file.
 
@@ -282,7 +300,7 @@ git adr config adr.artifact_warn_size 999999999
 
 ---
 
-### adr.artifact_max_size
+### ⚠️ adr.artifact_max_size
 
 Maximum allowed file size (in bytes) for artifacts.
 
@@ -320,9 +338,9 @@ git adr config adr.artifact_max_size 52428800
 
 ---
 
-## Sync Settings
+## ⚠️ Sync Settings (Planned)
 
-### adr.sync.auto_push
+### ⚠️ adr.sync.auto_push
 
 Automatically push notes to remote after creating or editing ADRs.
 
@@ -353,7 +371,7 @@ git adr config adr.sync.auto_push false
 
 ---
 
-### adr.sync.auto_pull
+### ⚠️ adr.sync.auto_pull
 
 Automatically pull notes from remote before listing or showing ADRs.
 
@@ -384,7 +402,7 @@ git adr config adr.sync.auto_pull false
 
 ---
 
-### adr.sync.merge_strategy
+### ⚠️ adr.sync.merge_strategy
 
 Strategy for resolving conflicts when merging notes from remote.
 
@@ -431,9 +449,9 @@ git adr sync --pull --merge-strategy theirs
 
 ---
 
-## AI Settings
+## ⚠️ AI Settings (Planned)
 
-### adr.ai.provider
+### ⚠️ adr.ai.provider
 
 The AI service provider for AI-assisted features.
 
@@ -486,7 +504,7 @@ export GOOGLE_API_KEY="..."
 
 ---
 
-### adr.ai.model
+### ⚠️ adr.ai.model
 
 The specific AI model to use with the configured provider.
 
@@ -532,7 +550,7 @@ git adr config adr.ai.model mistral
 
 ---
 
-### adr.ai.temperature
+### ⚠️ adr.ai.temperature
 
 Controls the randomness/creativity of AI-generated content.
 
@@ -574,9 +592,9 @@ git adr config adr.ai.temperature 0.9
 
 ---
 
-## Wiki Settings
+## ⚠️ Wiki Settings (Planned)
 
-### adr.wiki.platform
+### ⚠️ adr.wiki.platform
 
 The wiki platform for exporting ADRs.
 
@@ -618,7 +636,7 @@ git adr config adr.wiki.platform gitlab
 
 ---
 
-### adr.wiki.auto_sync
+### ⚠️ adr.wiki.auto_sync
 
 Automatically sync ADRs to wiki after modifications.
 
@@ -828,11 +846,22 @@ git adr config adr.sync.auto_push false
 
 ## Quick Reference
 
+### Implemented (Rust v1.x)
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `adr.prefix` | string | `ADR-` | ADR ID prefix |
+| `adr.digits` | int | `4` | Number of digits in ADR ID |
+| `adr.template` | string | `madr` | Default ADR template format |
+| `adr.format` | string | `nygard` | Default ADR format |
+| `adr.initialized` | bool | `false` | Whether repo is initialized |
+
+### Planned (Future Releases)
+
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `adr.namespace` | string | `adr` | Notes namespace for ADRs |
 | `adr.artifacts_namespace` | string | `adr-artifacts` | Notes namespace for artifacts |
-| `adr.template` | string | `madr` | Default ADR template format |
 | `adr.editor` | string | (system) | Editor for ADR editing |
 | `adr.artifact_warn_size` | int | `1048576` | Warning threshold (bytes) |
 | `adr.artifact_max_size` | int | `10485760` | Maximum artifact size (bytes) |

@@ -24,9 +24,9 @@ worktree:
 
 Implement automatic ADR notes synchronization via git hooks and integrate git-adr into the Software Development Lifecycle (SDLC) through CI/CD workflows, PR templates, and governance patterns.
 
-**Based on**: [Research Report](/Users/AllenR1_1/Projects/zircote/git-adr/docs/research/RESEARCH_REPORT.md)
+**Based on**: Research conducted during planning phase (research notes archived)
 
-**Related Project**: [git-adr CLI](../2025-12-15-git-adr-cli/README.md) (SPEC-2025-12-15-001)
+**Related Project**: [git-adr CLI](../2025-12-15-git-adr-cli/README.md) (SPEC-2025-12-15-001, completed)
 
 ## Problem Statement
 
@@ -70,7 +70,7 @@ Currently, git-adr requires users to manually run `git adr sync --push` to synch
 
 ## Quick Links
 
-- [Research Report](/Users/AllenR1_1/Projects/zircote/git-adr/docs/research/RESEARCH_REPORT.md) - Original Research
+- Research Notes (archived during planning phase)
 - [REQUIREMENTS.md](REQUIREMENTS.md) - Product Requirements Document
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Technical Architecture
 - [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) - Phased Task Breakdown

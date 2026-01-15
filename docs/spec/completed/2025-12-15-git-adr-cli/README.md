@@ -2,17 +2,19 @@
 project_id: SPEC-2025-12-15-001
 project_name: "git-adr CLI"
 slug: git-adr-cli
-status: in-progress
+status: completed
 created: 2025-12-15T00:20:00Z
 approved: 2025-12-15T02:00:00Z
 started: 2025-12-15T02:00:00Z
-completed: null
+completed: 2026-01-15T00:00:00Z
 expires: 2026-03-15T00:20:00Z
 superseded_by: null
-tags: [cli, git, adr, architecture-decision-records, git-notes]
+final_effort: "~40 hours"
+outcome: success
+tags: [cli, git, adr, architecture-decision-records, git-notes, rust]
 stakeholders: []
 worktree:
-  branch: plan/git-adr-cli
+  branch: rust-rewrite
   base_branch: main
 ---
 
@@ -26,7 +28,9 @@ A command-line tool implemented as a git extension that manages Architecture Dec
 
 ## Status
 
-**Current Phase**: Implementation (Phase 1: Core MVP)
+**Current Phase**: COMPLETED - Rust Rewrite
+
+> **Note**: This spec was originally planned for Python but the project was rewritten in Rust for better performance, single-binary distribution, and reduced dependencies. All core functionality has been implemented.
 
 ## Specification Summary
 

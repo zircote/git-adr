@@ -7,39 +7,42 @@ Complete reference for all git-adr commands.
 ### init - Initialize ADR tracking
 
 ```bash
-git adr init [--force] [--namespace TEXT] [--template madr|nygard|y-statement]
+git adr init [OPTIONS]
 ```
 
-- `--force`, `-f`: Reinitialize even if already initialized
-- `--namespace`: Custom git notes namespace (default: refs/notes/adr)
-- `--template`: Default template format (default: madr)
+- `--namespace <NAMESPACE>`: Notes namespace (default: adr)
+- `-t, --template <TEMPLATE>`: Default ADR template format (default: madr)
+- `--prefix <PREFIX>`: ADR ID prefix (default: ADR-)
+- `--digits <DIGITS>`: Number of digits in ADR ID (default: 4)
+- `-f, --force`: Force reinitialization
 
 ### new - Create a new ADR
 
 ```bash
-git adr new TITLE [OPTIONS]
+git adr new [OPTIONS] <TITLE>
 ```
 
-- `--status proposed|accepted|deprecated|superseded|draft`: Initial status
-- `--tags`, `-t TEXT`: Tags (repeatable)
-- `--link TEXT`: Commit SHA to link
-- `--template`: Template format override
-- `--file`, `-f PATH`: Read content from file
-- `--no-edit`: Skip editor (requires --file or stdin)
-- `--preview`: Show template without creating
-- `--draft`: Shortcut for --status draft
+- `-s, --status <STATUS>`: Initial status (default: proposed)
+- `-g, --tag <TAG>`: Tags (can be specified multiple times)
+- `-d, --deciders <DECIDERS>`: Deciders (can be specified multiple times)
+- `-l, --link <LINK>`: Link to commit SHA
+- `--template <TEMPLATE>`: Template format to use
+- `-f, --file <FILE>`: Read content from file
+- `--no-edit`: Don't open editor
+- `--preview`: Preview without saving
 
 ### edit - Edit an existing ADR
 
 ```bash
-git adr edit ADR_ID [OPTIONS]
+git adr edit [OPTIONS] <ADR_ID>
 ```
 
-- `--status TEXT`: Change status without editor
-- `--add-tag TEXT`: Add tag (repeatable)
-- `--remove-tag TEXT`: Remove tag (repeatable)
-- `--link TEXT`: Link to commit
-- `--unlink TEXT`: Remove commit link
+- `-s, --status <STATUS>`: Quick edit: change status
+- `--add-tag <ADD_TAG>`: Quick edit: add tag
+- `--remove-tag <REMOVE_TAG>`: Quick edit: remove tag
+- `-t, --title <TITLE>`: Quick edit: change title
+- `--add-decider <ADD_DECIDER>`: Quick edit: add decider
+- `--remove-decider <REMOVE_DECIDER>`: Quick edit: remove decider
 
 Without options, opens the ADR in your editor.
 
@@ -49,134 +52,114 @@ Without options, opens the ADR in your editor.
 git adr list [OPTIONS]
 ```
 
-- `--status TEXT`: Filter by status
-- `--tag TEXT`: Filter by tag
-- `--since YYYY-MM-DD`: Filter by start date
-- `--until YYYY-MM-DD`: Filter by end date
-- `--format table|json|csv|oneline`: Output format
-- `--reverse`: Reverse chronological order
+- `-s, --status <STATUS>`: Filter by status
+- `-g, --tag <TAG>`: Filter by tag
+- `--since <SINCE>`: Filter by date (since)
+- `--until <UNTIL>`: Filter by date (until)
+- `-f, --format <FORMAT>`: Output format (table, json, csv, oneline) [default: table]
+- `-r, --reverse`: Reverse sort order
 
 ### show - Display a single ADR
 
 ```bash
-git adr show ADR_ID [OPTIONS]
+git adr show [OPTIONS] <ADR_ID>
 ```
 
-- `--format markdown|yaml|json`: Output format
+- `-f, --format <FORMAT>`: Output format (markdown, yaml, json) [default: markdown]
 - `--metadata-only`: Show only metadata
-- `--no-interactive`: Disable interactive prompts
 
 ### search - Search ADRs by content
 
 ```bash
-git adr search QUERY [OPTIONS]
+git adr search [OPTIONS] <QUERY>
 ```
 
-- `--status TEXT`: Filter by status
-- `--tag TEXT`: Filter by tag
-- `--context INT`: Lines of context (default: 2)
-- `--case-sensitive`: Case-sensitive search
-- `--regex`: Treat query as regex
+- `-s, --status <STATUS>`: Filter by status
+- `-g, --tag <TAG>`: Filter by tag
+- `-c, --case-sensitive`: Case sensitive search
+- `-E, --regex`: Use regex pattern
+- `-C, --context <CONTEXT>`: Context lines to show (default: 2)
+- `--limit <LIMIT>`: Maximum results
 
 ### rm - Remove an ADR
 
 ```bash
-git adr rm ADR_ID [--force]
+git adr rm [OPTIONS] <ADR_ID>
 ```
 
-- `--force`, `-f`: Skip confirmation prompt
+- `-f, --force`: Skip confirmation prompt
 
 ### supersede - Create ADR that supersedes another
 
 ```bash
-git adr supersede OLD_ADR_ID TITLE [--template TEXT]
+git adr supersede [OPTIONS] <ADR_ID> <TITLE>
 ```
+
+- `--template <TEMPLATE>`: Template format for new ADR
 
 Creates a new ADR and marks the old one as superseded.
 
 ### link - Link ADR to commits
 
 ```bash
-git adr link ADR_ID COMMIT... [--unlink]
+git adr link <ADR_ID> <COMMIT>
 ```
 
-- `--unlink`: Remove links instead of adding
+Links an ADR to a specific commit SHA.
 
 ### log - Show git log with ADR annotations
 
 ```bash
-git adr log [-n INT] [--all]
+git adr log [OPTIONS] [REVISION]
 ```
 
-- `-n INT`: Number of commits (default: 10)
-- `--all`: Show all annotated commits
+- `-n <COUNT>`: Number of commits to show (default: 10)
+- `--linked-only`: Show only commits with linked ADRs
 
 ## Sync Commands
 
 ### sync - Synchronize ADRs with remote
 
 ```bash
-git adr sync [push|pull|both] [OPTIONS]
+git adr sync [OPTIONS] [REMOTE]
 ```
 
-Direction defaults to `both` (pull then push).
+Remote defaults to `origin`. Without flags, performs pull then push.
 
-- `--remote`, `-r TEXT`: Remote name (default: origin)
-- `--force`, `-f`: Force push/pull
-- `--dry-run`: Show what would be done
-
-### sync push - Push ADRs to remote
-
-```bash
-git adr sync push [--remote TEXT] [--force]
-```
-
-### sync pull - Pull ADRs from remote
-
-```bash
-git adr sync pull [--remote TEXT] [--force]
-```
+- `--pull`: Pull only
+- `--push`: Push only
+- `-f, --force`: Force push (use with caution)
 
 ## Artifact Commands
 
 ### attach - Attach file to ADR
 
 ```bash
-git adr attach ADR_ID FILE [--alt TEXT] [--name TEXT]
+git adr attach [OPTIONS] <ADR_ID> <FILE>
 ```
 
-- `--alt`: Alt text for images
-- `--name`: Override filename
+- `--name <NAME>`: Override filename
+- `--description <DESCRIPTION>`: Description/alt text for the attachment
 
-### artifacts - List attachments
+### artifacts - List and manage attachments
 
 ```bash
-git adr artifacts ADR_ID
+git adr artifacts [OPTIONS] <ADR_ID>
 ```
 
-### artifact-get - Extract attachment
-
-```bash
-git adr artifact-get ADR_ID NAME [--output PATH]
-```
-
-NAME can be filename or SHA256 prefix.
-
-### artifact-rm - Remove attachment
-
-```bash
-git adr artifact-rm ADR_ID NAME
-```
+- `-f, --format <FORMAT>`: Output format (text, json) [default: text]
+- `--extract <EXTRACT>`: Extract artifact to file
+- `--remove`: Remove artifact from ADR
 
 ## Analytics Commands
 
 ### stats - Quick statistics summary
 
 ```bash
-git adr stats [--velocity]
+git adr stats [OPTIONS]
 ```
 
-- `--velocity`: Show decision velocity metrics
+- `-f, --format <FORMAT>`: Output format (text, json) [default: text]
 
 ### report - Generate analytics report
 
@@ -184,9 +167,10 @@ git adr stats [--velocity]
 git adr report [OPTIONS]
 ```
 
-- `--format terminal|html|json|markdown`: Output format
-- `--output PATH`: Output file path
-- `--team`: Include team metrics
+- `-f, --format <FORMAT>`: Output format (markdown, html, json) [default: markdown]
+- `-o, --output <OUTPUT>`: Output file (stdout if not specified)
+- `--detailed`: Include detailed status breakdown
+- `--timeline`: Include timeline analysis
 
 ### metrics - Export metrics for dashboards
 
@@ -194,8 +178,9 @@ git adr report [OPTIONS]
 git adr metrics [OPTIONS]
 ```
 
-- `--format json|prometheus|csv`: Export format
-- `--output PATH`: Output file path
+- `-o, --output <OUTPUT>`: Output file (stdout if not specified)
+- `--include-adrs`: Include individual ADR metrics
+- `--pretty`: Pretty print JSON output
 
 ## Export/Import Commands
 
@@ -205,54 +190,63 @@ git adr metrics [OPTIONS]
 git adr export [OPTIONS]
 ```
 
-- `--format markdown|json|html|docx`: Export format
-- `--output PATH`: Output directory (default: ./adr-export)
-- `--adr TEXT`: Export specific ADR only
+- `-o, --output <OUTPUT>`: Output directory (default: ./adr-export)
+- `-f, --format <FORMAT>`: Export format (markdown, json, html) [default: markdown]
+- `--status <STATUS>`: Filter by status
+- `--tag <TAG>`: Filter by tag
+- `--index`: Generate index file
 
 ### import - Import from file-based ADRs
 
 ```bash
-git adr import PATH [OPTIONS]
+git adr import [OPTIONS] <PATH>
 ```
 
-- `--format auto|markdown|json|adr-tools`: Source format
-- `--link-by-date`: Associate ADRs with commits by date
-- `--dry-run`: Preview import
+- `-f, --format <FORMAT>`: Import format (auto, markdown, json, adr-tools) [default: auto]
+- `--link-by-date`: Link ADRs to commits by date
+- `--dry-run`: Preview import without saving
 
 ### convert - Convert ADR to different format
 
 ```bash
-git adr convert ADR_ID --to FORMAT [--dry-run]
+git adr convert [OPTIONS] --to <TO> <ADR_ID>
 ```
 
-Available formats: madr, nygard, y-statement, alexandrian, business, planguage
+- `-t, --to <TO>`: Target format (nygard, madr, y-statement, alexandrian)
+- `--in-place`: Save in place (update the ADR)
 
 ## Config Commands
 
-### config list - Show all settings
+### config - Manage configuration
 
 ```bash
-git adr config --list [--global]
+git adr config <COMMAND>
 ```
+
+Subcommands: `get`, `set`, `unset`, `list`
 
 ### config get - Get a setting
 
 ```bash
-git adr config KEY
-git adr config --get KEY [--global]
+git adr config get <KEY>
 ```
 
 ### config set - Set a configuration value
 
 ```bash
-git adr config KEY VALUE
-git adr config --set KEY VALUE [--global]
+git adr config set <KEY> <VALUE>
 ```
 
 ### config unset - Remove a setting
 
 ```bash
-git adr config --unset KEY [--global]
+git adr config unset <KEY>
+```
+
+### config list - Show all settings
+
+```bash
+git adr config list
 ```
 
 ### Key Configuration Options
@@ -272,25 +266,71 @@ git adr config --unset KEY [--global]
 | `adr.wiki.platform` | Wiki platform: github, gitlab |
 | `adr.wiki.auto_sync` | Auto-sync to wiki after changes |
 
-## Wiki Commands
+## Hooks Commands
 
-### wiki init - Configure wiki sync
-
-```bash
-git adr wiki init [--platform github|gitlab]
-```
-
-Auto-detects platform if not specified.
-
-### wiki sync - Sync ADRs to project wiki
+### hooks - Manage git hooks
 
 ```bash
-git adr wiki sync [OPTIONS]
+git adr hooks <COMMAND>
 ```
 
-- `--direction push|pull|both`: Sync direction (default: push)
-- `--adr TEXT`: Sync only specific ADR
-- `--dry-run`: Preview changes
+Subcommands: `install`, `uninstall`, `status`
+
+### hooks install - Install ADR git hooks
+
+Installs pre-push hooks for automatic ADR synchronization.
+
+### hooks uninstall - Uninstall ADR git hooks
+
+Removes installed hooks and restores backups if present.
+
+### hooks status - Show hook installation status
+
+Displays current hook configuration and status.
+
+## CI/CD Commands
+
+### ci - Generate CI/CD workflows
+
+```bash
+git adr ci <COMMAND>
+```
+
+Subcommands: `github`, `gitlab`
+
+### ci github - Generate GitHub Actions workflow
+
+Creates `.github/workflows/adr-sync.yml` for ADR validation and sync.
+
+### ci gitlab - Generate GitLab CI configuration
+
+Creates GitLab CI snippet for ADR integration.
+
+## Template Commands
+
+### templates - Generate project templates
+
+```bash
+git adr templates <COMMAND>
+```
+
+Subcommands: `pr`, `issue`, `codeowners`, `all`
+
+### templates pr - Generate pull request template
+
+Creates `.github/pull_request_template.md` with ADR section.
+
+### templates issue - Generate issue templates
+
+Creates GitHub issue templates for ADR workflows.
+
+### templates codeowners - Generate CODEOWNERS
+
+Creates or updates CODEOWNERS file with ADR patterns.
+
+### templates all - Generate all templates
+
+Creates PR template, issue templates, and CODEOWNERS at once.
 
 ## Onboard Command
 
@@ -300,10 +340,10 @@ git adr wiki sync [OPTIONS]
 git adr onboard [OPTIONS]
 ```
 
-- `--role developer|reviewer|architect`: User role
-- `--quick`: 5-minute executive summary
-- `--continue`: Resume from last position
-- `--status`: Show onboarding progress
+- `--accepted-only`: Show only accepted ADRs
+- `--by-tag`: Show ADRs by category/tag
+- `--non-interactive`: Skip interactive prompts
+- `-l, --limit <LIMIT>`: Limit number of ADRs to show (default: 10)
 
 ## Common Workflows
 
@@ -312,43 +352,45 @@ git adr onboard [OPTIONS]
 ```bash
 git adr init
 git adr new "Use git-adr for architecture decisions"
-git adr sync push
+git adr sync --push
 ```
 
 ### Team collaboration
 
 ```bash
-git adr sync pull                           # Get latest
-git adr new "Adopt microservices"          # Create decision
-git adr sync push                          # Share with team
+git adr sync --pull                          # Get latest
+git adr new "Adopt microservices"            # Create decision
+git adr sync --push                          # Share with team
 ```
 
 ### Link decisions to implementation
 
 ```bash
-git adr link 20250115-use-postgresql abc123
-git adr show 20250115-use-postgresql
+git adr link ADR-0001-use-postgresql abc123
+git adr show ADR-0001-use-postgresql
 ```
 
 ### Supersede a decision
 
 ```bash
-git adr supersede 20250101-use-mysql "Migrate to PostgreSQL"
+git adr supersede ADR-0001-use-mysql "Migrate to PostgreSQL"
 ```
 
 ### Onboard new team member
 
 ```bash
-git adr onboard --quick                    # Quick overview
-git adr list --status accepted             # Key decisions
-git adr show <id>                          # Read specific ADR
+git adr onboard                              # Interactive wizard
+git adr list --status accepted               # Key decisions
+git adr show <id>                            # Read specific ADR
 ```
 
 ## ADR ID Format
 
-ADR IDs use the format: `YYYYMMDD-slug-from-title`
+ADR IDs use the format: `ADR-NNNN-slug-from-title`
 
-Example: `20250115-use-postgresql-for-primary-database`
+Example: `ADR-0001-use-postgresql-for-primary-database`
+
+The prefix and number of digits are configurable via `git adr init`.
 
 ## Status Values
 

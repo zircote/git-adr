@@ -294,15 +294,20 @@ Ready to start using ADRs? Here is a 5-minute tutorial to get you going.
 
 ### Step 1: Install git-adr
 
-```bash
-pip install git-adr
-```
-
-Or with uv:
+Using Homebrew (macOS):
 
 ```bash
-uv tool install git-adr
+brew tap zircote/tap
+brew install git-adr
 ```
+
+Or using Cargo (Rust):
+
+```bash
+cargo install git-adr
+```
+
+Or download a pre-built binary from [GitHub Releases](https://github.com/zircote/git-adr/releases).
 
 ### Step 2: Initialize in Your Repository
 
@@ -375,13 +380,13 @@ git adr log
 Push ADRs to your remote so teammates can access them:
 
 ```bash
-git adr sync push
+git adr sync --push
 ```
 
 And pull ADRs others have created:
 
 ```bash
-git adr sync pull
+git adr sync --pull
 ```
 
 ### Bonus: Create a Superseding ADR

@@ -2,6 +2,10 @@
 
 use anyhow::Result;
 use clap::Args as ClapArgs;
+use colored::Colorize;
+use std::io::{self, Write};
+
+use crate::core::{ConfigManager, Git, NotesManager};
 
 /// Arguments for the rm command.
 #[derive(ClapArgs, Debug)]
@@ -20,16 +24,40 @@ pub struct Args {
 ///
 /// Returns an error if removal fails.
 pub fn run(args: Args) -> Result<()> {
-    use colored::Colorize;
+    let git = Git::new();
+    git.check_repository()?;
 
-    eprintln!("{} Removing ADR: {}", "→".blue(), args.adr_id);
+    let config = ConfigManager::new(git.clone()).load()?;
+    let notes = NotesManager::new(git, config);
 
-    // TODO: Implement remove logic
-    // 1. Confirm with user (unless --force)
-    // 2. Remove note
-    // 3. Update index
+    // Find the ADR to confirm it exists
+    let adrs = notes.list()?;
+    let adr = adrs
+        .into_iter()
+        .find(|a| a.id == args.adr_id || a.id.contains(&args.adr_id))
+        .ok_or_else(|| anyhow::anyhow!("ADR not found: {}", args.adr_id))?;
 
-    eprintln!("{} ADR removed", "✓".green());
+    eprintln!("{} ADR: {} - {}", "→".blue(), adr.id, adr.frontmatter.title);
+    eprintln!("  Status: {}", adr.frontmatter.status);
+
+    // Confirm deletion unless --force
+    if !args.force {
+        eprint!("Are you sure you want to remove this ADR? [y/N] ");
+        io::stderr().flush()?;
+
+        let mut input = String::new();
+        io::stdin().read_line(&mut input)?;
+
+        if !input.trim().eq_ignore_ascii_case("y") {
+            eprintln!("{} Aborted", "!".yellow());
+            return Ok(());
+        }
+    }
+
+    // Delete the ADR
+    notes.delete(&adr.id)?;
+
+    eprintln!("{} ADR removed: {}", "✓".green(), adr.id);
 
     Ok(())
 }

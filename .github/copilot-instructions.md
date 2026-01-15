@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-git-adr is a CLI tool for managing Architecture Decision Records (ADRs) stored in **git notes** (not files), making ADRs non-intrusive and portable with git history.
+git-adr is a Rust CLI tool for managing Architecture Decision Records (ADRs) stored in **git notes** (not files), making ADRs non-intrusive and portable with git history.
 
 ### Storage Model
 
@@ -13,96 +13,148 @@ git-adr is a CLI tool for managing Architecture Decision Records (ADRs) stored i
 ### Layer Architecture
 
 ```
-CLI (cli.py)
+src/main.rs (Binary entry point)
     ↓
-Commands (commands/*.py) - Typer commands using core services
+src/cli/*.rs (Clap-based command handlers)
     ↓
-Core (core/*.py)
-├── NotesManager - CRUD for ADRs in git notes
-├── IndexManager - Search index operations
-├── Git - Low-level git subprocess wrapper
-├── ConfigManager - adr.* git config settings
-└── ADR dataclass - Metadata + content model
+src/core/*.rs (Core business logic)
+├── notes.rs - NotesManager: CRUD for ADRs in git notes
+├── index.rs - IndexManager: Search index operations
+├── git.rs - Git: Low-level git subprocess wrapper
+├── config.rs - ConfigManager: adr.* git config settings
+├── adr.rs - Adr struct: Metadata + content model
+└── templates.rs - TemplateEngine: ADR format templates
     ↓
-Optional Services
-├── ai/service.py - LLM abstraction (OpenAI/Anthropic/Google/Ollama via LangChain)
-├── wiki/service.py - GitHub/GitLab wiki sync
-└── formats/docx.py - DOCX export
+Optional Feature Modules
+├── src/ai/*.rs - AI integration (langchain-rust)
+├── src/wiki/*.rs - GitHub/GitLab wiki sync
+└── src/export/*.rs - Export to DOCX/HTML/JSON
 ```
 
 ## Code Style
 
-- Python 3.11+ with full type annotations
-- Use `typer` for CLI commands (not click)
-- Follow Google-style docstrings
-- Use `pathlib.Path` over `os.path`
-- Prefer dataclasses for structured data
+- Rust 2021 edition, MSRV 1.80
+- Full type annotations on public APIs
+- Use `#[must_use]` for methods returning values
+- Use `const fn` where possible
+- Prefer `&str` parameters over `String` when not taking ownership
+- Use `impl Into<String>` for flexible string parameters
 
 ## Testing
 
-- Use pytest with fixtures in `tests/conftest.py`
-- Test files mirror source structure: `src/git_adr/foo.py` -> `tests/test_foo.py`
-- Use `initialized_adr_repo` fixture for tests requiring ADR operations
+- Test files are in `tests/` directory and inline with `#[cfg(test)]` modules
+- Use `tempfile` crate for temporary git repos
+- Use `assert_cmd` for CLI testing
 - Test naming: `test_<function>_<scenario>_<expected>`
 
-**Available fixtures:**
-- `temp_git_repo` - Empty git repository
-- `temp_git_repo_with_commit` - Git repo with initial commit
-- `initialized_adr_repo` - Git repo with ADR initialized (most common)
+**Test organization:**
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_function_scenario_expected() {
+        // Arrange
+        // Act
+        // Assert
+    }
+}
+```
 
 ## Common Patterns
 
-### CLI Commands (Typer-based)
+### CLI Commands (Clap derive-based)
 
-```python
-from typing import Annotated
-import typer
+```rust
+use clap::Args as ClapArgs;
+use anyhow::Result;
 
-@app.command()
-def my_command(
-    arg: Annotated[str, typer.Argument(help="Description")],
-    option: Annotated[str, typer.Option("--option", "-o")] = "default",
-) -> None:
-    """Command description for help text."""
-    git = Git()
-    config = ConfigManager(git).load()
-    notes = NotesManager(git, config)
-    # ... implementation
+#[derive(ClapArgs, Debug)]
+pub struct Args {
+    /// The ADR title
+    pub title: String,
+
+    /// ADR format
+    #[arg(long, short, default_value = "madr")]
+    pub format: String,
+}
+
+pub fn run(args: Args) -> Result<()> {
+    let git = Git::new();
+    let config = ConfigManager::new(git.clone()).load()?;
+    let notes = NotesManager::new(git, config);
+    // ... implementation
+    Ok(())
+}
 ```
 
-### File Operations
+### Error Handling
 
-```python
-from pathlib import Path
+- Use `thiserror` for library errors in `src/lib.rs`
+- Use `anyhow` for binary errors
+- Return `Result<()>` from command handlers
 
-def read_adr(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
+### Console Output
+
+Use the `colored` crate for terminal output:
+```rust
+use colored::Colorize;
+
+println!("{} ADR created: {}", "✓".green(), id.cyan());
+eprintln!("{} Warning: {}", "!".yellow(), message);
 ```
-
-### Rich Console Output
-
-Escape brackets in package names like `pip install 'git-adr[ai]'` as `'git-adr\\[ai]'` to prevent Rich from interpreting `[ai]` as markup.
 
 ## ADR Format
 
 ADRs use YAML frontmatter with markdown body:
-- **Status**: Proposed, Accepted, Deprecated, Superseded
-- **Sections**: Context, Decision, Consequences
+- **Status**: Proposed, Accepted, Deprecated, Superseded, Rejected
+- **Sections**: Context, Decision, Consequences (varies by template)
 
-## Optional Dependencies
+## Optional Features
 
-- `[ai]` - LangChain providers for AI commands
-- `[wiki]` - PyGithub/python-gitlab for wiki sync
-- `[export]` - python-docx for DOCX export
-- `[all]` - Everything
+Build with features as needed:
+- `ai` - LangChain providers for AI commands
+- `wiki` - GitHub/GitLab wiki sync
+- `export` - DOCX export via docx-rs
+- `all` - All features
+
+```bash
+cargo build --features ai
+cargo build --features all
+```
 
 ## Development Commands
 
 ```bash
-uv sync --all-extras        # Install all dependencies
-uv run pytest               # Run tests
-uv run ruff format .        # Format code
-uv run ruff check . --fix   # Lint and auto-fix
-uv run mypy src             # Type check
-uv run bandit -r src/       # Security scan
+cargo build                                    # Build debug
+cargo build --release                          # Build release
+cargo test                                     # Run all tests
+cargo test --all-features                      # Test with features
+cargo fmt                                      # Format code
+cargo clippy --all-targets --all-features -- -D warnings  # Lint
+cargo doc --open                               # Generate docs
+```
+
+## Project Structure
+
+```
+git-adr/
+├── Cargo.toml          # Package manifest
+├── src/
+│   ├── lib.rs          # Library entry, Error types
+│   ├── main.rs         # Binary entry point
+│   ├── cli/            # CLI command implementations
+│   │   ├── mod.rs      # CLI definition and Commands enum
+│   │   ├── init.rs     # Initialize ADR in repo
+│   │   ├── new.rs      # Create new ADR
+│   │   └── ...         # Other commands
+│   └── core/           # Core business logic
+│       ├── mod.rs      # Module exports
+│       ├── adr.rs      # ADR data model
+│       ├── git.rs      # Git subprocess wrapper
+│       ├── notes.rs    # Notes CRUD operations
+│       └── ...
+├── tests/              # Integration tests
+└── docs/               # Documentation
 ```

@@ -22,7 +22,7 @@ git adr config adr.template madr
 git adr new "Record architecture decisions"
 
 # 5. Push to remote to share with team
-git adr sync push
+git adr sync --push
 ```
 
 ### First ADR Content Suggestion
@@ -40,7 +40,7 @@ Synchronize ADRs across team members using remote repositories.
 
 ```bash
 # Start of day: Pull latest ADRs
-git adr sync pull
+git adr sync --pull
 
 # Check for new decisions
 git adr list --since "1 week ago"
@@ -56,7 +56,7 @@ git adr show <adr-id>
 git adr new "Adopt React Query for data fetching"
 
 # 2. Push to share with team
-git adr sync push
+git adr sync --push
 
 # 3. Notify team (ADR ID is printed after creation)
 ```
@@ -67,7 +67,7 @@ If sync fails due to conflicts:
 
 ```bash
 # 1. Pull and attempt merge
-git adr sync pull
+git adr sync --pull
 
 # 2. If conflicts exist, list and review
 git adr list
@@ -76,7 +76,7 @@ git adr list
 git adr edit <adr-id>
 
 # 4. Push resolved version
-git adr sync push
+git adr sync --push
 ```
 
 ## 3. Migration from File-Based ADRs
@@ -104,7 +104,7 @@ mkdir -p docs/adr-archive
 mv docs/adr/*.md docs/adr-archive/
 
 # 6. Push imported ADRs to remote
-git adr sync push
+git adr sync --push
 ```
 
 ### Import Options
@@ -313,9 +313,9 @@ git adr list --status accepted --format table
 
 | Workflow | Key Commands |
 |----------|--------------|
-| New project | `git adr init && git adr new "..." && git adr sync push` |
-| Daily sync | `git adr sync pull` |
-| Share decision | `git adr new "..." && git adr sync push` |
+| New project | `git adr init && git adr new "..." && git adr sync --push` |
+| Daily sync | `git adr sync --pull` |
+| Share decision | `git adr new "..." && git adr sync --push` |
 | Import files | `git adr import docs/adr/` |
 | Onboard | `git adr onboard` or `git adr list && git adr show <id>` |
 | Supersede | `git adr supersede <old-id> "<new title>"` |

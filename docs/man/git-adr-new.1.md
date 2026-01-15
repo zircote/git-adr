@@ -2,7 +2,7 @@
 
 ## SYNOPSIS
 
-`git adr new` TITLE [OPTIONS]
+`git adr new` [OPTIONS] TITLE
 
 ## DESCRIPTION
 
@@ -14,23 +14,26 @@ is stored in git notes after editing.
 
 `TITLE`
 : The title for the new ADR. Used to generate a unique ADR ID in the format
-  `YYYYMMDD-slug-from-title`.
+  `ADR-NNNN-slug-from-title`.
 
 ## OPTIONS
 
-`--status` [proposed|accepted|deprecated|superseded|draft]
+`-s`, `--status` STATUS
 : Initial status for the ADR (default: proposed).
 
-`--tags`, `-t` TEXT
+`-g`, `--tag` TAG
 : Tags for categorization. Can be specified multiple times.
 
-`--link` TEXT
+`-d`, `--deciders` NAME
+: Deciders involved. Can be specified multiple times.
+
+`-l`, `--link` COMMIT
 : Commit SHA to link to this ADR.
 
-`--template` [madr|nygard|y-statement]
+`--template` FORMAT
 : Template format to use (overrides default).
 
-`--file`, `-f` PATH
+`-f`, `--file` PATH
 : Read ADR content from a file instead of opening editor.
 
 `--no-edit`
@@ -38,9 +41,6 @@ is stored in git notes after editing.
 
 `--preview`
 : Show the template without creating an ADR.
-
-`--draft`
-: Mark as draft status (shortcut for --status draft).
 
 `-h`, `--help`
 : Show help message and exit.
@@ -57,7 +57,7 @@ git-adr-new supports multiple input modes:
 : Use `--file path/to/content.md` to read from a file.
 
 **Stdin input**
-: Pipe content: `cat adr.md | git adr new "Title"`
+: Pipe content: `cat adr.md | git adr new "Title" --no-edit`
 
 **Preview mode**
 : Use `--preview` to see the template without creating.
@@ -95,7 +95,11 @@ Create an ADR with editor:
 
 Create with specific status and tags:
 
-    $ git adr new "Adopt React" --status accepted --tags frontend --tags ui
+    $ git adr new "Adopt React" --status accepted -g frontend -g ui
+
+Create with deciders:
+
+    $ git adr new "API Design" -d "Alice" -d "Bob"
 
 Create from file:
 
@@ -103,7 +107,7 @@ Create from file:
 
 Create from stdin:
 
-    $ cat << 'EOF' | git adr new "Use REST API"
+    $ cat << 'EOF' | git adr new "Use REST API" --no-edit
     ## Context
     We need an API design approach.
 

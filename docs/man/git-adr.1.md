@@ -23,11 +23,6 @@ git notes attached to the repository, providing:
 `-h`, `--help`
 : Show help message and exit.
 
-`--install-completion`
-: Install shell completion for the current shell.
-
-`--show-completion`
-: Show completion script for the current shell.
 
 ## COMMANDS
 
@@ -70,8 +65,9 @@ git notes attached to the repository, providing:
 
 ### Synchronization
 
-`git adr sync` [push|pull|both]
-: Synchronize ADR notes with a remote repository.
+`git adr sync` [REMOTE] [--push|--pull]
+: Synchronize ADR notes with a remote repository. Use `--push` for push only,
+  `--pull` for pull only, or neither for both.
 
 ### Analysis & Reporting
 
@@ -224,7 +220,7 @@ Search ADRs:
 
 Sync ADRs with remote:
 
-    $ git adr sync push
+    $ git adr sync --push
 
 ## TEMPLATE FORMATS
 

@@ -69,8 +69,8 @@ git-adr is a command-line tool that manages ADRs using **git notes** instead of 
 | `git adr search "<query>"` | Search ADRs |
 | `git adr supersede <old-id> "<title>"` | Supersede a decision |
 | `git adr link <id> <commit>` | Link ADR to commit |
-| `git adr sync push` | Push ADRs to remote |
-| `git adr sync pull` | Pull ADRs from remote |
+| `git adr sync --push` | Push ADRs to remote |
+| `git adr sync --pull` | Pull ADRs from remote |
 | `git adr stats` | Show statistics |
 | `git adr export` | Export to files |
 | `git adr config list` | Show configuration |
@@ -99,9 +99,9 @@ git notes --ref=adr list 2>/dev/null || echo "Not initialized"
 If git-adr is not installed:
 ```
 git-adr is not installed. Install with:
-  pip install git-adr
+  cargo install git-adr
   # or
-  brew tap zircote/git-adr && brew install git-adr
+  brew tap zircote/tap && brew install git-adr
 ```
 
 If not in a git repository:
@@ -170,15 +170,15 @@ When generating content, follow the structure in the appropriate format template
 ```bash
 git adr init
 git adr new "Record architecture decisions"
-git adr sync push
+git adr sync --push
 ```
 
 ### Team Collaboration
 
 ```bash
-git adr sync pull          # Get latest
+git adr sync --pull        # Get latest
 git adr new "Add caching"  # Create decision
-git adr sync push          # Share with team
+git adr sync --push        # Share with team
 ```
 
 ### Linking to Implementation
