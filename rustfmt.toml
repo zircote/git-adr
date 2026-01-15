@@ -1,0 +1,23 @@
+# Rust formatting configuration
+# https://rust-lang.github.io/rustfmt/
+# Note: Only stable options are used for compatibility with stable Rust
+
+edition = "2021"
+max_width = 100
+tab_spaces = 4
+newline_style = "Unix"
+use_small_heuristics = "Default"
+
+# Import ordering (stable)
+reorder_imports = true
+reorder_modules = true
+
+# Struct/enum formatting (stable)
+struct_variant_width = 35
+
+# Match arms (stable)
+match_arm_leading_pipes = "Never"
+match_block_trailing_comma = true
+
+# Chains (stable)
+chain_width = 60

@@ -1,0 +1,135 @@
+[package]
+name = "git-adr"
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.80"
+description = "Architecture Decision Records management for git repositories using git notes"
+license = "MIT"
+authors = ["zircote"]
+repository = "https://github.com/zircote/git-adr"
+homepage = "https://github.com/zircote/git-adr"
+documentation = "https://docs.rs/git-adr"
+readme = "README.md"
+keywords = ["git", "adr", "architecture", "decision", "records"]
+categories = ["command-line-utilities", "development-tools"]
+
+[lib]
+name = "git_adr"
+path = "src/lib.rs"
+
+[[bin]]
+name = "git-adr"
+path = "src/main.rs"
+
+[dependencies]
+# CLI
+clap = { version = "4", features = ["derive", "env", "wrap_help", "string"] }
+colored = "2"
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+serde_json = "1"
+
+# Template engine
+tera = "1"
+
+# Date/time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Regex
+regex = "1"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Utilities
+sha1 = "0.10"
+sha2 = "0.10"
+base64 = "0.22"
+dirs = "5"
+
+# Optional: AI support
+langchain-rust = { version = "4", optional = true }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"], optional = true }
+
+# Optional: Export support
+docx-rs = { version = "0.4", optional = true }
+
+[dev-dependencies]
+# Testing
+proptest = "1.5"
+test-case = "3.3"
+tempfile = "3"
+assert_cmd = "2"
+predicates = "3"
+
+[profile.dev]
+debug = 1
+opt-level = 0
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.release-debug]
+inherits = "release"
+debug = true
+strip = false
+
+[lints.rust]
+unsafe_code = "warn"
+missing_docs = "warn"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+
+# Specific lints to deny (relaxed during initial development)
+# Allow unwrap/expect in tests only - use proper error handling in production code
+unwrap_used = "allow"  # TODO: Change to deny when implementations complete
+expect_used = "allow"  # TODO: Change to deny when implementations complete
+panic = "warn"
+todo = "allow"  # Allow TODOs during initial development
+unimplemented = "warn"
+dbg_macro = "deny"
+# Allow print for CLI binary (we use colored output)
+print_stdout = "allow"
+print_stderr = "allow"
+
+# Allow in certain contexts
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+redundant_pub_crate = "allow"
+multiple_crate_versions = "allow"  # Transitive deps
+struct_excessive_bools = "allow"  # CLI args often need bools
+needless_pass_by_value = "allow"  # Clap requires owned Args
+# Stub implementation lints (temporary)
+unused_self = "allow"  # Stub implementations
+unused_async = "allow"  # AI service stubs
+missing_const_for_fn = "allow"  # Not critical for initial release
+# Pedantic lints that are too strict for initial development
+option_if_let_else = "allow"  # if-let chains are more readable
+doc_markdown = "allow"  # Backticking API names is noisy
+unnecessary_wraps = "allow"  # Result returns are fine for consistency
+uninlined_format_args = "allow"  # Style preference
+needless_raw_string_hashes = "allow"  # r#""# is fine for readability
+
+[features]
+default = []
+ai = ["dep:langchain-rust", "dep:tokio"]
+wiki = []  # Uses git subprocess, no extra deps
+export = ["dep:docx-rs"]
+all = ["ai", "wiki", "export"]

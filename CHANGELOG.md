@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2025-01-15
+
+### Changed
+
+- **Complete Rust Rewrite** - git-adr has been rewritten from Python to Rust
+  - Zero runtime dependencies - single static binary
+  - Significantly faster startup and execution
+  - Memory-safe implementation with strong type guarantees
+  - Cross-compilation support for all major platforms
+
+### Added
+
+- **Native Binary Distribution**
+  - Pre-built binaries for macOS (ARM64, Intel), Linux (x86_64, ARM64, musl), Windows
+  - SHA256 checksums for all release assets
+  - Homebrew tap installation (`brew tap zircote/tap && brew install git-adr`)
+  - Cargo installation (`cargo install git-adr`)
+
+- **Rust-native Implementation**
+  - clap-derive for type-safe CLI argument parsing
+  - serde + serde_yaml for YAML frontmatter serialization
+  - thiserror for library errors, anyhow for binary errors
+  - Tera template engine for ADR format templates
+
+- **Feature Flags** (optional features compiled in)
+  - `ai` - AI-powered ADR assistance via langchain-rust (Anthropic, OpenAI, Google, Ollama)
+  - `wiki` - GitHub/GitLab wiki synchronization
+  - `export` - DOCX document export
+  - `all` - All optional features
+
+- **ADR Formats**
+  - Nygard (default) - Original ADR format
+  - MADR - Markdown Architectural Decision Records
+  - Structured MADR - Enterprise format with audit trail
+  - Y-Statement - Concise one-sentence format
+  - Alexandrian - Pattern-based format with forces
+  - Business Case - MBA-style with cost-benefit analysis
+
+### Migration from Python (v0.x)
+
+The data format (git notes) is **fully compatible** - existing ADRs work without changes.
+To access the Python version:
+
+```bash
+# Checkout the Python version
+git checkout python-final
+
+# Or install the last Python release
+pip install git-adr==0.3.0
+```
+
 ## [0.3.0] - 2025-01-15
 
 ### Added
@@ -210,6 +261,7 @@ Initial release of git-adr - Architecture Decision Records management for git re
 - Supports frontmatter-based metadata in Markdown files
 - 95%+ test coverage with pytest
 
+[1.0.0]: https://github.com/zircote/git-adr/releases/tag/v1.0.0
 [0.3.0]: https://github.com/zircote/git-adr/releases/tag/v0.3.0
 [0.2.4]: https://github.com/zircote/git-adr/releases/tag/v0.2.4
 [0.2.3]: https://github.com/zircote/git-adr/releases/tag/v0.2.3

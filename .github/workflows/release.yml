@@ -1,0 +1,128 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-alpha') || contains(github.ref, '-beta') }}
+          generate_release_notes: true
+
+  build-release:
+    name: Build Release
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: git-adr
+            archive: tar.gz
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            artifact: git-adr
+            archive: tar.gz
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            artifact: git-adr
+            archive: tar.gz
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: git-adr
+            archive: tar.gz
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: git-adr
+            archive: tar.gz
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: git-adr.exe
+            archive: zip
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Install cross-compilation tools
+        if: contains(matrix.target, 'linux') && contains(matrix.target, 'aarch64')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Set cross-compilation env
+        if: contains(matrix.target, 'linux') && contains(matrix.target, 'aarch64')
+        run: echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> "$GITHUB_ENV"
+
+      - name: Install musl tools
+        if: contains(matrix.target, 'musl')
+        run: sudo apt-get install -y musl-tools
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Create archive (Unix)
+        if: matrix.archive == 'tar.gz'
+        env:
+          TARGET: ${{ matrix.target }}
+          ARTIFACT: ${{ matrix.artifact }}
+        run: |
+          cd "target/${TARGET}/release"
+          tar czf "../../../git-adr-${TARGET}.tar.gz" "${ARTIFACT}"
+          cd ../../..
+          sha256sum "git-adr-${TARGET}.tar.gz" > "git-adr-${TARGET}.tar.gz.sha256"
+
+      - name: Create archive (Windows)
+        if: matrix.archive == 'zip'
+        env:
+          TARGET: ${{ matrix.target }}
+          ARTIFACT: ${{ matrix.artifact }}
+        shell: pwsh
+        run: |
+          cd "target/$env:TARGET/release"
+          Compress-Archive -Path $env:ARTIFACT -DestinationPath "../../../git-adr-$env:TARGET.zip"
+          cd ../../..
+          (Get-FileHash "git-adr-$env:TARGET.zip" -Algorithm SHA256).Hash.ToLower() + "  git-adr-$env:TARGET.zip" | Out-File -Encoding utf8 "git-adr-$env:TARGET.zip.sha256"
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        env:
+          TARGET: ${{ matrix.target }}
+          ARCHIVE: ${{ matrix.archive }}
+        with:
+          files: |
+            git-adr-${{ matrix.target }}.${{ matrix.archive }}
+            git-adr-${{ matrix.target }}.${{ matrix.archive }}.sha256
+
+  publish-crates:
+    name: Publish to crates.io
+    needs: build-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        continue-on-error: true
