@@ -6,9 +6,9 @@ parsing/serialization using YAML frontmatter + Markdown format.
 
 from __future__ import annotations
 
+import datetime as dt
 import re
 from dataclasses import dataclass, field
-import datetime as dt
 from datetime import date, datetime
 from enum import Enum
 from typing import Any

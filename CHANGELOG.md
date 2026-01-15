@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-01-15
+
+### Added
+
+- **Structured MADR Format** - Enterprise-grade ADR format with audit trail and risk assessment
+  - Extended YAML frontmatter with description, type, category, project, technologies, audience, related, author fields
+  - Decision Drivers section with Primary/Secondary categorization
+  - Risk Assessment tables for options (Technical/Schedule/Ecosystem dimensions)
+  - Audit section with Compliance Review, Findings tables, Summary, and Required Actions
+  - Full format detection support for automatic identification
+- **LSP Hooks** - Python code quality automation with Language Server Protocol integration
+- **Claude Code Plugin** - Configuration for enhanced AI-assisted development workflow
+- **Version Bump Tooling** - Makefile targets for streamlined version management
+- **SECURITY.md** - Vulnerability disclosure policy and security documentation
+
+### Changed
+
+- Updated GitHub Actions dependencies (checkout v6, setup-python v6, download-artifact v7)
+- Added Code Intelligence (LSP) section to CLAUDE.md
+- Improved code resilience and quality across the codebase
+
+### Fixed
+
+- CI workflow improvements and format fixes
+
+## [0.2.4] - 2025-01-10
+
+### Changed
+
+- Version bump and maintenance release
+
+## [0.2.3] - 2025-01-08
+
+### Fixed
+
+- CI test isolation improvements for AI commands
+
+## [0.2.2] - 2025-01-05
+
+### Changed
+
+- Homebrew tap rename and configuration updates
+
 ## [0.2.1] - 2025-12-17
 
 ### Changed
@@ -167,6 +210,10 @@ Initial release of git-adr - Architecture Decision Records management for git re
 - Supports frontmatter-based metadata in Markdown files
 - 95%+ test coverage with pytest
 
+[0.3.0]: https://github.com/zircote/git-adr/releases/tag/v0.3.0
+[0.2.4]: https://github.com/zircote/git-adr/releases/tag/v0.2.4
+[0.2.3]: https://github.com/zircote/git-adr/releases/tag/v0.2.3
+[0.2.2]: https://github.com/zircote/git-adr/releases/tag/v0.2.2
 [0.2.1]: https://github.com/zircote/git-adr/releases/tag/v0.2.1
 [0.2.0]: https://github.com/zircote/git-adr/releases/tag/v0.2.0
 [0.1.7]: https://github.com/zircote/git-adr/releases/tag/v0.1.7

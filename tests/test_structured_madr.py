@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from datetime import date
 
-import pytest
-
 from git_adr.core.adr import ADR, ADRMetadata, ADRStatus
 from git_adr.core.templates import TemplateContext, TemplateEngine
 
@@ -39,7 +37,9 @@ class TestStructuredMADRTemplate:
         )
 
         # Check header format
-        assert "ADR-20250115-use-postgresql: Use PostgreSQL for Primary Storage" in content
+        assert (
+            "ADR-20250115-use-postgresql: Use PostgreSQL for Primary Storage" in content
+        )
         assert "## Status" in content
         assert "proposed" in content
 
@@ -217,7 +217,9 @@ class TestStructuredMADRMetadata:
             updated=date(2025, 1, 15),
         )
 
-        assert metadata.description == "Decision to adopt PostgreSQL as primary database"
+        assert (
+            metadata.description == "Decision to adopt PostgreSQL as primary database"
+        )
         assert metadata.adr_type == "adr"
         assert metadata.category == "architecture"
         assert metadata.project == "my-application"

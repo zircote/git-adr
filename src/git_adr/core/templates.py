@@ -587,7 +587,10 @@ class TemplateEngine:
         if "## audit" in content_lower and "## decision drivers" in content_lower:
             return "structured-madr"
         # Also check for risk assessment tables (distinctive feature)
-        if "## decision drivers" in content_lower and "risk assessment" in content_lower:
+        if (
+            "## decision drivers" in content_lower
+            and "risk assessment" in content_lower
+        ):
             return "structured-madr"
         # ADR-{id}: title format in header
         if content_lower.startswith("# adr-") and "## audit" in content_lower:
