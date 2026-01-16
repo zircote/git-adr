@@ -33,7 +33,7 @@ Optional Feature Modules
 
 ## Code Style
 
-- Rust 2021 edition, MSRV 1.80
+- Rust 2021 edition, MSRV 1.85
 - Full type annotations on public APIs
 - Use `#[must_use]` for methods returning values
 - Use `const fn` where possible
