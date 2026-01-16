@@ -1,0 +1,131 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - ".github/workflows/deploy-docs.yml"
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Documentation version label"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch git notes
+        run: |
+          git fetch origin 'refs/notes/*:refs/notes/*' || echo "No notes refs found"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build Rust documentation
+        run: |
+          cargo doc --no-deps --all-features
+          # Create redirect to main crate docs
+          echo '<meta http-equiv="refresh" content="0; url=git_adr/index.html">' > target/doc/index.html
+
+      - name: Build git-adr binary
+        run: cargo build --release
+
+      - name: Export ADRs from git notes
+        run: |
+          mkdir -p adr-export
+          # Check if git-adr is initialized and has ADRs
+          if ./target/release/git-adr list --format json 2>/dev/null | grep -q '"id"'; then
+            ./target/release/git-adr export --output adr-export --format markdown --index
+            echo "ADRs exported successfully"
+            ls -la adr-export/
+          else
+            echo "No ADRs found in git notes, creating placeholder"
+            mkdir -p adr-export
+            cat > adr-export/index.md << 'EOF'
+          # Architecture Decision Records
+
+          No ADRs have been created yet. Use `git adr new "Title"` to create your first ADR.
+          EOF
+          fi
+
+      - name: Generate ADR viewer
+        uses: zircote/adrscope@v0
+        with:
+          command: generate
+          input-dir: adr-export
+          output: adr-viewer.html
+          theme: system
+        continue-on-error: true
+
+      - name: Create fallback ADR viewer
+        if: failure() || !hashFiles('adr-viewer.html')
+        run: |
+          if [ ! -f "adr-viewer.html" ]; then
+            cat > adr-viewer.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>git-adr - Architecture Decision Records</title>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }
+              h1 { color: #333; }
+              p { color: #666; }
+              a { color: #0066cc; }
+            </style>
+          </head>
+          <body>
+            <h1>git-adr Architecture Decision Records</h1>
+            <p>ADR viewer is being set up. Check back soon or visit the <a href="docs/">API documentation</a>.</p>
+            <p>git-adr stores ADRs in git notes. Use <code>git adr list</code> to view decisions.</p>
+          </body>
+          </html>
+          EOF
+          fi
+
+      - name: Determine version
+        id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$EVENT_NAME" == "release" ]; then
+            echo "version=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT_NAME" == "workflow_dispatch" ]; then
+            echo "version=$INPUT_VERSION" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy documentation
+        uses: zircote/zircote.github.io/.github/actions/docs-deploy@main
+        with:
+          project-id: git-adr
+          docs-path: target/doc
+          version: ${{ steps.version.outputs.version }}
+          include-adrs: adr-viewer.html
+        env:
+          DOCS_DEPLOY_TOKEN: ${{ secrets.DOCS_DEPLOY_TOKEN }}

@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Pushes updated formula to zircote/homebrew-tap repository
   - Supports macOS (Intel/ARM) and Linux (x86_64/ARM64)
 
+- **Documentation Deployment Workflow** - Automatically publish docs to zircote.github.io
+  - Builds and publishes Rust API documentation (rustdoc)
+  - Exports ADRs from git notes and generates viewer with adrscope
+  - Triggers on main branch pushes, releases, and manual dispatch
+  - Docs available at: https://www.zircote.com/projects/git-adr/docs/
+  - ADR viewer at: https://www.zircote.com/projects/git-adr/adrs.html
+
 ### Changed
 
 - **MSRV Update** - Bumped minimum supported Rust version from 1.80 to 1.85
