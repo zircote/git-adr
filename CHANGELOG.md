@@ -7,13 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- Address code review feedback from PR #54
-
 ### Changed
 
+- **MSRV Update** - Bumped minimum supported Rust version from 1.80 to 1.85
+  - Required for edition2024 dependencies (ignore crate v0.4.25)
+  - Updated CI workflow to use Rust 1.85 for MSRV check
+- **Makefile CI Parity** - Updated `make ci` to mirror GitHub Actions
+  - Added `deny` check to local CI target
+  - Added `docs-check` target for documentation warnings
 - Add `share/` to .gitignore for generated artifacts
+
+### Fixed
+
+- **CI Workflow Fixes** (PR #54)
+  - Fixed Windows compatibility in git hooks with `#[cfg(unix)]` conditional compilation
+  - Added `Unicode-3.0` to allowed licenses for icu_* crates
+  - Fixed clippy `too_many_lines` warning in `generate_html_report`
+  - Fixed clippy `unnecessary_map_or` warnings using `is_none_or`
+  - Updated RUSTSEC advisory ignores for langchain-rust dependencies:
+    - RUSTSEC-2024-0384 (instant unmaintained)
+    - RUSTSEC-2025-0012 (backoff unmaintained)
+    - RUSTSEC-2025-0057 (fxhash unmaintained)
+    - RUSTSEC-2025-0134 (rustls-pemfile unmaintained)
+- Address code review feedback from PR #54
 
 ## [1.0.0] - 2025-01-15
 
