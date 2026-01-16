@@ -238,7 +238,7 @@ fn generate_markdown_report(
 }
 
 /// Generate HTML report.
-#[allow(clippy::cast_precision_loss)]
+#[allow(clippy::cast_precision_loss, clippy::too_many_lines)]
 fn generate_html_report(
     adrs: &[crate::core::Adr],
     status_counts: &HashMap<AdrStatus, usize>,

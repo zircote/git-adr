@@ -2,7 +2,7 @@
 # Build, test, and install git-adr (Rust implementation)
 
 .PHONY: all clean test test-unit lint format check build build-release \
-        install install-bin uninstall help ci dev docs \
+        install install-bin uninstall help ci dev docs docs-check \
         version bump-patch bump-minor bump-major tag \
         release-patch release-minor release-major \
         clippy audit deny completions
@@ -68,7 +68,8 @@ help:
 	@echo "  make audit          Run cargo audit (security)"
 	@echo "  make deny           Run cargo deny (licenses/advisories)"
 	@echo "  make ci             Full CI checks (mirrors GitHub Actions)"
-	@echo "  make docs           Generate documentation"
+	@echo "  make docs           Generate and open documentation"
+	@echo "  make docs-check     Check documentation builds without warnings"
 	@echo ""
 	@echo "Version:"
 	@echo "  make version        Show current version"
@@ -197,8 +198,12 @@ deny:
 	fi
 
 # Full CI check (mirrors GitHub Actions)
-ci: check test
+ci: check deny test docs-check
 	@echo "CI checks passed!"
+
+# Documentation check (mirrors CI docs job)
+docs-check:
+	RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
 
 # ============================================================
 # Documentation
