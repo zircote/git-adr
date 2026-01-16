@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - RUSTSEC-2025-0057 (fxhash unmaintained)
     - RUSTSEC-2025-0134 (rustls-pemfile unmaintained)
 - Address code review feedback from PR #54
+- **Documentation Deployment** - Inlined composite action logic for private repository compatibility
 
 ## [1.0.0] - 2025-01-15
 
