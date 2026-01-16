@@ -69,7 +69,7 @@ pub fn run(args: Args) -> Result<()> {
             adr.frontmatter
                 .date
                 .as_ref()
-                .map_or(true, |d| d.datetime() >= since_date)
+                .is_none_or(|d| d.datetime() >= since_date)
         });
     }
 
@@ -79,7 +79,7 @@ pub fn run(args: Args) -> Result<()> {
             adr.frontmatter
                 .date
                 .as_ref()
-                .map_or(true, |d| d.datetime() <= until_date)
+                .is_none_or(|d| d.datetime() <= until_date)
         });
     }
 
