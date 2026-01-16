@@ -126,3 +126,86 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
         continue-on-error: true
+
+  update-homebrew:
+    name: Update Homebrew Tap
+    needs: build-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          gh release download "v${{ steps.version.outputs.version }}" \
+            --pattern "git-adr-*.tar.gz" \
+            --pattern "git-adr-*.tar.gz.sha256" \
+            --dir dist
+
+      - name: Generate Homebrew formula
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Get SHA256 checksums
+          DARWIN_AMD64_SHA=$(cat dist/git-adr-x86_64-apple-darwin.tar.gz.sha256 | awk '{print $1}')
+          DARWIN_ARM64_SHA=$(cat dist/git-adr-aarch64-apple-darwin.tar.gz.sha256 | awk '{print $1}')
+          LINUX_AMD64_SHA=$(cat dist/git-adr-x86_64-unknown-linux-gnu.tar.gz.sha256 | awk '{print $1}')
+          LINUX_ARM64_SHA=$(cat dist/git-adr-aarch64-unknown-linux-gnu.tar.gz.sha256 | awk '{print $1}')
+
+          cat > git-adr.rb << EOF
+          class GitAdr < Formula
+            desc "Architecture Decision Records management for git repositories using git notes"
+            homepage "https://github.com/zircote/git-adr"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/zircote/git-adr/releases/download/v${VERSION}/git-adr-aarch64-apple-darwin.tar.gz"
+                sha256 "${DARWIN_ARM64_SHA}"
+              end
+              on_intel do
+                url "https://github.com/zircote/git-adr/releases/download/v${VERSION}/git-adr-x86_64-apple-darwin.tar.gz"
+                sha256 "${DARWIN_AMD64_SHA}"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/zircote/git-adr/releases/download/v${VERSION}/git-adr-aarch64-unknown-linux-gnu.tar.gz"
+                sha256 "${LINUX_ARM64_SHA}"
+              end
+              on_intel do
+                url "https://github.com/zircote/git-adr/releases/download/v${VERSION}/git-adr-x86_64-unknown-linux-gnu.tar.gz"
+                sha256 "${LINUX_AMD64_SHA}"
+              end
+            end
+
+            def install
+              bin.install "git-adr"
+            end
+
+            test do
+              system "#{bin}/git-adr", "--version"
+            end
+          end
+          EOF
+
+      - name: Push to Homebrew tap
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/zircote/homebrew-tap.git" tap
+          cp git-adr.rb tap/Formula/git-adr.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/git-adr.rb
+          git commit -m "Update git-adr to v${{ steps.version.outputs.version }}"
+          git push

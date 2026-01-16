@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Automated Homebrew Tap Updates** - Release workflow now automatically updates the Homebrew formula
+  - Downloads pre-built binaries from GitHub releases
+  - Generates platform-specific formula with SHA256 checksums
+  - Pushes updated formula to zircote/homebrew-tap repository
+  - Supports macOS (Intel/ARM) and Linux (x86_64/ARM64)
+
 ### Changed
 
 - **MSRV Update** - Bumped minimum supported Rust version from 1.80 to 1.85
