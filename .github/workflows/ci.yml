@@ -141,7 +141,7 @@ jobs:
         if: contains(matrix.target, 'musl')
         run: sudo apt-get install -y musl-tools
       - run: cargo build --release --target ${{ matrix.target }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: git-adr-${{ matrix.target }}
           path: target/${{ matrix.target }}/release/${{ matrix.artifact }}
