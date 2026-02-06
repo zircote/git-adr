@@ -63,7 +63,7 @@ docx-rs = { version = "0.4", optional = true }
 
 [dev-dependencies]
 # Testing
-proptest = "1.5"
+proptest = "1.10"
 test-case = "3.3"
 tempfile = "3"
 assert_cmd = "2"
