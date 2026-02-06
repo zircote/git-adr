@@ -6,7 +6,7 @@ Thank you for your interest in contributing to git-adr! This document provides g
 
 ### Prerequisites
 
-- Rust 1.85 or higher
+- Rust 1.92 or higher
 - Git
 - Cargo (comes with Rust)
 

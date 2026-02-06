@@ -24,16 +24,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **MSRV Update** - Bumped minimum supported Rust version from 1.85 to 1.92
+  - Updated CI workflow to use `dtolnay/rust-toolchain@1.92` for MSRV check
+  - Updated MSRV references in CLAUDE.md, CONTRIBUTING.md, and copilot-instructions.md
 - **MSRV Update** - Bumped minimum supported Rust version from 1.80 to 1.85
   - Required for edition2024 dependencies (ignore crate v0.4.25)
   - Updated CI workflow to use Rust 1.85 for MSRV check
+- **Dependabot Configuration** - Added `cargo` ecosystem for automated dependency updates
+  - Previously only `pip` and `github-actions` ecosystems were configured
+  - Cargo dependencies now receive weekly grouped minor/patch update PRs
 - **Makefile CI Parity** - Updated `make ci` to mirror GitHub Actions
   - Added `deny` check to local CI target
   - Added `docs-check` target for documentation warnings
 - Add `share/` to .gitignore for generated artifacts
+- Removed stale RUSTSEC advisory ignores from `deny.toml` (RUSTSEC-2025-0057, RUSTSEC-2025-0134)
 
 ### Fixed
 
+- **CI MSRV Job** - Fixed MSRV check failing due to `dtolnay/rust-toolchain@1.85` branch temporarily resolving to non-existent Rust 1.100.0
 - **CI Workflow Fixes** (PR #54)
   - Fixed Windows compatibility in git hooks with `#[cfg(unix)]` conditional compilation
   - Added `Unicode-3.0` to allowed licenses for icu_* crates
@@ -46,6 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - RUSTSEC-2025-0134 (rustls-pemfile unmaintained)
 - Address code review feedback from PR #54
 - **Documentation Deployment** - Inlined composite action logic for private repository compatibility
+
+### Security
+
+- Updated `bytes` from 1.11.0 to 1.11.1 to fix RUSTSEC-2026-0007 (integer overflow in `BytesMut::reserve`)
 
 ## [1.0.0] - 2025-01-15
 

@@ -105,7 +105,7 @@ pub fn run(args: Args) -> Result<()> {
 
 ## Code Style
 
-- Rust 2021 edition, MSRV 1.85
+- Rust 2021 edition, MSRV 1.92
 - Full type annotations on public APIs
 - Use `#[must_use]` for methods returning values
 - Use `const fn` where possible
