@@ -2,7 +2,7 @@
 name = "git-adr"
 version = "1.0.0"
 edition = "2021"
-rust-version = "1.85"
+rust-version = "1.92"
 description = "Architecture Decision Records management for git repositories using git notes"
 license = "MIT"
 authors = ["zircote"]
