@@ -30,8 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MSRV Update** - Bumped minimum supported Rust version from 1.80 to 1.85
   - Required for edition2024 dependencies (ignore crate v0.4.25)
   - Updated CI workflow to use Rust 1.85 for MSRV check
-- **Dependabot Configuration** - Added `cargo` ecosystem for automated dependency updates
-  - Previously only `pip` and `github-actions` ecosystems were configured
+- **Dependabot Configuration** - Replaced stale `pip` ecosystem with `cargo` for automated dependency updates
+  - Removed `pip` ecosystem (no longer a Python project)
   - Cargo dependencies now receive weekly grouped minor/patch update PRs
 - **Makefile CI Parity** - Updated `make ci` to mirror GitHub Actions
   - Added `deny` check to local CI target

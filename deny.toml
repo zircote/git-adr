@@ -19,6 +19,8 @@ db-urls = ["https://github.com/rustsec/advisory-db"]
 ignore = [
     "RUSTSEC-2024-0384",  # instant (unmaintained) - used by h2
     "RUSTSEC-2025-0012",  # backoff (unmaintained) - used by langchain-rust
+    "RUSTSEC-2025-0057",  # fxhash (unmaintained) - used by langchain-rust
+    "RUSTSEC-2025-0134",  # rustls-pemfile (unmaintained) - used by reqwest
 ]
 
 [licenses]
