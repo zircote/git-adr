@@ -24,7 +24,7 @@ path = "src/main.rs"
 [dependencies]
 # CLI
 clap = { version = "4", features = ["derive", "env", "wrap_help", "string"] }
-colored = "2"
+colored = "3"
 
 # Error handling
 thiserror = "2"
