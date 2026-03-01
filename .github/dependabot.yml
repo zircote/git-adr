@@ -1,38 +1,21 @@
----
 version: 2
 updates:
-  - package-ecosystem: "cargo"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "rust"
-    commit-message:
-      prefix: "deps"
-    groups:
-      cargo:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
-
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
     labels:
-      - "dependencies"
-      - "github-actions"
+      - "type/chore"
+      - "area/ci"
     commit-message:
       prefix: "ci"
-    ignore:
-      # dtolnay/rust-toolchain uses Rust version tags (e.g. @1.92), not action
-      # version tags. Dependabot misinterprets these as outdated action versions
-      # and creates PRs for nonexistent Rust releases.
-      - dependency-name: "dtolnay/rust-toolchain"
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "type/chore"
+    commit-message:
+      prefix: "deps"
