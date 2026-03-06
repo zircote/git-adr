@@ -326,11 +326,29 @@ pip install git-adr==0.3.0
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
 
-## License
+## Citing This Project
 
-MIT License - see [LICENSE](LICENSE) for details.
+If you use `git-adr` in your research or documentation, you can cite it using GitHub's "Cite this repository" button, or with the following BibTeX entry:
+
+```bibtex
+@software{allen_git_adr,
+  author       = {Allen, Robert},
+  title        = {git-adr},
+  version      = {1.0.0},
+  date         = {2026-01-15},
+  url          = {https://github.com/zircote/git-adr},
+  license      = {MIT}
+}
+```
 
 ## Acknowledgments
 
-- [MADR](https://adr.github.io/madr/) - Markdown ADR format
-- [ADR Tools](https://github.com/npryce/adr-tools) - Original ADR tooling inspiration
+This project builds on the work of the ADR community:
+
+> ADR organization. *MADR - Markdown Architectural Decision Records*. https://github.com/adr/madr
+
+> Nat Pryce. *adr-tools*. https://github.com/npryce/adr-tools
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
