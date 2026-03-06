@@ -1,0 +1,55 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "git-adr"
+abstract: "Architecture Decision Records management for git repositories using git notes"
+version: "1.0.0"
+date-released: "2026-01-15"
+license: MIT
+url: "https://github.com/zircote/git-adr"
+repository-code: "https://github.com/zircote/git-adr"
+authors:
+  - family-names: Allen
+    given-names: Robert
+    email: zircote@gmail.com
+    orcid: "https://orcid.org/0009-0007-9691-004X"
+identifiers:
+  - type: url
+    value: "https://github.com/zircote/git-adr"
+    description: "GitHub repository"
+keywords:
+  - git
+  - adr
+  - architecture
+  - decision
+  - records
+references:
+  - type: software
+    title: "MADR - Markdown Architectural Decision Records"
+    url: "https://adr.github.io/madr/"
+    repository-code: "https://github.com/adr/madr"
+    abstract: "Markdown Architectural Decision Records format used as a supported ADR template in git-adr."
+    authors:
+      - name: "ADR organization"
+  - type: software
+    title: "adr-tools"
+    url: "https://github.com/npryce/adr-tools"
+    repository-code: "https://github.com/npryce/adr-tools"
+    abstract: "Original command-line ADR tooling that inspired the git-adr project."
+    authors:
+      - family-names: Pryce
+        given-names: Nat
+preferred-citation:
+  type: software
+  title: "git-adr"
+  abstract: "Architecture Decision Records management for git repositories using git notes"
+  version: "1.0.0"
+  date-released: "2026-01-15"
+  license: MIT
+  url: "https://github.com/zircote/git-adr"
+  repository-code: "https://github.com/zircote/git-adr"
+  authors:
+    - family-names: Allen
+      given-names: Robert
+      email: zircote@gmail.com
+      orcid: "https://orcid.org/0009-0007-9691-004X"
