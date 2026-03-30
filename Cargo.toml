@@ -50,7 +50,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Utilities
 sha1 = "0.11"
-sha2 = "0.10"
+sha2 = "0.11"
 base64 = "0.22"
 dirs = "6"
 
