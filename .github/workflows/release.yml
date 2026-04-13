@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v6
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           draft: false
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-alpha') || contains(github.ref, '-beta') }}
@@ -108,7 +108,7 @@ jobs:
           (Get-FileHash "git-adr-$env:TARGET.zip" -Algorithm SHA256).Hash.ToLower() + "  git-adr-$env:TARGET.zip" | Out-File -Encoding utf8 "git-adr-$env:TARGET.zip.sha256"
 
       - name: Upload Release Asset
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         env:
           TARGET: ${{ matrix.target }}
           ARCHIVE: ${{ matrix.archive }}
