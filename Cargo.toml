@@ -52,7 +52,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 sha1 = "0.11"
 sha2 = "0.11"
 base64 = "0.23"
-dirs = "6"
+dirs = "7"
 
 # Optional: AI support
 langchain-rust = { version = "4", optional = true }
